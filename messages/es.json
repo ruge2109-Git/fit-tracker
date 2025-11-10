@@ -85,7 +85,8 @@
     "passwordMismatch": "Las contraseñas no coinciden",
     "continueWithGoogle": "Continuar con Google",
     "signingInWithGoogle": "Iniciando sesión con Google...",
-    "orContinueWith": "O continúa con"
+    "orContinueWith": "O continúa con",
+    "backToHome": "Volver al Inicio"
   },
   "dashboard": {
     "title": "Panel de Control",

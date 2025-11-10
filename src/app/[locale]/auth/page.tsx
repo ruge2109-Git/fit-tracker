@@ -6,7 +6,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from '@/i18n/routing'
+import { useRouter, usePathname } from '@/i18n/routing'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES, APP_NAME } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
-import { Dumbbell, Eye, EyeOff } from 'lucide-react'
+import { Dumbbell, Eye, EyeOff, ArrowLeft, Home } from 'lucide-react'
 import { authService } from '@/domain/services/auth.service'
 
 const loginSchema = z.object({
@@ -36,6 +36,7 @@ type SignUpFormData = z.infer<typeof signUpSchema>
 
 export default function AuthPage() {
   const router = useRouter()
+  const pathname = usePathname()
   const t = useTranslations('auth')
   const { signIn, signUp, isLoading } = useAuthStore()
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login')
@@ -87,10 +88,31 @@ export default function AuthPage() {
     // and then back to the callback route
   }
 
+  // Get current locale from pathname
+  const getCurrentLocale = () => {
+    const locale = pathname.split('/')[1]
+    return locale && ['en', 'es'].includes(locale) ? locale : 'en'
+  }
+
+  const handleBackToHome = () => {
+    const locale = getCurrentLocale()
+    router.push(`/${locale}`)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md relative">
         <CardHeader className="text-center">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 left-4"
+            onClick={handleBackToHome}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('backToHome')}
+          </Button>
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-primary/10 rounded-full">
               <Dumbbell className="h-8 w-8 text-primary" />

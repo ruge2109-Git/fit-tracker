@@ -85,7 +85,8 @@
     "passwordMismatch": "Passwords don't match",
     "continueWithGoogle": "Continue with Google",
     "signingInWithGoogle": "Signing in with Google...",
-    "orContinueWith": "Or continue with"
+    "orContinueWith": "Or continue with",
+    "backToHome": "Back to Home"
   },
   "dashboard": {
     "title": "Dashboard",

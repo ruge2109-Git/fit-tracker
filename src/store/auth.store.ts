@@ -17,6 +17,7 @@ interface AuthState {
   setUser: (user: User | null) => void
   signIn: (email: string, password: string) => Promise<boolean>
   signUp: (email: string, password: string, name: string) => Promise<boolean>
+  signInWithGoogle: () => Promise<boolean>
   signOut: () => Promise<void>
   loadUser: () => Promise<void>
   clearError: () => void
@@ -52,6 +53,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     
     set({ user: result.data!, isLoading: false })
+    return true
+  },
+
+  signInWithGoogle: async () => {
+    set({ isLoading: true, error: null })
+    const result = await authService.signInWithGoogle()
+    
+    if (result.error) {
+      set({ error: result.error, isLoading: false })
+      return false
+    }
+    
+    // OAuth redirects to callback, so we don't set user here
+    // The callback will handle the redirect
     return true
   },
 

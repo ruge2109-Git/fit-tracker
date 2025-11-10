@@ -12,6 +12,8 @@ export const APP_DESCRIPTION = 'Track your workouts, analyze your progress, achi
 export const ROUTES = {
   HOME: '/',
   AUTH: '/auth',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/auth/reset-password',
   DASHBOARD: '/dashboard',
   WORKOUTS: '/workouts',
   WORKOUT_DETAIL: (id: string) => `/workouts/${id}`,

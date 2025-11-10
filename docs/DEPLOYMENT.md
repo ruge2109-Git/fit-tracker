@@ -78,28 +78,40 @@ Make sure `.env.local` is in `.gitignore` (it should be by default).
 - Output Directory: `.next`
 - Install Command: `npm install`
 
-### 2.4 Add Environment Variables
+### 2.4 Deploy First (To Get Your URL)
 
-In the **Environment Variables** section, add:
+**IMPORTANTE**: Primero debes desplegar para obtener tu URL de Vercel.
+
+1. Click **"Deploy"** (puedes dejar las variables de entorno vacías por ahora)
+2. Wait 2-3 minutes for the build to complete
+3. Una vez completado, Vercel te mostrará tu URL de despliegue
+4. Tu URL será algo como: `https://fittrackr-abc123.vercel.app` o `https://tu-proyecto.vercel.app`
+5. **Copia esta URL** - la necesitarás en el siguiente paso
+
+**Nota**: Vercel asigna automáticamente una URL basada en el nombre de tu proyecto. Si tu proyecto se llama "fittrackr", la URL será `https://fittrackr.vercel.app` o similar.
+
+### 2.5 Add Environment Variables
+
+Ahora que tienes tu URL de Vercel, agrega las variables de entorno:
+
+1. Ve a **Settings** → **Environment Variables** en tu proyecto de Vercel
+2. Agrega las siguientes variables:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+NEXT_PUBLIC_APP_URL=https://tu-url-real-de-vercel.vercel.app
 ```
 
+**Donde obtener cada valor**:
+- `NEXT_PUBLIC_SUPABASE_URL`: De tu proyecto Supabase → Settings → API → Project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: De tu proyecto Supabase → Settings → API → anon/public key
+- `NEXT_PUBLIC_APP_URL`: **La URL que Vercel te dio después del despliegue** (paso 2.4)
+
 **Important**: 
-- Use the same values from your `.env.local` (or create new production Supabase project)
-- These should be your **production** Supabase credentials
-- `NEXT_PUBLIC_APP_URL` should be your Vercel deployment URL
-- Double-check for typos!
-- You can add these for all environments (Production, Preview, Development)
-
-### 2.5 Deploy
-
-1. Click **"Deploy"**
-2. Wait 2-3 minutes for the build to complete
-3. You'll see "Congratulations!" when done
+- Puedes agregar estas variables para todos los ambientes (Production, Preview, Development)
+- Después de agregar las variables, Vercel hará un nuevo despliegue automáticamente
+- Si no se despliega automáticamente, puedes hacer un "Redeploy" manual
 
 Your app is now live! 🎉
 
@@ -122,11 +134,15 @@ Vercel automatically provisions SSL certificates. Your site will be available at
 
 1. Go to your Supabase project dashboard
 2. Navigate to **Authentication** → **URL Configuration**
-3. Add your Vercel deployment URL:
-   - Site URL: `https://your-app.vercel.app`
+3. Add your **real** Vercel deployment URL (la que obtuviste en el paso 2.4):
+   - Site URL: `https://tu-url-real-de-vercel.vercel.app` (reemplaza con tu URL real)
 4. Add redirect URLs:
-   - `https://your-app.vercel.app/auth/callback`
-   - `https://your-app.vercel.app/**`
+   - `https://tu-url-real-de-vercel.vercel.app/auth/callback`
+   - `https://tu-url-real-de-vercel.vercel.app/**`
+   
+**Ejemplo**: Si tu URL de Vercel es `https://fittrackr.vercel.app`, entonces:
+   - Site URL: `https://fittrackr.vercel.app`
+   - Redirect URLs: `https://fittrackr.vercel.app/auth/callback`
 
 ### 4.2 Update Email Templates
 
@@ -139,8 +155,8 @@ In **Authentication** → **Email Templates**, update:
 If using Google OAuth:
 1. Go to **Google Cloud Console**
 2. Update authorized redirect URIs:
-   - `https://your-project.supabase.co/auth/v1/callback`
-   - `https://your-app.vercel.app/auth/callback`
+   - `https://your-project.supabase.co/auth/v1/callback` (tu URL de Supabase)
+   - `https://tu-url-real-de-vercel.vercel.app/auth/callback` (tu URL real de Vercel)
 
 ## Step 5: Post-Deployment Checklist
 

@@ -92,14 +92,19 @@ async function handleAuth(request: NextRequest, response: NextResponse) {
     pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   ) || routing.defaultLocale
 
+  // Allow access to public auth pages (forgot-password, reset-password, callback)
+  const isPublicAuthPage = pathname.includes('/auth/forgot-password') ||
+    pathname.includes('/auth/reset-password') ||
+    pathname.includes('/auth/callback')
+
   // If user is not signed in and trying to access protected routes, redirect to auth
   if (!user && !pathname.includes('/auth')) {
     const authUrl = new URL(`/${locale}/auth`, request.url)
     return NextResponse.redirect(authUrl)
   }
 
-  // If user is signed in and trying to access auth page, redirect to dashboard
-  if (user && pathname.includes('/auth')) {
+  // If user is signed in and trying to access auth page (except public pages), redirect to dashboard
+  if (user && pathname.includes('/auth') && !isPublicAuthPage) {
     const dashboardUrl = new URL(`/${locale}/dashboard`, request.url)
     return NextResponse.redirect(dashboardUrl)
   }

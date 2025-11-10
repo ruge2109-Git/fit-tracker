@@ -13,6 +13,8 @@ export interface IAuthService {
   signOut(): Promise<ApiResponse<boolean>>
   getCurrentUser(): Promise<ApiResponse<User | null>>
   signInWithGoogle(): Promise<ApiResponse<void>>
+  resetPasswordRequest(email: string): Promise<ApiResponse<void>>
+  resetPassword(newPassword: string): Promise<ApiResponse<void>>
 }
 
 class AuthService implements IAuthService {
@@ -99,11 +101,47 @@ class AuthService implements IAuthService {
 
   async signInWithGoogle(): Promise<ApiResponse<void>> {
     try {
+      // Get current locale from URL or use default
+      const pathname = window.location.pathname
+      const locale = pathname.split('/')[1] || 'en'
+      const redirectUrl = `${window.location.origin}/${locale}/auth/callback`
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
         },
+      })
+
+      if (error) throw error
+      return { data: undefined }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async resetPasswordRequest(email: string): Promise<ApiResponse<void>> {
+    try {
+      // Get current locale from URL or use default
+      const pathname = window.location.pathname
+      const locale = pathname.split('/')[1] || 'en'
+      const redirectUrl = `${window.location.origin}/${locale}/auth/reset-password`
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      })
+
+      if (error) throw error
+      return { data: undefined }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async resetPassword(newPassword: string): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
       })
 
       if (error) throw error

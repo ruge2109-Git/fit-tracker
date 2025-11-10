@@ -101,10 +101,9 @@ class AuthService implements IAuthService {
 
   async signInWithGoogle(): Promise<ApiResponse<void>> {
     try {
-      // Get current locale from URL or use default
-      const pathname = window.location.pathname
-      const locale = pathname.split('/')[1] || 'en'
-      const redirectUrl = `${window.location.origin}/${locale}/auth/callback`
+      // Use callback URL without locale to simplify Supabase configuration
+      // The callback route will handle locale detection and redirect appropriately
+      const redirectUrl = `${window.location.origin}/auth/callback`
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

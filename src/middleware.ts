@@ -93,16 +93,20 @@ async function handleAuth(request: NextRequest, response: NextResponse) {
   ) || routing.defaultLocale
 
   // Allow access to public auth pages (forgot-password, reset-password, callback)
+  // Note: /auth/callback (without locale) is also allowed
   const isPublicAuthPage = pathname.includes('/auth/forgot-password') ||
     pathname.includes('/auth/reset-password') ||
     pathname.includes('/auth/callback')
+  
+  // Allow access to callback route without locale
+  const isCallbackRoute = pathname === '/auth/callback'
 
   // Allow access to landing page (root locale route)
   const isLandingPage = pathname === `/${locale}` || pathname === `/${locale}/`
 
   // If user is not signed in and trying to access protected routes, redirect to landing page
-  // But allow landing page and auth pages
-  if (!user && !pathname.includes('/auth') && !isLandingPage) {
+  // But allow landing page, auth pages, and callback route
+  if (!user && !pathname.includes('/auth') && !isLandingPage && !isCallbackRoute) {
     const landingUrl = new URL(`/${locale}`, request.url)
     return NextResponse.redirect(landingUrl)
   }

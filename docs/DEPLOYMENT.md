@@ -153,10 +153,12 @@ In **Authentication** → **Email Templates**, update:
 ### 4.3 Configure OAuth Redirects
 
 If using Google OAuth:
-1. Go to **Google Cloud Console**
-2. Update authorized redirect URIs:
-   - `https://your-project.supabase.co/auth/v1/callback` (tu URL de Supabase)
-   - `https://tu-url-real-de-vercel.vercel.app/auth/callback` (tu URL real de Vercel)
+1. Go to **Google Cloud Console** → Your OAuth 2.0 Client
+2. Update **Authorized redirect URIs**:
+   - `https://your-project.supabase.co/auth/v1/callback` (URL de Supabase - automática)
+   - `https://tu-url-real-de-vercel.vercel.app/auth/callback` (URL de tu app - sin locale)
+
+**Important:** The callback URL is `/auth/callback` (without locale) to simplify configuration. The app will handle locale detection after authentication.
 
 ## Step 5: Post-Deployment Checklist
 

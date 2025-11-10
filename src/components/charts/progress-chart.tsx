@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ExerciseProgress } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { CHART_COLORS } from '@/lib/constants'
+import { useTranslations } from 'next-intl'
 
 interface ProgressChartProps {
   data: ExerciseProgress
@@ -18,6 +19,9 @@ interface ProgressChartProps {
 }
 
 export function ProgressChart({ data, metric, title }: ProgressChartProps) {
+  const t = useTranslations('exercises')
+  const tCharts = useTranslations('charts')
+  
   const chartData = data.dates.map((date, index) => ({
     date: formatDate(date, 'MMM dd'),
     value: metric === 'weight' 
@@ -28,15 +32,15 @@ export function ProgressChart({ data, metric, title }: ProgressChartProps) {
   }))
 
   const metricLabel = {
-    weight: 'Weight (kg)',
-    reps: 'Repetitions',
-    volume: 'Volume (kg)',
+    weight: tCharts('weight'),
+    reps: tCharts('repetitions'),
+    volume: tCharts('volume'),
   }[metric]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title || `${data.exercise_name} Progress`}</CardTitle>
+        <CardTitle>{title || `${data.exercise_name} ${tCharts('progress')}`}</CardTitle>
         <CardDescription>{metricLabel} over time</CardDescription>
       </CardHeader>
       <CardContent>

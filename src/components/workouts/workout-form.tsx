@@ -13,12 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { WorkoutFormData } from '@/types'
-
-const workoutSchema = z.object({
-  date: z.string().min(1, 'Date is required'),
-  duration: z.coerce.number().min(1, 'Duration must be at least 1 minute'),
-  notes: z.string().optional(),
-})
+import { useTranslations } from 'next-intl'
 
 interface WorkoutFormProps {
   onSubmit: (data: WorkoutFormData) => void
@@ -27,6 +22,14 @@ interface WorkoutFormProps {
 }
 
 export function WorkoutForm({ onSubmit, defaultValues, isLoading }: WorkoutFormProps) {
+  const t = useTranslations('workouts')
+  
+  const workoutSchema = z.object({
+    date: z.string().min(1, t('dateRequired')),
+    duration: z.coerce.number().min(1, t('durationRequired')),
+    notes: z.string().optional(),
+  })
+
   const {
     register,
     handleSubmit,
@@ -42,7 +45,7 @@ export function WorkoutForm({ onSubmit, defaultValues, isLoading }: WorkoutFormP
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
+        <Label htmlFor="date">{t('date')}</Label>
         <Input
           id="date"
           type="date"
@@ -55,7 +58,7 @@ export function WorkoutForm({ onSubmit, defaultValues, isLoading }: WorkoutFormP
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="duration">Duration (minutes)</Label>
+        <Label htmlFor="duration">{t('durationMinutes')}</Label>
         <Input
           id="duration"
           type="number"
@@ -69,17 +72,17 @@ export function WorkoutForm({ onSubmit, defaultValues, isLoading }: WorkoutFormP
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes (optional)</Label>
+        <Label htmlFor="notes">{t('notesOptional')}</Label>
         <Input
           id="notes"
           {...register('notes')}
-          placeholder="How did it feel?"
+          placeholder={t('howFeel')}
           disabled={isLoading}
         />
       </div>
 
       <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading ? 'Saving...' : 'Save Workout'}
+        {isLoading ? t('saving') : t('saveWorkout')}
       </Button>
     </form>
   )

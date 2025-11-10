@@ -10,8 +10,10 @@ import { Play, Pause, RotateCcw, Timer, X, Minimize2, Maximize2 } from 'lucide-r
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { useTranslations } from 'next-intl'
 
 export function WorkoutRestTimer() {
+  const t = useTranslations('restTimer')
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [duration, setDuration] = useState(90) // seconds
@@ -139,7 +141,7 @@ export function WorkoutRestTimer() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Timer className="h-5 w-5" />
-                Rest Timer
+                {t('title')}
               </CardTitle>
               <div className="flex gap-1">
                 <Button
@@ -166,7 +168,7 @@ export function WorkoutRestTimer() {
                 {formatTime(timeLeft)}
               </div>
               {isFinished && (
-                <p className="text-green-500 font-medium mt-2 text-sm">Rest complete!</p>
+                <p className="text-green-500 font-medium mt-2 text-sm">{t('restComplete')}</p>
               )}
             </div>
 
@@ -175,12 +177,12 @@ export function WorkoutRestTimer() {
               {!isRunning ? (
                 <Button onClick={handleStart} size="lg" className="flex-1">
                   <Play className="h-4 w-4 mr-2" />
-                  {timeLeft === 0 ? 'Restart' : 'Start'}
+                  {timeLeft === 0 ? t('restart') : t('start')}
                 </Button>
               ) : (
                 <Button onClick={handlePause} variant="outline" size="lg" className="flex-1">
                   <Pause className="h-4 w-4 mr-2" />
-                  Pause
+                  {t('pause')}
                 </Button>
               )}
               <Button onClick={handleReset} variant="outline" size="lg">

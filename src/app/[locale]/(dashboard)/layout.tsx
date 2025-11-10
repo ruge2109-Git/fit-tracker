@@ -11,6 +11,7 @@ import { NavBar } from '@/components/navigation/nav-bar'
 import { NavigationProgress } from '@/components/navigation/navigation-progress'
 import { PageTransition } from '@/components/ui/page-transition'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
+import { OfflineIndicator } from '@/components/offline/offline-indicator'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES } from '@/lib/constants'
 
@@ -70,6 +71,7 @@ export default function DashboardLayout({
           </PageTransition>
         </Suspense>
       </main>
+      <OfflineIndicator />
     </div>
   )
 }

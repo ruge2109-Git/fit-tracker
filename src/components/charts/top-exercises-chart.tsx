@@ -7,6 +7,7 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTranslations } from 'next-intl'
 
 interface TopExercisesChartProps {
   data: {
@@ -17,16 +18,19 @@ interface TopExercisesChartProps {
 }
 
 export function TopExercisesChart({ data }: TopExercisesChartProps) {
+  const t = useTranslations('dashboard')
+  const tCharts = useTranslations('charts')
+  
   if (data.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Top Exercises</CardTitle>
-          <CardDescription>Your most frequently performed exercises</CardDescription>
+          <CardTitle>{t('topExercises')}</CardTitle>
+          <CardDescription>{t('mostFrequentlyPerformed')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            No data yet. Start logging workouts!
+            {t('noDataYet')}
           </div>
         </CardContent>
       </Card>
@@ -36,8 +40,8 @@ export function TopExercisesChart({ data }: TopExercisesChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Exercises</CardTitle>
-        <CardDescription>Most frequently performed exercises (by sets)</CardDescription>
+        <CardTitle>{t('topExercises')}</CardTitle>
+        <CardDescription>{t('mostFrequentlyPerformedBySets')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -66,7 +70,7 @@ export function TopExercisesChart({ data }: TopExercisesChartProps) {
             <Bar 
               dataKey="count" 
               fill="hsl(var(--primary))" 
-              name="Sets"
+              name={tCharts('sets')}
               radius={[0, 4, 4, 0]}
             />
           </BarChart>

@@ -7,6 +7,7 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTranslations } from 'next-intl'
 
 interface VolumeChartProps {
   data: {
@@ -17,6 +18,9 @@ interface VolumeChartProps {
 }
 
 export function VolumeChart({ data }: VolumeChartProps) {
+  const t = useTranslations('dashboard')
+  const tCharts = useTranslations('charts')
+  
   const formattedData = data.map(item => ({
     ...item,
     week: new Date(item.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -26,12 +30,12 @@ export function VolumeChart({ data }: VolumeChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Weekly Volume</CardTitle>
-          <CardDescription>Track your total volume over time</CardDescription>
+          <CardTitle>{t('weeklyVolume')}</CardTitle>
+          <CardDescription>{t('trackTotalVolume')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            No data yet. Start logging workouts!
+            {t('noDataYet')}
           </div>
         </CardContent>
       </Card>
@@ -41,7 +45,7 @@ export function VolumeChart({ data }: VolumeChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Weekly Volume</CardTitle>
+        <CardTitle>{t('weeklyVolume')}</CardTitle>
         <CardDescription>
           Total volume (kg × reps) per week over the last {data.length} weeks
         </CardDescription>
@@ -73,7 +77,7 @@ export function VolumeChart({ data }: VolumeChartProps) {
               dataKey="volume" 
               stroke="hsl(var(--primary))" 
               strokeWidth={2}
-              name="Volume (kg)"
+              name={tCharts('volume')}
               dot={{ fill: 'hsl(var(--primary))' }}
             />
           </LineChart>

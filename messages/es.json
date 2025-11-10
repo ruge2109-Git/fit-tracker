@@ -100,7 +100,14 @@
     "muscleGroupDistribution": "Distribución de Grupos Musculares",
     "topExercises": "Ejercicios Más Frecuentes",
     "personalRecords": "Récords Personales",
-    "totalVolume": "Volumen Total"
+    "totalVolume": "Volumen Total",
+    "weeklyVolume": "Volumen Semanal",
+    "trackTotalVolume": "Rastrea tu volumen total en el tiempo",
+    "noDataYet": "Aún no hay datos. ¡Comienza a registrar entrenamientos!",
+    "seeWhichMuscles": "Ve qué músculos entrenas más",
+    "distributionOfSets": "Distribución de series por grupo muscular",
+    "mostFrequentlyPerformed": "Tus ejercicios más frecuentemente realizados",
+    "mostFrequentlyPerformedBySets": "Ejercicios más frecuentemente realizados (por series)"
   },
   "workouts": {
     "title": "Entrenamientos",
@@ -150,7 +157,12 @@
     "min": "Mín",
     "max": "Máx",
     "applyFilters": "Aplicar Filtros",
-    "clearFilters": "Limpiar Filtros"
+    "clearFilters": "Limpiar Filtros",
+    "date": "Fecha",
+    "durationMinutes": "Duración (minutos)",
+    "notesOptional": "Notas (opcional)",
+    "dateRequired": "La fecha es requerida",
+    "durationRequired": "La duración debe ser al menos 1 minuto"
   },
   "exercises": {
     "title": "Ejercicios",
@@ -168,7 +180,8 @@
     "averageReps": "Repeticiones Promedio",
     "progressOverTime": "Progreso en el Tiempo",
     "weightProgression": "Progresión de Peso",
-    "volumeProgression": "Progresión de Volumen"
+    "volumeProgression": "Progresión de Volumen",
+    "selectExercise": "Selecciona un ejercicio"
   },
   "routines": {
     "title": "Rutinas",
@@ -241,14 +254,18 @@
     "start": "Iniciar",
     "pause": "Pausar",
     "reset": "Reiniciar",
+    "restart": "Reiniciar",
     "restComplete": "¡Descanso completo!",
-    "presets": "Presets Rápidos"
+    "presets": "Presets Rápidos",
+    "duration": "Duración (segundos)",
+    "timerWillBeep": "El temporizador sonará cuando termine"
   },
   "oneRmCalculator": {
     "title": "Calculadora de 1RM",
     "weight": "Peso Levantado (kg)",
     "reps": "Repeticiones Realizadas",
     "calculate": "Calcular",
+    "calculate1RM": "Calcular 1RM",
     "oneRepMax": "1RM Estimado",
     "trainingPercentages": "Porcentajes de Entrenamiento",
     "formula": "Fórmula",
@@ -258,7 +275,13 @@
     "lombardi": "Lombardi",
     "mayhew": "Mayhew",
     "oConner": "O'Conner",
-    "wathen": "Wathen"
+    "wathen": "Wathen",
+    "calculator": "Calculadora",
+    "percentages": "Porcentajes",
+    "basedOn": "Basado en",
+    "note": "Nota: Esto es una estimación. El 1RM real puede variar. Más preciso para 1-10 repeticiones.",
+    "trainingPercentagesNote": "Usa estos porcentajes para planificar tus series de entrenamiento",
+    "trainingPercentagesBasedOn": "Porcentajes de entrenamiento basados en tu 1RM estimado de"
   },
   "notifications": {
     "title": "Notificaciones",
@@ -290,6 +313,23 @@
     "unauthorized": "No autorizado",
     "forbidden": "Prohibido",
     "serverError": "Error del servidor"
+  },
+  "charts": {
+    "muscleGroups": {
+      "chest": "Pecho",
+      "back": "Espalda",
+      "legs": "Piernas",
+      "shoulders": "Hombros",
+      "arms": "Brazos",
+      "core": "Core",
+      "fullBody": "Cuerpo Completo",
+      "cardio": "Cardio"
+    },
+    "volume": "Volumen (kg)",
+    "sets": "Series",
+    "weight": "Peso (kg)",
+    "repetitions": "Repeticiones",
+    "progress": "Progreso"
   }
 }
 

@@ -12,8 +12,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useTranslations } from 'next-intl'
 
 export function OneRMCalculator() {
+  const t = useTranslations('oneRmCalculator')
+  const tTools = useTranslations('tools')
   const [weight, setWeight] = useState<number>(100)
   const [reps, setReps] = useState<number>(5)
   const [oneRM, setOneRM] = useState<number | null>(null)
@@ -63,21 +66,21 @@ export function OneRMCalculator() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Calculator className="h-5 w-5" />
-          <CardTitle>1RM Calculator</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
         </div>
-        <CardDescription>Calculate your one-rep max and training percentages</CardDescription>
+        <CardDescription>{tTools('calculatorDescription')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="calculator" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="calculator">Calculator</TabsTrigger>
-            <TabsTrigger value="percentages" disabled={!oneRM}>Percentages</TabsTrigger>
+            <TabsTrigger value="calculator">{t('calculator')}</TabsTrigger>
+            <TabsTrigger value="percentages" disabled={!oneRM}>{t('percentages')}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="calculator" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="weight">Weight Lifted (kg)</Label>
+                <Label htmlFor="weight">{t('weight')}</Label>
                 <Input
                   id="weight"
                   type="number"
@@ -88,7 +91,7 @@ export function OneRMCalculator() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reps">Reps Performed</Label>
+                <Label htmlFor="reps">{t('reps')}</Label>
                 <Input
                   id="reps"
                   type="number"
@@ -102,21 +105,21 @@ export function OneRMCalculator() {
 
             <Button onClick={calculateOneRM} className="w-full">
               <TrendingUp className="h-4 w-4 mr-2" />
-              Calculate 1RM
+              {t('calculate1RM')}
             </Button>
 
             {oneRM && (
               <div className="text-center p-6 bg-primary/10 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Estimated 1RM</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('oneRepMax')}</p>
                 <p className="text-4xl font-bold text-primary">{oneRM} kg</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Based on {weight}kg × {reps} reps
+                  {t('basedOn')} {weight}kg × {reps} {t('reps')}
                 </p>
               </div>
             )}
 
             <p className="text-xs text-muted-foreground">
-              Note: This is an estimate. Actual 1RM may vary. Most accurate for 1-10 reps.
+              {t('note')}
             </p>
           </TabsContent>
 
@@ -124,7 +127,7 @@ export function OneRMCalculator() {
             {oneRM && (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground mb-4">
-                  Training percentages based on your estimated 1RM of <span className="font-bold text-foreground">{oneRM}kg</span>
+                  {t('trainingPercentagesBasedOn')} <span className="font-bold text-foreground">{oneRM}kg</span>
                 </p>
                 <div className="space-y-2">
                   {calculatePercentages().map((item) => (
@@ -136,12 +139,12 @@ export function OneRMCalculator() {
                         <span className="text-lg font-bold w-12">{item.percent}%</span>
                         <span className="text-2xl font-bold text-primary">{item.weight} kg</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{item.reps} reps</span>
+                      <span className="text-sm text-muted-foreground">{item.reps} {t('reps')}</span>
                     </div>
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-4">
-                  Use these percentages to plan your training sets
+                  {t('trainingPercentagesNote')}
                 </p>
               </div>
             )}

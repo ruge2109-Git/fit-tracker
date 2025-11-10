@@ -9,8 +9,10 @@ import { Wifi, WifiOff, RefreshCw } from 'lucide-react'
 import { useOffline } from '@/hooks/use-offline'
 import { Button } from '@/components/ui/button'
 import { syncService } from '@/lib/offline/sync'
+import { useTranslations } from 'next-intl'
 
 export function OfflineIndicator() {
+  const t = useTranslations('offline')
   const { isOffline, isSyncing } = useOffline()
 
   if (!isOffline && !isSyncing) return null
@@ -22,16 +24,16 @@ export function OfflineIndicator() {
           <>
             <WifiOff className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium">Offline Mode</p>
-              <p className="text-xs text-muted-foreground">Changes will sync when online</p>
+              <p className="text-sm font-medium">{t('offlineMode')}</p>
+              <p className="text-xs text-muted-foreground">{t('changesWillSync')}</p>
             </div>
           </>
         ) : isSyncing ? (
           <>
             <RefreshCw className="h-5 w-5 text-primary animate-spin" />
             <div>
-              <p className="text-sm font-medium">Syncing...</p>
-              <p className="text-xs text-muted-foreground">Updating your data</p>
+              <p className="text-sm font-medium">{t('syncing')}</p>
+              <p className="text-xs text-muted-foreground">{t('updatingData')}</p>
             </div>
           </>
         ) : null}
@@ -42,7 +44,7 @@ export function OfflineIndicator() {
             onClick={() => syncService.sync()}
           >
             <Wifi className="h-4 w-4 mr-2" />
-            Sync Now
+            {t('syncNow')}
           </Button>
         )}
       </div>

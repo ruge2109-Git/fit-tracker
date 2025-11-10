@@ -7,6 +7,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTranslations } from 'next-intl'
 
 interface MuscleGroupChartProps {
   data: Record<string, number>
@@ -23,18 +24,21 @@ const COLORS = [
   '#ffc658',
 ]
 
-const MUSCLE_GROUP_LABELS: Record<string, string> = {
-  chest: 'Chest',
-  back: 'Back',
-  legs: 'Legs',
-  shoulders: 'Shoulders',
-  arms: 'Arms',
-  core: 'Core',
-  full_body: 'Full Body',
-  cardio: 'Cardio',
-}
-
 export function MuscleGroupChart({ data }: MuscleGroupChartProps) {
+  const t = useTranslations('dashboard')
+  const tCharts = useTranslations('charts')
+  
+  const MUSCLE_GROUP_LABELS: Record<string, string> = {
+    chest: tCharts('muscleGroups.chest'),
+    back: tCharts('muscleGroups.back'),
+    legs: tCharts('muscleGroups.legs'),
+    shoulders: tCharts('muscleGroups.shoulders'),
+    arms: tCharts('muscleGroups.arms'),
+    core: tCharts('muscleGroups.core'),
+    full_body: tCharts('muscleGroups.fullBody'),
+    cardio: tCharts('muscleGroups.cardio'),
+  }
+
   const chartData = Object.entries(data).map(([key, value]) => ({
     name: MUSCLE_GROUP_LABELS[key] || key,
     value,
@@ -44,12 +48,12 @@ export function MuscleGroupChart({ data }: MuscleGroupChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Muscle Group Distribution</CardTitle>
-          <CardDescription>See which muscles you train most</CardDescription>
+          <CardTitle>{t('muscleGroupDistribution')}</CardTitle>
+          <CardDescription>{t('seeWhichMuscles')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            No data yet. Start logging workouts!
+            {t('noDataYet')}
           </div>
         </CardContent>
       </Card>
@@ -59,8 +63,8 @@ export function MuscleGroupChart({ data }: MuscleGroupChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Muscle Group Distribution</CardTitle>
-        <CardDescription>Distribution of sets by muscle group</CardDescription>
+        <CardTitle>{t('muscleGroupDistribution')}</CardTitle>
+        <CardDescription>{t('distributionOfSets')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

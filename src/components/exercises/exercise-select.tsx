@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useExerciseStore } from '@/store/exercise.store'
+import { useTranslations } from 'next-intl'
 
 interface ExerciseSelectProps {
   value: string
@@ -22,6 +23,7 @@ interface ExerciseSelectProps {
 }
 
 export function ExerciseSelect({ value, onChange, disabled }: ExerciseSelectProps) {
+  const t = useTranslations('exercises')
   const { exercises, loadExercises, isLoading } = useExerciseStore()
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export function ExerciseSelect({ value, onChange, disabled }: ExerciseSelectProp
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled || isLoading}>
       <SelectTrigger>
-        <SelectValue placeholder="Select an exercise" />
+        <SelectValue placeholder={t('selectExercise')} />
       </SelectTrigger>
       <SelectContent>
         {exercises.map((exercise) => (

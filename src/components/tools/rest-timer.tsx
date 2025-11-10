@@ -11,8 +11,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useTranslations } from 'next-intl'
 
 export function RestTimer() {
+  const t = useTranslations('restTimer')
+  const tTools = useTranslations('tools')
   const [duration, setDuration] = useState(90) // seconds
   const [timeLeft, setTimeLeft] = useState(90)
   const [isRunning, setIsRunning] = useState(false)
@@ -103,9 +106,9 @@ export function RestTimer() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Timer className="h-5 w-5" />
-          <CardTitle>Rest Timer</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
         </div>
-        <CardDescription>Track your rest periods between sets</CardDescription>
+        <CardDescription>{tTools('timerDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Timer Display */}
@@ -114,7 +117,7 @@ export function RestTimer() {
             {formatTime(timeLeft)}
           </div>
           {isFinished && (
-            <p className="text-green-500 font-medium mt-2">Rest complete!</p>
+            <p className="text-green-500 font-medium mt-2">{t('restComplete')}</p>
           )}
         </div>
 
@@ -123,23 +126,23 @@ export function RestTimer() {
           {!isRunning ? (
             <Button onClick={handleStart} size="lg">
               <Play className="h-4 w-4 mr-2" />
-              {timeLeft === 0 ? 'Restart' : 'Start'}
+              {timeLeft === 0 ? t('restart') : t('start')}
             </Button>
           ) : (
             <Button onClick={handlePause} variant="outline" size="lg">
               <Pause className="h-4 w-4 mr-2" />
-              Pause
+              {t('pause')}
             </Button>
           )}
           <Button onClick={handleReset} variant="outline" size="lg">
             <RotateCcw className="h-4 w-4 mr-2" />
-            Reset
+            {t('reset')}
           </Button>
         </div>
 
         {/* Duration Input */}
         <div className="space-y-2">
-          <Label htmlFor="duration">Duration (seconds)</Label>
+          <Label htmlFor="duration">{t('duration')}</Label>
           <Input
             id="duration"
             type="number"
@@ -153,7 +156,7 @@ export function RestTimer() {
 
         {/* Presets */}
         <div className="space-y-2">
-          <Label>Quick Presets</Label>
+          <Label>{t('presets')}</Label>
           <div className="flex flex-wrap gap-2">
             {presets.map((preset) => (
               <Button
@@ -170,7 +173,7 @@ export function RestTimer() {
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
-          Timer will beep when complete
+          {t('timerWillBeep')}
         </p>
       </CardContent>
     </Card>

@@ -90,8 +90,8 @@ class NotificationService {
 
     new Notification('FitTrackr - Workout Reminder', {
       body: `Time for your routine: ${routine.name}`,
-      icon: '/icons/icon-192x192.svg',
-      badge: '/icons/icon-96x96.svg',
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon-96x96.png',
       tag: `routine-${routine.id}`,
       requireInteraction: false,
     })
@@ -118,6 +118,8 @@ class NotificationService {
       new Notification('FitTrackr', {
         body: 'Notifications are working!',
         icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-96x96.png',
+        tag: 'test-notification',
       })
     }
   }

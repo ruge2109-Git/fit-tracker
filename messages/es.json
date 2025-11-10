@@ -330,6 +330,104 @@
     "weight": "Peso (kg)",
     "repetitions": "Repeticiones",
     "progress": "Progreso"
+  },
+  "landing": {
+    "getStarted": "Comenzar",
+    "hero": {
+      "title": "Rastrea Tu Viaje Fitness",
+      "subtitle": "La aplicación todo-en-uno para rastrear entrenamientos que te ayuda a monitorear el progreso, planificar rutinas y alcanzar tus objetivos de fitness.",
+      "cta": "Comienza a Rastrear Ahora",
+      "learnMore": "Saber Más"
+    },
+    "features": {
+      "title": "Características Poderosas",
+      "subtitle": "Todo lo que necesitas para tomar control de tu viaje fitness",
+      "trackWorkouts": "Rastrear Entrenamientos",
+      "trackWorkoutsDesc": "Registra tus sesiones de entrenamiento con series, repeticiones y pesos detallados. Mantén un historial completo de todos tus entrenamientos.",
+      "analyzeProgress": "Analizar Progreso",
+      "analyzeProgressDesc": "Visualiza estadísticas y gráficos completos para entender tu progreso en el tiempo. Rastrea volumen, ganancias de fuerza y más.",
+      "routinePlanning": "Planificación de Rutinas",
+      "routinePlanningDesc": "Crea y gestiona rutinas de entrenamiento. Programa tus días de entrenamiento y recibe recordatorios para mantenerte consistente.",
+      "visualizeData": "Visualizar Datos",
+      "visualizeDataDesc": "Hermosos gráficos y diagramas muestran tu progreso de un vistazo. Ve tendencias, récords personales y distribución de grupos musculares.",
+      "setGoals": "Establecer Objetivos",
+      "setGoalsDesc": "Define tus objetivos de fitness y rastrea tu progreso hacia alcanzarlos. Mantente motivado con objetivos claros.",
+      "offlineMode": "Modo Sin Conexión",
+      "offlineModeDesc": "Entrena en cualquier lugar, en cualquier momento. Tus datos se sincronizan automáticamente cuando vuelves a estar en línea. ¿Sin internet? No hay problema."
+    },
+    "benefits": {
+      "title": "¿Por Qué Elegir FitTrackr?",
+      "subtitle": "Únete a miles de usuarios que están alcanzando sus objetivos de fitness",
+      "trackProgress": "Rastrea tu progreso con análisis detallados",
+      "stayMotivated": "Mantente motivado con seguimiento visual del progreso",
+      "planWorkouts": "Planifica y organiza tus rutinas de entrenamiento",
+      "analyzeData": "Analiza tu rendimiento con estadísticas completas",
+      "achieveGoals": "Alcanza tus objetivos de fitness más rápido"
+    },
+    "stats": {
+      "users": "Usuarios Activos",
+      "workouts": "Entrenamientos Registrados",
+      "sets": "Series Completadas"
+    },
+    "pricing": {
+      "title": "Elige Tu Plan",
+      "subtitle": "Comienza gratis y actualiza según crezcas. Todos los planes incluyen características principales.",
+      "perMonth": "mes",
+      "getStarted": "Comenzar",
+      "upgrade": "Actualizar Ahora",
+      "note": "Todos los planes incluyen una prueba gratuita de 14 días. Cancela en cualquier momento.",
+      "free": {
+        "name": "Gratis",
+        "price": "$0",
+        "description": "Perfecto para comenzar",
+        "features": [
+          "Entrenamientos ilimitados",
+          "Seguimiento básico de progreso",
+          "Biblioteca de ejercicios",
+          "Planificación de rutinas",
+          "Modo sin conexión",
+          "Soporte de la comunidad"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "popular": "Más Popular",
+        "price": "$9.99",
+        "description": "Para entusiastas del fitness serios",
+        "features": [
+          "Todo en Gratis",
+          "Análisis y gráficos avanzados",
+          "Seguimiento de récords personales",
+          "Plantillas de entrenamiento personalizadas",
+          "Sincronización prioritaria",
+          "Exportar datos (CSV/PDF)",
+          "Soporte por email"
+        ]
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "$19.99",
+        "description": "Para atletas y entrenadores",
+        "features": [
+          "Todo en Pro",
+          "Insights impulsados por IA",
+          "Biblioteca de ejercicios con video",
+          "Integración de seguimiento nutricional",
+          "Colaboración equipo/entrenador",
+          "Reportes avanzados",
+          "Soporte prioritario 24/7",
+          "Acceso a API"
+        ]
+      }
+    },
+    "cta": {
+      "title": "¿Listo para Transformar Tu Viaje Fitness?",
+      "subtitle": "Únete a miles de usuarios que ya están rastreando su progreso con FitTrackr",
+      "button": "Comenzar Gratis"
+    },
+    "footer": {
+      "rights": "Todos los derechos reservados."
+    }
   }
 }
 

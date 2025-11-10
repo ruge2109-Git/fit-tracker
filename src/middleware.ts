@@ -97,14 +97,24 @@ async function handleAuth(request: NextRequest, response: NextResponse) {
     pathname.includes('/auth/reset-password') ||
     pathname.includes('/auth/callback')
 
-  // If user is not signed in and trying to access protected routes, redirect to auth
-  if (!user && !pathname.includes('/auth')) {
-    const authUrl = new URL(`/${locale}/auth`, request.url)
-    return NextResponse.redirect(authUrl)
+  // Allow access to landing page (root locale route)
+  const isLandingPage = pathname === `/${locale}` || pathname === `/${locale}/`
+
+  // If user is not signed in and trying to access protected routes, redirect to landing page
+  // But allow landing page and auth pages
+  if (!user && !pathname.includes('/auth') && !isLandingPage) {
+    const landingUrl = new URL(`/${locale}`, request.url)
+    return NextResponse.redirect(landingUrl)
   }
 
   // If user is signed in and trying to access auth page (except public pages), redirect to dashboard
   if (user && pathname.includes('/auth') && !isPublicAuthPage) {
+    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url)
+    return NextResponse.redirect(dashboardUrl)
+  }
+
+  // If user is signed in and on landing page, redirect to dashboard
+  if (user && isLandingPage) {
     const dashboardUrl = new URL(`/${locale}/dashboard`, request.url)
     return NextResponse.redirect(dashboardUrl)
   }

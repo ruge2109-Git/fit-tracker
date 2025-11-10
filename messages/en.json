@@ -330,6 +330,104 @@
     "weight": "Weight (kg)",
     "repetitions": "Repetitions",
     "progress": "Progress"
+  },
+  "landing": {
+    "getStarted": "Get Started",
+    "hero": {
+      "title": "Track Your Fitness Journey",
+      "subtitle": "The all-in-one workout tracking app that helps you monitor progress, plan routines, and achieve your fitness goals.",
+      "cta": "Start Tracking Now",
+      "learnMore": "Learn More"
+    },
+    "features": {
+      "title": "Powerful Features",
+      "subtitle": "Everything you need to take control of your fitness journey",
+      "trackWorkouts": "Track Workouts",
+      "trackWorkoutsDesc": "Log your training sessions with detailed sets, reps, and weights. Keep a complete history of all your workouts.",
+      "analyzeProgress": "Analyze Progress",
+      "analyzeProgressDesc": "View comprehensive statistics and charts to understand your progress over time. Track volume, strength gains, and more.",
+      "routinePlanning": "Routine Planning",
+      "routinePlanningDesc": "Create and manage workout routines. Schedule your training days and get reminders to stay consistent.",
+      "visualizeData": "Visualize Data",
+      "visualizeDataDesc": "Beautiful charts and graphs show your progress at a glance. See trends, personal records, and muscle group distribution.",
+      "setGoals": "Set Goals",
+      "setGoalsDesc": "Define your fitness objectives and track your progress towards achieving them. Stay motivated with clear targets.",
+      "offlineMode": "Offline Mode",
+      "offlineModeDesc": "Work out anywhere, anytime. Your data syncs automatically when you're back online. No internet? No problem."
+    },
+    "benefits": {
+      "title": "Why Choose FitTrackr?",
+      "subtitle": "Join thousands of users who are achieving their fitness goals",
+      "trackProgress": "Track your progress with detailed analytics",
+      "stayMotivated": "Stay motivated with visual progress tracking",
+      "planWorkouts": "Plan and organize your workout routines",
+      "analyzeData": "Analyze your performance with comprehensive statistics",
+      "achieveGoals": "Achieve your fitness goals faster"
+    },
+    "stats": {
+      "users": "Active Users",
+      "workouts": "Workouts Logged",
+      "sets": "Sets Completed"
+    },
+    "pricing": {
+      "title": "Choose Your Plan",
+      "subtitle": "Start free and upgrade as you grow. All plans include core features.",
+      "perMonth": "month",
+      "getStarted": "Get Started",
+      "upgrade": "Upgrade Now",
+      "note": "All plans include a 14-day free trial. Cancel anytime.",
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "description": "Perfect for getting started",
+        "features": [
+          "Unlimited workouts",
+          "Basic progress tracking",
+          "Exercise library",
+          "Routine planning",
+          "Offline mode",
+          "Community support"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "popular": "Most Popular",
+        "price": "$9.99",
+        "description": "For serious fitness enthusiasts",
+        "features": [
+          "Everything in Free",
+          "Advanced analytics & charts",
+          "Personal records tracking",
+          "Custom workout templates",
+          "Priority sync",
+          "Export data (CSV/PDF)",
+          "Email support"
+        ]
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "$19.99",
+        "description": "For athletes and coaches",
+        "features": [
+          "Everything in Pro",
+          "AI-powered insights",
+          "Video exercise library",
+          "Nutrition tracking integration",
+          "Team/coach collaboration",
+          "Advanced reporting",
+          "24/7 priority support",
+          "API access"
+        ]
+      }
+    },
+    "cta": {
+      "title": "Ready to Transform Your Fitness Journey?",
+      "subtitle": "Join thousands of users who are already tracking their progress with FitTrackr",
+      "button": "Get Started Free"
+    },
+    "footer": {
+      "rights": "All rights reserved."
+    }
   }
 }
 

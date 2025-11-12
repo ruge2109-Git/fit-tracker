@@ -19,7 +19,11 @@ const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 
 if (vapidPublicKey && vapidPrivateKey) {
-  const vapidEmail = process.env.VAPID_EMAIL || 'mailto:jonathan.ruge.77@gmail.com'
+  // Ensure VAPID email is in correct format (mailto:)
+  let vapidEmail = process.env.VAPID_EMAIL || 'mailto:jonathan.ruge.77@gmail.com'
+  if (!vapidEmail.startsWith('mailto:')) {
+    vapidEmail = `mailto:${vapidEmail}`
+  }
   webpush.setVapidDetails(
     vapidEmail,
     vapidPublicKey,

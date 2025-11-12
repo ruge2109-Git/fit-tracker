@@ -89,15 +89,15 @@ export async function POST(request: NextRequest) {
     const currentMinute = now.getMinutes()
     const currentDay = now.getDay()
 
-    // Only send notifications at 6:35 PM Colombia time (13:35 UTC) (allow manual testing with query param)
+    // Only send notifications at 6:55 PM Colombia time (23:55 UTC) (allow manual testing with query param)
     const isManualTest = request.nextUrl.searchParams.get('test') === 'true'
-    const expectedHour = 13 // 1:35 PM UTC = 6:35 PM Colombia (UTC-5)
-    const expectedMinute = 35
+    const expectedHour = 23 // 11:55 PM UTC = 6:55 PM Colombia (UTC-5)
+    const expectedMinute = 55
     
     if (!isManualTest && (currentHour !== expectedHour || currentMinute !== expectedMinute)) {
       return NextResponse.json(
         { 
-          message: `Not the right time for notifications. Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC (${(currentHour - 5 + 24) % 24}:${currentMinute.toString().padStart(2, '0')} Colombia). Expected: ${expectedHour}:${expectedMinute.toString().padStart(2, '0')} UTC (6:35 PM Colombia). Use ?test=true to test manually.`, 
+          message: `Not the right time for notifications. Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC (${(currentHour - 5 + 24) % 24}:${currentMinute.toString().padStart(2, '0')} Colombia). Expected: ${expectedHour}:${expectedMinute.toString().padStart(2, '0')} UTC (6:55 PM Colombia). Use ?test=true to test manually.`, 
           sent: 0 
         },
         { status: 200 }
@@ -171,6 +171,8 @@ export async function POST(request: NextRequest) {
         badge: '/icons/icon-96x96.png',
         tag: `routine-${routine.id}`,
         vibrate: [200, 100, 200],
+        requireInteraction: false,
+        silent: false,
         data: {
           url: `/routines/${routine.id}`,
           routineId: routine.id,

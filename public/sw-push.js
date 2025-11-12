@@ -17,12 +17,16 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('push', (event) => {
+  console.log('Push event received:', event)
+  
   let data = {}
   
   if (event.data) {
     try {
       data = event.data.json()
+      console.log('Push data parsed:', data)
     } catch (e) {
+      console.error('Error parsing push data:', e)
       data = { body: event.data.text() }
     }
   }
@@ -36,10 +40,21 @@ self.addEventListener('push', (event) => {
     vibrate: data.vibrate || [200, 100, 200],
     data: data.data || {},
     actions: data.actions || [],
+    // Important for mobile: ensure notification is shown even when app is closed
+    silent: false,
+    renotify: true,
   }
+
+  console.log('Showing notification with options:', options)
 
   event.waitUntil(
     self.registration.showNotification(data.title || 'FitTrackr', options)
+      .then(() => {
+        console.log('Notification shown successfully')
+      })
+      .catch((error) => {
+        console.error('Error showing notification:', error)
+      })
   )
 })
 

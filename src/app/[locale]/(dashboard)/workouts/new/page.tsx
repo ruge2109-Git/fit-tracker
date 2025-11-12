@@ -200,7 +200,7 @@ export default function NewWorkoutPage() {
 
             <Button onClick={handleAddSet} className="w-full">
               <Plus className="h-4 w-4 mr-2" />
-              Add Set
+              {t('addSet') || 'Add Set'}
             </Button>
 
             {sets.length > 0 && (
@@ -213,7 +213,7 @@ export default function NewWorkoutPage() {
                       className="flex items-center justify-between p-3 border rounded-lg"
                     >
                       <span className="text-sm">
-                        Set {index + 1}: {set.reps} reps × {set.weight} kg
+                        {t('set') || 'Set'} {index + 1}: {set.reps} {t('reps') || 'reps'} × {set.weight} {t('kg') || 'kg'}
                       </span>
                       <Button
                         variant="ghost"
@@ -230,7 +230,7 @@ export default function NewWorkoutPage() {
 
             {sets.length > 0 && (
               <Button onClick={handleFinalSubmit} className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Complete Workout'}
+                {isLoading ? t('creating') || 'Creating...' : t('completeWorkout') || 'Complete Workout'}
               </Button>
             )}
           </CardContent>

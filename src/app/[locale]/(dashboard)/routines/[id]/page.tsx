@@ -27,6 +27,7 @@ import {
 } from '@dnd-kit/sortable'
 import { ArrowLeft, Plus, Trash2, Dumbbell, Edit, Copy } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -50,6 +51,8 @@ type AddExerciseFormData = z.infer<typeof addExerciseSchema>
 export default function RoutineDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const t = useTranslations('routines')
+  const tCommon = useTranslations('common')
   const [routine, setRoutine] = useState<RoutineWithExercises | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -96,20 +99,20 @@ export default function RoutineDetailPage() {
     if (result.data) {
       setRoutine(result.data)
     } else {
-      toast.error('Failed to load routine')
+      toast.error(t('failedToLoad') || 'Failed to load routine')
     }
     setIsLoading(false)
   }
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this routine?')) return
+    if (!confirm(t('confirmDelete') || 'Are you sure you want to delete this routine?')) return
 
     const result = await routineRepository.delete(routineId)
     if (result.data) {
-      toast.success('Routine deleted')
+      toast.success(t('routineDeleted') || 'Routine deleted')
       router.push(ROUTES.ROUTINES)
     } else {
-      toast.error('Failed to delete routine')
+      toast.error(t('failedToDelete') || 'Failed to delete routine')
     }
   }
 
@@ -121,10 +124,10 @@ export default function RoutineDetailPage() {
     })
 
     if (result.data) {
-      toast.success(routine.is_active ? 'Routine deactivated' : 'Routine activated')
+      toast.success(routine.is_active ? t('routineDeactivated') || 'Routine deactivated' : t('routineActivated') || 'Routine activated')
       loadRoutine()
     } else {
-      toast.error('Failed to update routine')
+      toast.error(t('failedToUpdate') || 'Failed to update routine')
     }
   }
 
@@ -136,7 +139,7 @@ export default function RoutineDetailPage() {
       // Create new routine with "Copy of" prefix
       const newRoutineResult = await routineRepository.create({
         user_id: routine.user_id,
-        name: `Copy of ${routine.name}`,
+        name: `${t('copyOf') || 'Copy of'} ${routine.name}`,
         description: routine.description,
         is_active: false,
         frequency: routine.frequency,
@@ -163,10 +166,10 @@ export default function RoutineDetailPage() {
         }
       }
 
-      toast.success('Routine duplicated successfully!')
+      toast.success(t('routineDuplicated') || 'Routine duplicated successfully!')
       router.push(ROUTES.ROUTINE_DETAIL(newRoutineId))
     } catch (error) {
-      toast.error('Failed to duplicate routine')
+      toast.error(t('failedToDuplicate') || 'Failed to duplicate routine')
     } finally {
       setIsDuplicating(false)
     }
@@ -187,9 +190,9 @@ export default function RoutineDetailPage() {
     })
 
     if (result.error) {
-      toast.error('Failed to add exercise')
+      toast.error(t('failedToAddExercise') || 'Failed to add exercise')
     } else {
-      toast.success('Exercise added successfully!')
+      toast.success(t('exerciseAdded') || 'Exercise added successfully!')
       reset()
       setDialogOpen(false)
       loadRoutine()
@@ -198,14 +201,14 @@ export default function RoutineDetailPage() {
   }
 
   const handleRemoveExercise = async (routineExerciseId: string) => {
-    if (!confirm('Remove this exercise from the routine?')) return
+    if (!confirm(t('confirmRemoveExercise') || 'Remove this exercise from the routine?')) return
 
     const result = await routineRepository.removeExercise(routineExerciseId)
     
     if (result.error) {
-      toast.error('Failed to remove exercise')
+      toast.error(t('failedToRemoveExercise') || 'Failed to remove exercise')
     } else {
-      toast.success('Exercise removed')
+      toast.success(t('exerciseRemoved') || 'Exercise removed')
       loadRoutine()
     }
   }
@@ -251,7 +254,7 @@ export default function RoutineDetailPage() {
       // Revert on error
       loadRoutine()
     } else {
-      toast.success('Exercises reordered')
+      toast.success(t('exercisesReordered') || 'Exercises reordered')
     }
     setIsReordering(false)
   }
@@ -269,7 +272,7 @@ export default function RoutineDetailPage() {
       <div className="text-center py-12">
         <p className="text-muted-foreground">Routine not found</p>
         <Button onClick={() => router.push(ROUTES.ROUTINES)} className="mt-4">
-          Back to Routines
+          {t('backToRoutines') || 'Back to Routines'}
         </Button>
       </div>
     )
@@ -281,26 +284,26 @@ export default function RoutineDetailPage() {
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {tCommon('back') || 'Back'}
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleDuplicate} disabled={isDuplicating}>
             <Copy className="h-4 w-4 mr-2" />
-            {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+            {isDuplicating ? t('duplicating') || 'Duplicating...' : t('duplicate') || 'Duplicate'}
           </Button>
           <Button variant="outline" onClick={() => router.push(ROUTES.ROUTINE_EDIT(routineId))}>
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            {tCommon('edit') || 'Edit'}
           </Button>
           <Button
             variant={routine.is_active ? 'outline' : 'default'}
             onClick={handleToggleActive}
           >
-            {routine.is_active ? 'Deactivate' : 'Activate'}
+            {routine.is_active ? t('deactivate') || 'Deactivate' : t('activate') || 'Activate'}
           </Button>
           <Button variant="destructive" onClick={handleDelete}>
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            {tCommon('delete') || 'Delete'}
           </Button>
         </div>
       </div>
@@ -312,7 +315,7 @@ export default function RoutineDetailPage() {
             <CardTitle className="text-2xl">{routine.name}</CardTitle>
             {routine.is_active && (
               <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full">
-                Active
+                {tCommon('active') || 'Active'}
               </span>
             )}
           </div>
@@ -322,14 +325,14 @@ export default function RoutineDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>{routine.exercises?.length || 0} exercises</span>
+            <span>{routine.exercises?.length || 0} {tCommon('exercises') || 'exercises'}</span>
             <span>•</span>
-            <span>Created {new Date(routine.created_at).toLocaleDateString()}</span>
+            <span>{t('created') || 'Created'} {new Date(routine.created_at).toLocaleDateString()}</span>
           </div>
 
           {routine.frequency && routine.frequency !== 'custom' && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium">Frequency:</span>
+              <span className="font-medium">{t('frequency') || 'Frequency'}:</span>
               <span className="text-muted-foreground">
                 {ROUTINE_FREQUENCY_OPTIONS.find(opt => opt.value === routine.frequency)?.label}
               </span>
@@ -338,7 +341,7 @@ export default function RoutineDetailPage() {
 
           {routine.scheduled_days && routine.scheduled_days.length > 0 && (
             <div className="space-y-2">
-              <span className="text-sm font-medium">Scheduled Days:</span>
+              <span className="text-sm font-medium">{t('scheduledDays') || 'Scheduled Days'}:</span>
               <div className="flex flex-wrap gap-2">
                 {routine.scheduled_days.map((day) => {
                   const dayInfo = DAYS_OF_WEEK_OPTIONS.find(d => d.value === day)
@@ -361,10 +364,10 @@ export default function RoutineDetailPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">Exercises</h2>
+            <h2 className="text-2xl font-bold">{tCommon('exercises') || 'Exercises'}</h2>
             {routine.exercises && routine.exercises.length > 1 && (
               <p className="text-sm text-muted-foreground mt-1">
-                Drag the grip icon (⋮⋮) to reorder exercises
+                {t('dragToReorder') || 'Drag the grip icon (⋮⋮) to reorder exercises'}
               </p>
             )}
           </div>
@@ -372,20 +375,20 @@ export default function RoutineDetailPage() {
             <DialogTrigger asChild>
               <Button disabled={isReordering}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Exercise
+                {t('addExercise') || 'Add Exercise'}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Exercise to Routine</DialogTitle>
+                <DialogTitle>{t('addExerciseToRoutine') || 'Add Exercise to Routine'}</DialogTitle>
                 <DialogDescription>
-                  Select an exercise and set your target sets, reps, and weight
+                  {t('addExerciseDescription') || 'Select an exercise and set your target sets, reps, and weight'}
                 </DialogDescription>
               </DialogHeader>
 
               <form onSubmit={handleSubmit(handleAddExercise)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="exercise">Exercise</Label>
+                  <Label htmlFor="exercise">{tCommon('exercises') || 'Exercise'}</Label>
                   <ExerciseSelect
                     value={selectedExerciseId || ''}
                     onChange={(value) => setValue('exercise_id', value)}
@@ -398,7 +401,7 @@ export default function RoutineDetailPage() {
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="target_sets">Target Sets</Label>
+                    <Label htmlFor="target_sets">{t('targetSets') || 'Target Sets'}</Label>
                     <Input
                       id="target_sets"
                       type="number"
@@ -413,7 +416,7 @@ export default function RoutineDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="target_reps">Target Reps</Label>
+                    <Label htmlFor="target_reps">{t('targetReps') || 'Target Reps'}</Label>
                     <Input
                       id="target_reps"
                       type="number"
@@ -428,7 +431,7 @@ export default function RoutineDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="target_weight">Weight (kg)</Label>
+                    <Label htmlFor="target_weight">{t('targetWeight') || 'Weight (kg)'}</Label>
                     <Input
                       id="target_weight"
                       type="number"
@@ -436,7 +439,7 @@ export default function RoutineDetailPage() {
                       step="0.5"
                       {...register('target_weight')}
                       disabled={isSubmitting}
-                      placeholder="Optional"
+                      placeholder={t('optional') || 'Optional'}
                     />
                     {errors.target_weight && (
                       <p className="text-xs text-destructive">{errors.target_weight.message}</p>
@@ -445,7 +448,7 @@ export default function RoutineDetailPage() {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? 'Adding...' : 'Add Exercise to Routine'}
+                  {isSubmitting ? t('adding') || 'Adding...' : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
                 </Button>
               </form>
             </DialogContent>
@@ -456,25 +459,25 @@ export default function RoutineDetailPage() {
           <Card>
             <CardContent className="text-center py-12">
               <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground mb-4">No exercises yet</p>
+              <p className="text-muted-foreground mb-4">{t('noExercisesYet') || 'No exercises yet'}</p>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Your First Exercise
+                    {t('addFirstExercise') || 'Add Your First Exercise'}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add Exercise to Routine</DialogTitle>
+                    <DialogTitle>{t('addExerciseToRoutine') || 'Add Exercise to Routine'}</DialogTitle>
                     <DialogDescription>
-                      Select an exercise and set your target sets, reps, and weight
+                      {t('addExerciseDescription') || 'Select an exercise and set your target sets, reps, and weight'}
                     </DialogDescription>
                   </DialogHeader>
 
                   <form onSubmit={handleSubmit(handleAddExercise)} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="exercise-empty">Exercise</Label>
+                      <Label htmlFor="exercise-empty">{tCommon('exercises') || 'Exercise'}</Label>
                       <ExerciseSelect
                         value={selectedExerciseId || ''}
                         onChange={(value) => setValue('exercise_id', value)}
@@ -487,7 +490,7 @@ export default function RoutineDetailPage() {
 
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="target_sets_empty">Target Sets</Label>
+                        <Label htmlFor="target_sets_empty">{t('targetSets') || 'Target Sets'}</Label>
                         <Input
                           id="target_sets_empty"
                           type="number"
@@ -502,7 +505,7 @@ export default function RoutineDetailPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="target_reps_empty">Target Reps</Label>
+                        <Label htmlFor="target_reps_empty">{t('targetReps') || 'Target Reps'}</Label>
                         <Input
                           id="target_reps_empty"
                           type="number"
@@ -517,7 +520,7 @@ export default function RoutineDetailPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="target_weight_empty">Weight (kg)</Label>
+                        <Label htmlFor="target_weight_empty">{t('targetWeight') || 'Weight (kg)'}</Label>
                         <Input
                           id="target_weight_empty"
                           type="number"
@@ -525,7 +528,7 @@ export default function RoutineDetailPage() {
                           step="0.5"
                           {...register('target_weight')}
                           disabled={isSubmitting}
-                          placeholder="Optional"
+                          placeholder={t('optional') || 'Optional'}
                         />
                         {errors.target_weight && (
                           <p className="text-xs text-destructive">{errors.target_weight.message}</p>
@@ -534,7 +537,7 @@ export default function RoutineDetailPage() {
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? 'Adding...' : 'Add Exercise to Routine'}
+                      {isSubmitting ? t('adding') || 'Adding...' : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
                     </Button>
                   </form>
                 </DialogContent>
@@ -575,13 +578,13 @@ export default function RoutineDetailPage() {
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="pt-6">
             <div className="text-center">
-              <h3 className="font-semibold mb-2">Ready to train?</h3>
+              <h3 className="font-semibold mb-2">{t('readyToTrain') || 'Ready to train?'}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Start a workout using this routine
+                {t('startWorkoutDescription') || 'Start a workout using this routine'}
               </p>
               <Button onClick={() => router.push(`/workouts/new-from-routine/${routineId}`)} size="lg">
                 <Dumbbell className="h-4 w-4 mr-2" />
-                Start Workout from Routine
+                {t('startWorkoutFromRoutine') || 'Start Workout from Routine'}
               </Button>
             </div>
           </CardContent>

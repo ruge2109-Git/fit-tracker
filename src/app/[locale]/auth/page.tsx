@@ -60,7 +60,7 @@ export default function AuthPage() {
       // Force a full page reload to ensure middleware detects the session
       window.location.href = ROUTES.DASHBOARD
     } else {
-      toast.error('Invalid credentials')
+      toast.error(t('invalidCredentials') || 'Invalid credentials')
     }
   }
 
@@ -72,7 +72,7 @@ export default function AuthPage() {
       // Force a full page reload to ensure middleware detects the session
       window.location.href = ROUTES.DASHBOARD
     } else {
-      toast.error('Failed to create account')
+      toast.error(t('failedToCreateAccount') || 'Failed to create account')
     }
   }
 

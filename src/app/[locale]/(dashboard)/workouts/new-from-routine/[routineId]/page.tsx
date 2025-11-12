@@ -296,28 +296,28 @@ export default function NewWorkoutFromRoutinePage() {
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {t('back') || 'Back'}
         </Button>
         <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save Workout'}
+          {isSaving ? t('saving') || 'Saving...' : t('saveWorkout') || 'Save Workout'}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Starting from: {routine.name}</CardTitle>
-          <CardDescription>Adjust the sets as needed for today's workout</CardDescription>
+          <CardTitle>{t('fromRoutine') || 'Starting from'}: {routine.name}</CardTitle>
+          <CardDescription>{t('adjustSets') || 'Adjust the sets as needed for today\'s workout'}</CardDescription>
         </CardHeader>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Workout Details</CardTitle>
+          <CardTitle>{t('workoutDetails') || 'Workout Details'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">{t('date') || 'Date'}</Label>
               <Input
                 id="date"
                 type="date"
@@ -326,7 +326,7 @@ export default function NewWorkoutFromRoutinePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration">Duration (min)</Label>
+              <Label htmlFor="duration">{t('durationMinutes') || 'Duration (minutes)'}</Label>
               <Input
                 id="duration"
                 type="number"
@@ -337,19 +337,19 @@ export default function NewWorkoutFromRoutinePage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">{t('notesOptional') || 'Notes (optional)'}</Label>
             <Input
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="How are you feeling today?"
+              placeholder={t('howFeeling') || 'How are you feeling today?'}
             />
           </div>
         </CardContent>
       </Card>
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Exercises</h2>
+        <h2 className="text-2xl font-bold">{t('exercises') || 'Exercises'}</h2>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -388,7 +388,7 @@ export default function NewWorkoutFromRoutinePage() {
                           onClick={() => handleAddSet(exerciseId, group.name)}
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          Add Set
+                          {t('addSet') || 'Add Set'}
                         </Button>
                       </div>
                       {group.sets.map((set, index) => (
@@ -400,7 +400,7 @@ export default function NewWorkoutFromRoutinePage() {
                               id={`set-${set.tempId}`}
                             />
                             <Label htmlFor={`set-${set.tempId}`} className="text-sm font-medium w-16 cursor-pointer">
-                              Set {index + 1}
+                              {t('set') || 'Set'} {index + 1}
                             </Label>
                           </div>
                           <div className="flex-1 grid grid-cols-3 gap-2">
@@ -409,7 +409,7 @@ export default function NewWorkoutFromRoutinePage() {
                                 type="number"
                                 value={set.reps}
                                 onChange={(e) => handleUpdateSet(set.tempId, 'reps', parseInt(e.target.value))}
-                                placeholder="Reps"
+                                placeholder={t('reps') || 'Reps'}
                                 min="1"
                               />
                             </div>
@@ -472,7 +472,7 @@ export default function NewWorkoutFromRoutinePage() {
       </div>
 
       <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
-        {isSaving ? 'Saving Workout...' : 'Save Workout'}
+        {isSaving ? t('saving') || 'Saving...' : t('saveWorkout') || 'Save Workout'}
       </Button>
 
       <WorkoutRestTimer />

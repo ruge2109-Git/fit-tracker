@@ -21,11 +21,14 @@ import { PersonalRecordsList } from '@/components/charts/personal-records-list'
 import { ChartSkeleton, StatsCardSkeleton, CardSkeleton } from '@/components/ui/loading-skeleton'
 import { useRouter } from 'next/navigation'
 import { ROUTES } from '@/lib/constants'
+import { useTranslations } from 'next-intl'
 
 export default function DashboardPage() {
   const router = useRouter()
   const { user } = useAuthStore()
   const { workouts, loadWorkouts } = useWorkoutStore()
+  const t = useTranslations('dashboard')
+  const tWorkouts = useTranslations('workouts')
   const [stats, setStats] = useState<WorkoutStats | null>(null)
   const [volumeData, setVolumeData] = useState<VolumeByWeek[]>([])
   const [muscleDistribution, setMuscleDistribution] = useState<Record<MuscleGroup, number>>({} as Record<MuscleGroup, number>)
@@ -204,11 +207,11 @@ export default function DashboardPage() {
           {recentWorkouts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
-                No workouts yet. Start tracking your fitness journey!
+                {t('noWorkoutsYet') || 'No workouts yet. Start tracking your fitness journey!'}
               </p>
               <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)}>
                 <Activity className="h-4 w-4 mr-2" />
-                Log Your First Workout
+                {t('logFirstWorkout') || 'Log Your First Workout'}
               </Button>
             </div>
           ) : (

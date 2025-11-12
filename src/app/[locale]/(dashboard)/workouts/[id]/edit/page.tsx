@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,6 +33,8 @@ export default function EditWorkoutPage() {
   const params = useParams()
   const router = useRouter()
   const { currentWorkout, loadWorkout } = useWorkoutStore()
+  const t = useTranslations('workouts')
+  const tCommon = useTranslations('common')
   const workoutId = params.id as string
 
   const [isLoading, setIsLoading] = useState(true)
@@ -191,29 +194,29 @@ export default function EditWorkoutPage() {
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {tCommon('back') || 'Back'}
         </Button>
         <Button onClick={handleSave} disabled={isSaving}>
           <Save className="h-4 w-4 mr-2" />
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? t('saving') || 'Saving...' : t('saveChanges') || 'Save Changes'}
         </Button>
       </div>
 
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold">Edit Workout</h1>
-        <p className="text-muted-foreground">Modify your workout details</p>
+        <h1 className="text-3xl font-bold">{t('editWorkout') || 'Edit Workout'}</h1>
+        <p className="text-muted-foreground">{t('modifyDetails') || 'Modify your workout details'}</p>
       </div>
 
       {/* Workout Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Workout Information</CardTitle>
+          <CardTitle>{t('workoutInformation') || 'Workout Information'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">{t('date') || 'Date'}</Label>
               <Input
                 id="date"
                 type="date"
@@ -222,7 +225,7 @@ export default function EditWorkoutPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Label htmlFor="duration">{t('durationMinutes') || 'Duration (minutes)'}</Label>
               <Input
                 id="duration"
                 type="number"
@@ -233,12 +236,12 @@ export default function EditWorkoutPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{tCommon('notes') || 'Notes'}</Label>
             <Input
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="How did it feel?"
+              placeholder={t('howFeel') || 'How did it feel?'}
             />
           </div>
         </CardContent>
@@ -247,10 +250,10 @@ export default function EditWorkoutPage() {
       {/* Exercise Sets */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Exercises & Sets</h2>
+          <h2 className="text-2xl font-bold">{tCommon('exercises') || 'Exercises'} & {t('sets') || 'Sets'}</h2>
           <Button onClick={handleAddSet}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Set
+            {t('addSet') || 'Add Set'}
           </Button>
         </div>
 
@@ -263,7 +266,7 @@ export default function EditWorkoutPage() {
               <div className="space-y-3">
                 {exerciseSets.map((set, index) => (
                   <div key={set.id} className="flex items-center gap-4">
-                    <span className="text-sm font-medium w-16">Set {index + 1}</span>
+                    <span className="text-sm font-medium w-16">{t('set') || 'Set'} {index + 1}</span>
                     
                     {set.isNew && (
                       <div className="flex-1">
@@ -280,7 +283,7 @@ export default function EditWorkoutPage() {
                           type="number"
                           value={set.reps}
                           onChange={(e) => handleUpdateSet(set.id, 'reps', parseInt(e.target.value))}
-                          placeholder="Reps"
+                          placeholder={t('reps') || 'Reps'}
                           min="1"
                         />
                       </div>
@@ -289,7 +292,7 @@ export default function EditWorkoutPage() {
                           type="number"
                           value={set.weight}
                           onChange={(e) => handleUpdateSet(set.id, 'weight', parseFloat(e.target.value))}
-                          placeholder="Weight (kg)"
+                          placeholder={t('weightKg') || 'Weight (kg)'}
                           min="0"
                           step="0.5"
                         />
@@ -299,7 +302,7 @@ export default function EditWorkoutPage() {
                           type="number"
                           value={set.rest_time || 90}
                           onChange={(e) => handleUpdateSet(set.id, 'rest_time', parseInt(e.target.value))}
-                          placeholder="Rest (s)"
+                          placeholder={t('rest') || 'Rest (s)'}
                           min="0"
                         />
                       </div>
@@ -322,10 +325,10 @@ export default function EditWorkoutPage() {
         {activeSets.length === 0 && (
           <Card>
             <CardContent className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No sets yet</p>
+              <p className="text-muted-foreground mb-4">{t('noSetsYet') || 'No sets yet'}</p>
               <Button onClick={handleAddSet}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add First Set
+                {t('addFirstSet') || 'Add First Set'}
               </Button>
             </CardContent>
           </Card>
@@ -335,7 +338,7 @@ export default function EditWorkoutPage() {
       {/* Save Button */}
       <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
         <Save className="h-4 w-4 mr-2" />
-        {isSaving ? 'Saving Changes...' : 'Save Workout'}
+        {isSaving ? t('savingChanges') || 'Saving Changes...' : t('saveWorkout') || 'Save Workout'}
       </Button>
 
       {/* Floating Rest Timer */}

@@ -18,11 +18,15 @@ import { ROUTES } from '@/lib/constants'
 import { ExerciseMedia } from '@/components/exercises/exercise-media'
 import { exerciseRepository } from '@/domain/repositories/exercise.repository'
 import { Exercise } from '@/types'
+import { useTranslations } from 'next-intl'
 
 export default function ExerciseStatsPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuthStore()
+  const t = useTranslations('exercises')
+  const tCommon = useTranslations('common')
+  const tWorkouts = useTranslations('workouts')
   const exerciseId = params.id as string
   
   const [progress, setProgress] = useState<ExerciseProgress | null>(null)
@@ -69,15 +73,15 @@ export default function ExerciseStatsPage() {
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {tCommon('back') || 'Back'}
           </Button>
         </div>
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">
-            No data yet for this exercise
+            {t('noDataYet') || 'No data yet for this exercise'}
           </p>
           <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)}>
-            Log a Workout
+            {tWorkouts('logWorkout') || 'Log a Workout'}
           </Button>
         </div>
       </div>
@@ -106,14 +110,14 @@ export default function ExerciseStatsPage() {
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {tCommon('back') || 'Back'}
         </Button>
       </div>
 
       {/* Title */}
       <div>
         <h1 className="text-3xl font-bold">{progress.exercise_name}</h1>
-        <p className="text-muted-foreground">Exercise Statistics & Progress</p>
+        <p className="text-muted-foreground">{t('exerciseStats') || 'Exercise Statistics & Progress'}</p>
       </div>
 
       {/* Exercise Media */}
@@ -127,45 +131,45 @@ export default function ExerciseStatsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Max Weight</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('maxWeight') || 'Max Weight'}</CardTitle>
             <Weight className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{maxWeight} kg</div>
-            <p className="text-xs text-muted-foreground">Personal record</p>
+            <p className="text-xs text-muted-foreground">{t('personalRecord') || 'Personal record'}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Max Reps</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('maxReps') || 'Max Reps'}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{maxReps}</div>
-            <p className="text-xs text-muted-foreground">Best set</p>
+            <p className="text-xs text-muted-foreground">{t('bestSet') || 'Best set'}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sets</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalSets') || 'Total Sets'}</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalSets}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
+            <p className="text-xs text-muted-foreground">{t('allTime') || 'All time'}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Max Volume</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('maxVolume') || 'Max Volume'}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{maxVolume.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">kg (weight × reps)</p>
+            <p className="text-xs text-muted-foreground">kg ({t('weightTimesReps') || 'weight × reps'})</p>
           </CardContent>
         </Card>
       </div>
@@ -173,8 +177,8 @@ export default function ExerciseStatsPage() {
       {/* Progress Chart - Weight */}
       <Card>
         <CardHeader>
-          <CardTitle>Weight Progression</CardTitle>
-          <CardDescription>How your lift weight has progressed over time</CardDescription>
+            <CardTitle>{t('weightProgression') || 'Weight Progression'}</CardTitle>
+            <CardDescription>{t('weightProgressionDescription') || 'How your lift weight has progressed over time'}</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -214,8 +218,8 @@ export default function ExerciseStatsPage() {
       {/* Progress Chart - Volume */}
       <Card>
         <CardHeader>
-          <CardTitle>Volume Progression</CardTitle>
-          <CardDescription>Total volume (weight × reps) over time</CardDescription>
+            <CardTitle>{t('volumeProgression') || 'Volume Progression'}</CardTitle>
+            <CardDescription>{t('volumeProgressionDescription') || 'Total volume (weight × reps) over time'}</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -255,17 +259,17 @@ export default function ExerciseStatsPage() {
       {/* Average Stats */}
       <Card>
         <CardHeader>
-          <CardTitle>Average Stats</CardTitle>
-          <CardDescription>Your typical performance for this exercise</CardDescription>
+            <CardTitle>{t('averageStats') || 'Average Stats'}</CardTitle>
+            <CardDescription>{t('averageStatsDescription') || 'Your typical performance for this exercise'}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Average Weight</p>
+              <p className="text-sm text-muted-foreground">{t('averageWeight') || 'Average Weight'}</p>
               <p className="text-2xl font-bold">{avgWeight} kg</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Average Reps</p>
+              <p className="text-sm text-muted-foreground">{t('averageReps') || 'Average Reps'}</p>
               <p className="text-2xl font-bold">{avgReps}</p>
             </div>
           </div>

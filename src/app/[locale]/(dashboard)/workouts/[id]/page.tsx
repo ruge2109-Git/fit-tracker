@@ -15,12 +15,15 @@ import { useAuthStore } from '@/store/auth.store'
 import { formatDate, formatDuration, formatWeight } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 export default function WorkoutDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { currentWorkout, loadWorkout, deleteWorkout, createWorkout, isLoading } = useWorkoutStore()
   const { user } = useAuthStore()
+  const t = useTranslations('workouts')
+  const tCommon = useTranslations('common')
   const [isDuplicating, setIsDuplicating] = useState(false)
   const workoutId = params.id as string
 
@@ -31,14 +34,14 @@ export default function WorkoutDetailPage() {
   }, [workoutId, loadWorkout])
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this workout?')) return
+    if (!confirm(t('confirmDelete') || 'Are you sure you want to delete this workout?')) return
 
     const success = await deleteWorkout(workoutId)
     if (success) {
-      toast.success('Workout deleted')
+      toast.success(t('workoutDeleted') || 'Workout deleted')
       router.push(ROUTES.WORKOUTS)
     } else {
-      toast.error('Failed to delete workout')
+      toast.error(t('failedToDelete') || 'Failed to delete workout')
     }
   }
 
@@ -51,7 +54,7 @@ export default function WorkoutDetailPage() {
       const workoutData = {
         date: new Date().toISOString().split('T')[0],
         duration: currentWorkout.duration,
-        notes: currentWorkout.notes ? `Copy of: ${currentWorkout.notes}` : 'Duplicated workout',
+        notes: currentWorkout.notes ? `${t('copyOf') || 'Copy of'}: ${currentWorkout.notes}` : t('duplicatedWorkout') || 'Duplicated workout',
         routine_id: currentWorkout.routine_id,
       }
 
@@ -66,11 +69,11 @@ export default function WorkoutDetailPage() {
       const newWorkoutId = await createWorkout(user.id, workoutData, setsData)
 
       if (newWorkoutId) {
-        toast.success('Workout duplicated successfully!')
+        toast.success(t('workoutDuplicated') || 'Workout duplicated successfully!')
         router.push(ROUTES.WORKOUT_DETAIL(newWorkoutId))
       }
     } catch (error) {
-      toast.error('Failed to duplicate workout')
+      toast.error(t('failedToDuplicate') || 'Failed to duplicate workout')
     } finally {
       setIsDuplicating(false)
     }
@@ -100,20 +103,20 @@ export default function WorkoutDetailPage() {
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {tCommon('back') || 'Back'}
         </Button>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleDuplicate} disabled={isDuplicating}>
             <Copy className="h-4 w-4 mr-2" />
-            {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+            {isDuplicating ? t('duplicating') || 'Duplicating...' : t('duplicate') || 'Duplicate'}
           </Button>
           <Button variant="outline" onClick={() => router.push(ROUTES.WORKOUT_EDIT(workoutId))}>
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            {tCommon('edit') || 'Edit'}
           </Button>
           <Button variant="destructive" onClick={handleDelete}>
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            {tCommon('delete') || 'Delete'}
           </Button>
         </div>
       </div>
@@ -121,7 +124,7 @@ export default function WorkoutDetailPage() {
       {/* Workout Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Workout Details</CardTitle>
+          <CardTitle>{t('workoutDetails') || 'Workout Details'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-6">
@@ -137,7 +140,7 @@ export default function WorkoutDetailPage() {
 
           {currentWorkout.notes && (
             <div>
-              <h3 className="font-semibold mb-1">Notes</h3>
+              <h3 className="font-semibold mb-1">{tCommon('notes') || 'Notes'}</h3>
               <p className="text-muted-foreground">{currentWorkout.notes}</p>
             </div>
           )}
@@ -146,7 +149,7 @@ export default function WorkoutDetailPage() {
 
       {/* Exercises */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Exercises</h2>
+        <h2 className="text-2xl font-bold">{tCommon('exercises') || 'Exercises'}</h2>
         {Object.entries(exerciseGroups).map(([exerciseName, sets]) => (
           <Card key={exerciseName}>
             <CardHeader>

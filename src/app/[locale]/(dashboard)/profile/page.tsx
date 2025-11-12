@@ -19,11 +19,14 @@ import { useEffect, useState } from 'react'
 import { statsService } from '@/domain/services/stats.service'
 import { WorkoutStats } from '@/types'
 import { formatDate, formatDuration } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { user, signOut } = useAuthStore()
   const { workouts, loadWorkouts } = useWorkoutStore()
+  const t = useTranslations('profile')
+  const tCommon = useTranslations('common')
   const [stats, setStats] = useState<WorkoutStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
@@ -126,7 +129,7 @@ export default function ProfilePage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-medium">{user.name || 'Not set'}</p>
+              <p className="font-medium">{user.name || t('notSet') || 'Not set'}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
@@ -221,7 +224,7 @@ export default function ProfilePage() {
                     size="sm"
                     onClick={() => router.push(ROUTES.WORKOUT_DETAIL(workout.id))}
                   >
-                    View
+                    {tCommon('view') || 'View'}
                   </Button>
                 </div>
               ))}

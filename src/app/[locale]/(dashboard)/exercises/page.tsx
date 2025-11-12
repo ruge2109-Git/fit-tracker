@@ -36,6 +36,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ExerciseFormData } from '@/types'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 const exerciseSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -46,6 +47,8 @@ const exerciseSchema = z.object({
 
 export default function ExercisesPage() {
   const router = useRouter()
+  const t = useTranslations('exercises')
+  const tCommon = useTranslations('common')
   const {
     exercises,
     loadExercises,
@@ -140,10 +143,10 @@ export default function ExercisesPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="muscle_group">Muscle Group</Label>
+                <Label htmlFor="muscle_group">{t('muscleGroup') || 'Muscle Group'}</Label>
                 <Select onValueChange={(value) => setValue('muscle_group', value as any)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select muscle group" />
+                    <SelectValue placeholder={t('selectMuscleGroup') || 'Select muscle group'} />
                   </SelectTrigger>
                   <SelectContent>
                     {MUSCLE_GROUP_OPTIONS.map((option) => (
@@ -156,16 +159,16 @@ export default function ExercisesPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
+                <Label htmlFor="description">{tCommon('description') || 'Description'} ({t('optional') || 'optional'})</Label>
                 <Input
                   id="description"
                   {...register('description')}
-                  placeholder="Exercise description"
+                  placeholder={t('exerciseDescriptionPlaceholder') || 'Exercise description'}
                 />
               </div>
 
               <Button type="submit" className="w-full">
-                Create Exercise
+                {t('createExercise') || 'Create Exercise'}
               </Button>
             </form>
           </DialogContent>
@@ -177,7 +180,7 @@ export default function ExercisesPage() {
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search exercises..."
+            placeholder={t('searchExercises') || 'Search exercises...'}
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10"
@@ -186,10 +189,10 @@ export default function ExercisesPage() {
 
         <Select onValueChange={(value) => filterByType(value as any)}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by type" />
+            <SelectValue placeholder={t('filterByType') || 'Filter by type'} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">{t('allTypes') || 'All Types'}</SelectItem>
             {EXERCISE_TYPE_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -200,10 +203,10 @@ export default function ExercisesPage() {
 
         <Select onValueChange={(value) => filterByMuscleGroup(value as any)}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by muscle" />
+            <SelectValue placeholder={t('filterByMuscle') || 'Filter by muscle'} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Muscles</SelectItem>
+            <SelectItem value="all">{t('allMuscles') || 'All Muscles'}</SelectItem>
             {MUSCLE_GROUP_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -213,7 +216,7 @@ export default function ExercisesPage() {
         </Select>
 
         <Button variant="outline" onClick={resetFilters}>
-          Reset
+          {tCommon('reset') || 'Reset'}
         </Button>
       </div>
 
@@ -226,7 +229,7 @@ export default function ExercisesPage() {
         </div>
       ) : exercises.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No exercises found</p>
+          <p className="text-muted-foreground">{t('noExercises') || 'No exercises found'}</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -247,7 +250,7 @@ export default function ExercisesPage() {
                   <p className="text-sm text-muted-foreground">{exercise.description}</p>
                 )}
                 <ExerciseMedia exercise={exercise} />
-                <p className="text-xs text-primary mt-2">Click to view stats →</p>
+                <p className="text-xs text-primary mt-2">{t('viewStats') || 'Click to view stats'} →</p>
               </CardContent>
             </Card>
           ))}

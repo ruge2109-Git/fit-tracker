@@ -17,11 +17,14 @@ import { WorkoutCardSkeleton } from '@/components/ui/loading-skeleton'
 import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
 import { ROUTES } from '@/lib/constants'
+import { useTranslations } from 'next-intl'
 
 export default function WorkoutsPage() {
   const router = useRouter()
   const { user } = useAuthStore()
   const { workouts, loadWorkouts, isLoading } = useWorkoutStore()
+  const t = useTranslations('workouts')
+  const tCommon = useTranslations('common')
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('')
@@ -193,20 +196,20 @@ export default function WorkoutsPage() {
         </div>
       ) : workouts.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">No workouts yet</p>
+          <p className="text-muted-foreground mb-4">{t('noWorkouts') || 'No workouts yet'}</p>
           <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)}>
             <Plus className="h-4 w-4 mr-2" />
-            Create Your First Workout
+            {t('createFirst') || 'Create Your First Workout'}
           </Button>
         </div>
       ) : filteredWorkouts.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">
-            No workouts match your filters
+            {t('noWorkoutsMatchFilters') || 'No workouts match your filters'}
           </p>
           <Button variant="outline" onClick={clearFilters}>
             <X className="h-4 w-4 mr-2" />
-            Clear Filters
+            {t('clearFilters') || 'Clear Filters'}
           </Button>
         </div>
       ) : (

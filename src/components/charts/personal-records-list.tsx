@@ -8,6 +8,7 @@
 import { Trophy } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatWeight } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface PersonalRecordsListProps {
   data: {
@@ -19,19 +20,21 @@ interface PersonalRecordsListProps {
 }
 
 export function PersonalRecordsList({ data }: PersonalRecordsListProps) {
+  const t = useTranslations('profile')
+  
   if (data.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
-            Personal Records
+            {t('personalRecords') || 'Personal Records'}
           </CardTitle>
-          <CardDescription>Your best lifts for each exercise</CardDescription>
+          <CardDescription>{t('bestLiftsDescription') || 'Your best lifts for each exercise'}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-            No records yet. Start lifting!
+            {t('noRecordsYet') || 'No records yet. Start lifting!'}
           </div>
         </CardContent>
       </Card>
@@ -43,9 +46,9 @@ export function PersonalRecordsList({ data }: PersonalRecordsListProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-yellow-500" />
-          Personal Records
+          {t('personalRecords') || 'Personal Records'}
         </CardTitle>
-        <CardDescription>Your best lifts for each exercise (top 5)</CardDescription>
+        <CardDescription>{t('bestLiftsTop5') || 'Your best lifts for each exercise (top 5)'}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

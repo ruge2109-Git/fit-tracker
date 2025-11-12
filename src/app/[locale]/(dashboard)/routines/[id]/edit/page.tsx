@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { RoutineWithExercises, DayOfWeek, RoutineFrequency } from '@/types'
 import { ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS, ROUTES } from '@/lib/constants'
+import { useTranslations } from 'next-intl'
 
 const routineSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -33,6 +34,8 @@ type RoutineFormData = z.infer<typeof routineSchema>
 export default function EditRoutinePage() {
   const params = useParams()
   const router = useRouter()
+  const t = useTranslations('routines')
+  const tCommon = useTranslations('common')
   const routineId = params.id as string
 
   const [routine, setRoutine] = useState<RoutineWithExercises | null>(null)
@@ -117,29 +120,29 @@ export default function EditRoutinePage() {
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {tCommon('back') || 'Back'}
         </Button>
         <Button onClick={handleSubmit(handleSave)} disabled={isSaving}>
           <Save className="h-4 w-4 mr-2" />
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? t('saving') || 'Saving...' : t('saveChanges') || 'Save Changes'}
         </Button>
       </div>
 
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold">Edit Routine</h1>
-        <p className="text-muted-foreground">Modify routine details and schedule</p>
+        <h1 className="text-3xl font-bold">{t('editRoutine') || 'Edit Routine'}</h1>
+        <p className="text-muted-foreground">{t('editRoutineDescription') || 'Modify routine details and schedule'}</p>
       </div>
 
       {/* Routine Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Routine Information</CardTitle>
+          <CardTitle>{t('routineInformation') || 'Routine Information'}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Routine Name</Label>
+              <Label htmlFor="name">{t('routineName') || 'Routine Name'}</Label>
               <Input
                 id="name"
                 placeholder="e.g., Push Day, Leg Day"
@@ -152,24 +155,24 @@ export default function EditRoutinePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">{tCommon('description') || 'Description'} ({t('optional') || 'optional'})</Label>
               <Input
                 id="description"
-                placeholder="Brief description of this routine"
+                placeholder={t('routineDescriptionPlaceholder') || 'Brief description of this routine'}
                 {...register('description')}
                 disabled={isSaving}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="frequency">Frequency</Label>
+              <Label htmlFor="frequency">{t('frequency') || 'Frequency'}</Label>
               <Controller
                 name="frequency"
                 control={control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value} disabled={isSaving}>
                     <SelectTrigger>
-                      <SelectValue placeholder="How often?" />
+                      <SelectValue placeholder={t('howOften') || 'How often?'} />
                     </SelectTrigger>
                     <SelectContent>
                       {ROUTINE_FREQUENCY_OPTIONS.map((option) => (
@@ -185,7 +188,7 @@ export default function EditRoutinePage() {
 
             {selectedFrequency === RoutineFrequency.CUSTOM && (
               <div className="space-y-2">
-                <Label>Scheduled Days</Label>
+                <Label>{t('scheduledDays') || 'Scheduled Days'}</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {DAYS_OF_WEEK_OPTIONS.map((day) => (
                     <Button
@@ -202,8 +205,8 @@ export default function EditRoutinePage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {selectedDays.length > 0 
-                    ? `Selected: ${selectedDays.length} day(s)`
-                    : 'Select the days you plan to do this routine'
+                    ? `${t('selected') || 'Selected'}: ${selectedDays.length} ${t('days') || 'day(s)'}`
+                    : t('selectScheduledDays') || 'Select the days you plan to do this routine'
                   }
                 </p>
               </div>
@@ -219,7 +222,7 @@ export default function EditRoutinePage() {
                     {...register('is_active')}
                     disabled={isSaving}
                   />
-                  <span>Active routine</span>
+                  <span>{t('isActive') || 'Active routine'}</span>
                 </div>
               </Label>
             </div>
@@ -230,14 +233,14 @@ export default function EditRoutinePage() {
       {/* Exercise Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Exercises in this Routine</CardTitle>
+          <CardTitle>{t('exercisesInRoutine') || 'Exercises in this Routine'}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            This routine contains {routine.exercises?.length || 0} exercise(s).
+            {t('routineContainsExercises') || 'This routine contains'} {routine.exercises?.length || 0} {t('exercisesCount') || 'exercise(s)'}.
           </p>
           <p className="text-xs text-muted-foreground">
-            To modify exercises, go back to the routine detail page.
+            {t('modifyExercisesNote') || 'To modify exercises, go back to the routine detail page.'}
           </p>
         </CardContent>
       </Card>

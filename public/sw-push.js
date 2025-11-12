@@ -6,18 +6,22 @@
 
 // Install event - ensure service worker is active
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...')
   self.skipWaiting() // Activate immediately
 })
 
 // Activate event
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...')
   event.waitUntil(
     clients.claim() // Take control of all pages immediately
   )
+  console.log('Service Worker activated')
 })
 
 self.addEventListener('push', (event) => {
   console.log('Push event received:', event)
+  console.log('Service Worker state:', self.registration.active ? 'active' : 'inactive')
   
   let data = {}
   
@@ -43,17 +47,25 @@ self.addEventListener('push', (event) => {
     // Important for mobile: ensure notification is shown even when app is closed
     silent: false,
     renotify: true,
+    // Additional options for better mobile support
+    dir: 'ltr',
+    lang: 'es',
+    timestamp: Date.now(),
   }
 
   console.log('Showing notification with options:', options)
 
+  // Use waitUntil to keep service worker alive during notification
   event.waitUntil(
     self.registration.showNotification(data.title || 'FitTrackr', options)
       .then(() => {
         console.log('Notification shown successfully')
+        // Keep service worker alive a bit longer
+        return new Promise(resolve => setTimeout(resolve, 1000))
       })
       .catch((error) => {
         console.error('Error showing notification:', error)
+        throw error
       })
   )
 })

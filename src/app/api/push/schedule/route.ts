@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { pushSubscriptionRepository } from '@/domain/repositories/push-subscription.repository'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import webpush from 'web-push'
@@ -63,21 +64,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    // Use service role client to bypass RLS for cron job
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseServiceKey) {
+      logger.error('SUPABASE_SERVICE_ROLE_KEY not configured', new Error('Missing service role key'), 'PushScheduleAPI')
+      return NextResponse.json(
+        { error: 'Service role key not configured. This endpoint requires SUPABASE_SERVICE_ROLE_KEY.' },
+        { status: 500 }
+      )
+    }
+
+    // Create admin client that bypasses RLS
+    const supabase = createAdminClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+
     const now = new Date()
     const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
     const currentDay = now.getDay()
 
-    // Only send notifications at 8 AM (allow manual testing with query param)
+    // Only send notifications at 6:35 PM Colombia time (13:35 UTC) (allow manual testing with query param)
     const isManualTest = request.nextUrl.searchParams.get('test') === 'true'
-    if (!isManualTest && currentHour !== 8) {
+    const expectedHour = 13 // 1:35 PM UTC = 6:35 PM Colombia (UTC-5)
+    const expectedMinute = 35
+    
+    if (!isManualTest && (currentHour !== expectedHour || currentMinute !== expectedMinute)) {
       return NextResponse.json(
-        { message: 'Not the right time for notifications. Current hour: ' + currentHour + '. Expected: 8. Use ?test=true to test manually.', sent: 0 },
+        { 
+          message: `Not the right time for notifications. Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC (${(currentHour - 5 + 24) % 24}:${currentMinute.toString().padStart(2, '0')} Colombia). Expected: ${expectedHour}:${expectedMinute.toString().padStart(2, '0')} UTC (6:35 PM Colombia). Use ?test=true to test manually.`, 
+          sent: 0 
+        },
         { status: 200 }
       )
     }
 
-    // Get all active routines with scheduled days
+    // Get all active routines with scheduled days (using admin client to bypass RLS)
     const { data: routines, error: routinesError } = await supabase
       .from('routines')
       .select('*')
@@ -87,16 +114,25 @@ export async function POST(request: NextRequest) {
     if (routinesError || !routines) {
       logger.error('Failed to fetch routines', routinesError as Error, 'PushScheduleAPI')
       return NextResponse.json(
-        { error: 'Failed to fetch routines' },
+        { error: 'Failed to fetch routines', details: routinesError?.message },
         { status: 500 }
       )
     }
 
     let totalSent = 0
     const errors: string[] = []
+    const diagnostics: any = {
+      totalRoutines: routines.length,
+      routinesProcessed: 0,
+      routinesWithTodayScheduled: 0,
+      routinesWithSubscriptions: 0,
+      subscriptionsFound: 0,
+    }
 
     // Process each routine
     for (const routine of routines) {
+      diagnostics.routinesProcessed++
+      
       if (!routine.scheduled_days || routine.scheduled_days.length === 0) {
         continue
       }
@@ -116,12 +152,17 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // Get user's push subscriptions
+      diagnostics.routinesWithTodayScheduled++
+
+      // Get user's push subscriptions (using admin client)
       const subscriptionsResult = await pushSubscriptionRepository.findByUserId(routine.user_id, supabase)
 
       if (subscriptionsResult.error || !subscriptionsResult.data || subscriptionsResult.data.length === 0) {
         continue
       }
+
+      diagnostics.routinesWithSubscriptions++
+      diagnostics.subscriptionsFound += subscriptionsResult.data.length
 
       const payload = JSON.stringify({
         title: 'FitTrackr - Workout Reminder',
@@ -153,7 +194,7 @@ export async function POST(request: NextRequest) {
         } catch (error: any) {
           // Remove invalid subscriptions
           if (error.statusCode === 410 || error.statusCode === 404) {
-            await pushSubscriptionRepository.deleteByEndpoint(routine.user_id, subscription.endpoint)
+            await pushSubscriptionRepository.deleteByEndpoint(routine.user_id, subscription.endpoint, supabase)
             logger.warn(`Removed invalid subscription: ${subscription.endpoint}`, 'PushScheduleAPI')
           } else {
             errors.push(error.message)
@@ -167,7 +208,11 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         sent: totalSent,
+        diagnostics: isManualTest ? diagnostics : undefined,
         errors: errors.length > 0 ? errors : undefined,
+        message: totalSent === 0 
+          ? 'No notifications sent. Check: 1) Active routines with scheduled days for today, 2) Push subscriptions exist, 3) VAPID keys configured'
+          : `Successfully sent ${totalSent} notification(s)`,
       },
       { status: 200 }
     )

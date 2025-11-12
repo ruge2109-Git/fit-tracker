@@ -14,16 +14,16 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'black',
     title: APP_NAME,
   },
   other: {
     'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-status-bar-style': 'black',
     'apple-mobile-web-app-title': APP_NAME,
     'mobile-web-app-capable': 'yes',
     'application-name': APP_NAME,
-    'msapplication-TileColor': '#f97316',
+    'msapplication-TileColor': '#020817',
   },
   formatDetection: {
     telephone: false,
@@ -46,7 +46,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#f97316',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#020817' },
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

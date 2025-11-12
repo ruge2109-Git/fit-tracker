@@ -4,8 +4,8 @@
   "description": "Track your workouts, analyze your progress, achieve your goals",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#f97316",
+  "background_color": "#020817",
+  "theme_color": "#020817",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -103,7 +103,8 @@ class AuthService implements IAuthService {
     try {
       // Use callback URL without locale to simplify Supabase configuration
       // The callback route will handle locale detection and redirect appropriately
-      const redirectUrl = `${window.location.origin}/auth/callback`
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+      const redirectUrl = `${baseUrl}/auth/callback`
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -124,7 +125,8 @@ class AuthService implements IAuthService {
       // Get current locale from URL or use default
       const pathname = window.location.pathname
       const locale = pathname.split('/')[1] || 'en'
-      const redirectUrl = `${window.location.origin}/${locale}/auth/reset-password`
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+      const redirectUrl = `${baseUrl}/${locale}/auth/reset-password`
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,

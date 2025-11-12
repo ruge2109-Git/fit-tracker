@@ -68,3 +68,45 @@
   }
 }
 
+/* PWA Safe Area Support for Notch */
+@supports (padding: max(0px)) {
+  /* Ensure the background extends to the edges behind the notch */
+  html {
+    background-color: #020817;
+  }
+
+  html.light {
+    background-color: #ffffff;
+  }
+
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+
+  /* Fix for navigation and fixed elements */
+  nav {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+
+  /* Ensure fixed elements respect safe area */
+  .fixed {
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-right: max(0px, env(safe-area-inset-right));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    padding-left: max(0px, env(safe-area-inset-left));
+  }
+}
+
+/* iOS specific fixes */
+@media (display-mode: standalone) {
+  /* When running as PWA */
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+

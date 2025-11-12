@@ -5,6 +5,7 @@
 
 'use client'
 
+import { useEffect } from 'react'
 import { useLocale } from 'next-intl'
 import { useRouter, usePathname } from '@/i18n/routing'
 import {
@@ -21,13 +22,39 @@ const languages = [
   { code: 'es', name: 'Español', flag: '🇪🇸' },
 ]
 
+const LOCALE_STORAGE_KEY = 'preferred-locale'
+const LOCALE_COOKIE_NAME = 'NEXT_LOCALE'
+
 export function LanguageSelector() {
   const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
 
+  // Load saved locale preference on mount (only once)
+  useEffect(() => {
+    const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY)
+    if (savedLocale && savedLocale !== locale && ['en', 'es'].includes(savedLocale)) {
+      // Also set cookie if not already set
+      const existingCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(`${LOCALE_COOKIE_NAME}=`))
+      
+      if (!existingCookie) {
+        document.cookie = `${LOCALE_COOKIE_NAME}=${savedLocale}; path=/; max-age=31536000; SameSite=Lax`
+      }
+      
+      router.replace(pathname, { locale: savedLocale })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleLanguageChange = (newLocale: string) => {
     if (newLocale !== locale) {
+      // Save to localStorage
+      localStorage.setItem(LOCALE_STORAGE_KEY, newLocale)
+      
+      // Save to cookie (for server-side access)
+      document.cookie = `${LOCALE_COOKIE_NAME}=${newLocale}; path=/; max-age=31536000; SameSite=Lax`
+      
       router.replace(pathname, { locale: newLocale })
     }
   }

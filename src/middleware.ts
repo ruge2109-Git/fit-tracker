@@ -8,8 +8,11 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { routing } from './i18n/routing'
 
-// Create i18n middleware
-const intlMiddleware = createMiddleware(routing)
+// Create i18n middleware with locale detection from cookies
+const intlMiddleware = createMiddleware({
+  ...routing,
+  localeDetection: true
+})
 
 export async function middleware(request: NextRequest) {
   // Handle i18n first
@@ -18,9 +21,21 @@ export async function middleware(request: NextRequest) {
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   )
 
+  // Get locale from cookie if available
+  const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value
+  
   // If no locale in path, let i18n middleware handle it
   if (!pathnameHasLocale && !pathname.startsWith('/_next') && !pathname.startsWith('/api')) {
     const response = intlMiddleware(request)
+    
+    // Save locale to cookie if detected
+    if (cookieLocale && routing.locales.includes(cookieLocale as any)) {
+      response.cookies.set('NEXT_LOCALE', cookieLocale, {
+        path: '/',
+        maxAge: 31536000, // 1 year
+        sameSite: 'lax'
+      })
+    }
     
     // After i18n, check authentication
     return handleAuth(request, response)
@@ -28,6 +43,20 @@ export async function middleware(request: NextRequest) {
 
   // If locale is present, check auth after i18n
   const intlResponse = intlMiddleware(request)
+  
+  // Extract locale from pathname and save to cookie
+  const detectedLocale = routing.locales.find(locale => 
+    pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  ) || cookieLocale || routing.defaultLocale
+  
+  if (detectedLocale && routing.locales.includes(detectedLocale as any)) {
+    intlResponse.cookies.set('NEXT_LOCALE', detectedLocale, {
+      path: '/',
+      maxAge: 31536000, // 1 year
+      sameSite: 'lax'
+    })
+  }
+  
   return handleAuth(request, intlResponse)
 }
 

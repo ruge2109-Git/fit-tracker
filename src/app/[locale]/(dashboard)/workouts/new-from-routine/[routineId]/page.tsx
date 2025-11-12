@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, TrendingUp } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Accordion } from '@/components/ui/accordion'
 import { SortableExerciseGroup } from '@/components/workouts/sortable-exercise-group'
+import { ExerciseProgressDialog } from '@/components/workouts/exercise-progress-dialog'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { WorkoutRestTimer } from '@/components/workouts/workout-rest-timer'
 import { useAuthStore } from '@/store/auth.store'
@@ -371,7 +372,16 @@ export default function NewWorkoutFromRoutinePage() {
                     value={exerciseId}
                   >
                     <div className="space-y-3 pt-2">
-                      <div className="flex justify-end mb-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <ExerciseProgressDialog
+                          exerciseId={exerciseId}
+                          exerciseName={group.name}
+                        >
+                          <Button variant="outline" size="sm">
+                            <TrendingUp className="h-4 w-4 mr-2" />
+                            {t('viewProgress') || 'View Progress'}
+                          </Button>
+                        </ExerciseProgressDialog>
                         <Button
                           variant="outline"
                           size="sm"

@@ -169,7 +169,21 @@
     "weightKg": "Weight (kg)",
     "weightLbs": "Weight (lbs)",
     "kg": "kg",
-    "lbs": "lbs"
+    "lbs": "lbs",
+    "progress": "Progress",
+    "viewProgress": "View Progress",
+    "exerciseProgressDescription": "View your historical performance and progress",
+    "noExerciseData": "No data available for this exercise yet",
+    "weightProgression": "Weight Progression",
+    "workoutHistory": "Workout History",
+    "maxWeight": "Max Weight",
+    "maxWeightPerWorkout": "Max Weight (kg)",
+    "totalVolume": "Total Volume (kg)",
+    "volume": "Volume (kg)",
+    "total": "Total",
+    "allWorkoutsLoaded": "All workouts loaded",
+    "volumeExplanation": "Volume = Weight × Reps. It represents the total work done in each set.",
+    "volumeTooltip": "Volume = Weight × Reps. Total work done in this set."
   },
   "exercises": {
     "title": "Exercises",

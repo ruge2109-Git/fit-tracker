@@ -165,7 +165,11 @@
     "dateRequired": "La fecha es requerida",
     "durationRequired": "La duración debe ser al menos 1 minuto",
     "progressRestored": "¡Tu progreso del entrenamiento ha sido restaurado!",
-    "returnToActiveRoutine": "Volver a rutina activa"
+    "returnToActiveRoutine": "Volver a rutina activa",
+    "weightKg": "Peso (kg)",
+    "weightLbs": "Peso (lbs)",
+    "kg": "kg",
+    "lbs": "lbs"
   },
   "exercises": {
     "title": "Ejercicios",

@@ -22,6 +22,21 @@ interface WorkoutSet extends SetFormData {
   exerciseName: string
 }
 
+const KG_TO_LBS = 2.20462
+const LBS_TO_KG = 1 / KG_TO_LBS
+
+const convertKgToLbs = (kg: number): number => {
+  return kg * KG_TO_LBS
+}
+
+const convertLbsToKg = (lbs: number): number => {
+  return lbs * LBS_TO_KG
+}
+
+const roundToTwoDecimals = (value: number): number => {
+  return Math.round(value * 100) / 100
+}
+
 export default function NewWorkoutFromRoutinePage() {
   const params = useParams()
   const router = useRouter()
@@ -39,6 +54,7 @@ export default function NewWorkoutFromRoutinePage() {
   const [hasRestoredProgress, setHasRestoredProgress] = useState(false)
   const [isRestoring, setIsRestoring] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [lastLbsInput, setLastLbsInput] = useState<Record<string, number>>({})
 
   useWorkoutPersistence(
     routineId,
@@ -122,8 +138,40 @@ export default function NewWorkoutFromRoutinePage() {
     ))
   }
 
+  const handleWeightChange = (tempId: string, value: number, unit: 'kg' | 'lbs') => {
+    let weightInKg: number
+    if (unit === 'kg') {
+      weightInKg = roundToTwoDecimals(value)
+      delete lastLbsInput[tempId]
+    } else {
+      const roundedLbs = roundToTwoDecimals(value)
+      setLastLbsInput(prev => ({ ...prev, [tempId]: roundedLbs }))
+      weightInKg = convertLbsToKg(roundedLbs)
+      weightInKg = roundToTwoDecimals(weightInKg)
+    }
+    handleUpdateSet(tempId, 'weight', weightInKg)
+  }
+
+  const getWeightInLbs = (weightInKg: number): number => {
+    return convertKgToLbs(weightInKg)
+  }
+
+  const formatWeight = (weight: number): string => {
+    const rounded = roundToTwoDecimals(weight)
+    return rounded.toFixed(2).replace(/\.?0+$/, '')
+  }
+
+  const formatWeightForInput = (weight: number): number => {
+    return roundToTwoDecimals(weight)
+  }
+
   const handleRemoveSet = (tempId: string) => {
     setSets(prev => prev.filter(set => set.tempId !== tempId))
+    setLastLbsInput(prev => {
+      const newInput = { ...prev }
+      delete newInput[tempId]
+      return newInput
+    })
   }
 
   const handleAddSet = (exerciseId: string, exerciseName: string) => {
@@ -256,7 +304,7 @@ export default function NewWorkoutFromRoutinePage() {
                 {group.sets.map((set, index) => (
                   <div key={set.tempId} className="flex items-center gap-4">
                     <span className="text-sm font-medium w-16">Set {index + 1}</span>
-                    <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div className="flex-1 grid grid-cols-3 gap-2">
                       <div>
                         <Input
                           type="number"
@@ -269,12 +317,41 @@ export default function NewWorkoutFromRoutinePage() {
                       <div>
                         <Input
                           type="number"
-                          value={set.weight}
-                          onChange={(e) => handleUpdateSet(set.tempId, 'weight', parseFloat(e.target.value))}
-                          placeholder="Weight (kg)"
+                          value={set.weight ? formatWeightForInput(set.weight) : ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                            if (!isNaN(value)) {
+                              handleWeightChange(set.tempId, value, 'kg')
+                            }
+                          }}
+                          placeholder={t('weightKg') || 'Weight (kg)'}
                           min="0"
-                          step="0.5"
+                          step="0.01"
                         />
+                        <span className="text-xs text-muted-foreground mt-1 block">
+                          {set.weight && set.weight > 0 ? `≈ ${formatWeight(getWeightInLbs(set.weight))} ${t('lbs') || 'lbs'}` : ''}
+                        </span>
+                      </div>
+                      <div>
+                        <Input
+                          type="number"
+                          value={lastLbsInput[set.tempId] !== undefined 
+                            ? formatWeightForInput(lastLbsInput[set.tempId])
+                            : (set.weight && set.weight > 0 ? formatWeightForInput(getWeightInLbs(set.weight)) : '')
+                          }
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                            if (!isNaN(value)) {
+                              handleWeightChange(set.tempId, value, 'lbs')
+                            }
+                          }}
+                          placeholder={t('weightLbs') || 'Weight (lbs)'}
+                          min="0"
+                          step="0.01"
+                        />
+                        <span className="text-xs text-muted-foreground mt-1 block">
+                          {set.weight && set.weight > 0 ? `≈ ${formatWeight(set.weight)} ${t('kg') || 'kg'}` : ''}
+                        </span>
                       </div>
                     </div>
                     <Button

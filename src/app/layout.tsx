@@ -8,7 +8,7 @@ import { APP_NAME, APP_DESCRIPTION } from '@/lib/constants'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://fit-tracker-iota.vercel.app'),
   title: APP_NAME,
   description: APP_DESCRIPTION,
   manifest: '/manifest.json',

@@ -4,10 +4,28 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Accordion } from '@/components/ui/accordion'
+import { SortableExerciseGroup } from '@/components/workouts/sortable-exercise-group'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { WorkoutRestTimer } from '@/components/workouts/workout-rest-timer'
 import { useAuthStore } from '@/store/auth.store'
@@ -20,6 +38,7 @@ import { useTranslations } from 'next-intl'
 interface WorkoutSet extends SetFormData {
   tempId: string
   exerciseName: string
+  completed?: boolean
 }
 
 const KG_TO_LBS = 2.20462
@@ -55,6 +74,14 @@ export default function NewWorkoutFromRoutinePage() {
   const [isRestoring, setIsRestoring] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
   const [lastLbsInput, setLastLbsInput] = useState<Record<string, number>>({})
+  const [exerciseOrder, setExerciseOrder] = useState<string[]>([])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   useWorkoutPersistence(
     routineId,
@@ -69,6 +96,7 @@ export default function NewWorkoutFromRoutinePage() {
         reps: set.reps,
         weight: set.weight,
         rest_time: set.rest_time || 90,
+        completed: set.completed,
       }))
     },
     undefined,
@@ -95,7 +123,11 @@ export default function NewWorkoutFromRoutinePage() {
         setDate(savedProgress.date || new Date().toISOString().split('T')[0])
         setDuration(savedProgress.duration || 60)
         setNotes(savedProgress.notes || '')
-        setSets(savedProgress.sets as WorkoutSet[])
+        const restoredSets = savedProgress.sets as WorkoutSet[]
+        setSets(restoredSets)
+        
+        const order = Array.from(new Set(restoredSets.map(set => set.exercise_id)))
+        setExerciseOrder(order)
         setHasRestoredProgress(true)
         
         setTimeout(() => {
@@ -106,7 +138,9 @@ export default function NewWorkoutFromRoutinePage() {
         toast.success(t('progressRestored') || 'Your workout progress has been restored!')
       } else {
         const initialSets: WorkoutSet[] = []
+        const order: string[] = []
         result.data.exercises?.forEach((routineExercise) => {
+          order.push(routineExercise.exercise_id)
           for (let i = 0; i < routineExercise.target_sets; i++) {
             initialSets.push({
               tempId: `${routineExercise.id}-${i}`,
@@ -115,10 +149,12 @@ export default function NewWorkoutFromRoutinePage() {
               reps: routineExercise.target_reps,
               weight: routineExercise.target_weight || 0,
               rest_time: 90,
+              completed: false,
             })
           }
         })
         setSets(initialSets)
+        setExerciseOrder(order)
         setTimeout(() => {
           setIsRestoring(false)
           setIsInitialized(true)
@@ -135,6 +171,12 @@ export default function NewWorkoutFromRoutinePage() {
   const handleUpdateSet = (tempId: string, field: keyof SetFormData, value: number) => {
     setSets(prev => prev.map(set => 
       set.tempId === tempId ? { ...set, [field]: value } : set
+    ))
+  }
+
+  const handleToggleSetCompleted = (tempId: string) => {
+    setSets(prev => prev.map(set => 
+      set.tempId === tempId ? { ...set, completed: !set.completed } : set
     ))
   }
 
@@ -183,7 +225,12 @@ export default function NewWorkoutFromRoutinePage() {
       reps: lastSet?.reps || 10,
       weight: lastSet?.weight || 0,
       rest_time: 90,
+      completed: false,
     }])
+    
+    if (!exerciseOrder.includes(exerciseId)) {
+      setExerciseOrder(prev => [...prev, exerciseId])
+    }
   }
 
   const handleSave = async () => {
@@ -214,6 +261,20 @@ export default function NewWorkoutFromRoutinePage() {
     )
   }
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) return
+
+    const oldIndex = exerciseOrder.indexOf(active.id as string)
+    const newIndex = exerciseOrder.indexOf(over.id as string)
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newOrder = arrayMove(exerciseOrder, oldIndex, newIndex)
+      setExerciseOrder(newOrder)
+    }
+  }
+
   const exerciseGroups = sets.reduce((acc, set) => {
     if (!acc[set.exercise_id]) {
       acc[set.exercise_id] = {
@@ -224,6 +285,10 @@ export default function NewWorkoutFromRoutinePage() {
     acc[set.exercise_id].sets.push(set)
     return acc
   }, {} as Record<string, { name: string; sets: WorkoutSet[] }>)
+
+  const orderedExerciseIds = exerciseOrder.length > 0 
+    ? exerciseOrder.filter(id => exerciseGroups[id])
+    : Object.keys(exerciseGroups)
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -284,89 +349,116 @@ export default function NewWorkoutFromRoutinePage() {
 
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Exercises</h2>
-        {Object.entries(exerciseGroups).map(([exerciseId, group]) => (
-          <Card key={exerciseId}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{group.name}</CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleAddSet(exerciseId, group.name)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Set
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {group.sets.map((set, index) => (
-                  <div key={set.tempId} className="flex items-center gap-4">
-                    <span className="text-sm font-medium w-16">Set {index + 1}</span>
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <div>
-                        <Input
-                          type="number"
-                          value={set.reps}
-                          onChange={(e) => handleUpdateSet(set.tempId, 'reps', parseInt(e.target.value))}
-                          placeholder="Reps"
-                          min="1"
-                        />
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={orderedExerciseIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <Accordion type="multiple" className="space-y-2">
+              {orderedExerciseIds.map((exerciseId) => {
+                const group = exerciseGroups[exerciseId]
+                if (!group) return null
+
+                return (
+                  <SortableExerciseGroup
+                    key={exerciseId}
+                    id={exerciseId}
+                    exerciseName={group.name}
+                    value={exerciseId}
+                  >
+                    <div className="space-y-3 pt-2">
+                      <div className="flex justify-end mb-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddSet(exerciseId, group.name)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Set
+                        </Button>
                       </div>
-                      <div>
-                        <Input
-                          type="number"
-                          value={set.weight ? formatWeightForInput(set.weight) : ''}
-                          onChange={(e) => {
-                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                            if (!isNaN(value)) {
-                              handleWeightChange(set.tempId, value, 'kg')
-                            }
-                          }}
-                          placeholder={t('weightKg') || 'Weight (kg)'}
-                          min="0"
-                          step="0.01"
-                        />
-                        <span className="text-xs text-muted-foreground mt-1 block">
-                          {set.weight && set.weight > 0 ? `≈ ${formatWeight(getWeightInLbs(set.weight))} ${t('lbs') || 'lbs'}` : ''}
-                        </span>
-                      </div>
-                      <div>
-                        <Input
-                          type="number"
-                          value={lastLbsInput[set.tempId] !== undefined 
-                            ? formatWeightForInput(lastLbsInput[set.tempId])
-                            : (set.weight && set.weight > 0 ? formatWeightForInput(getWeightInLbs(set.weight)) : '')
-                          }
-                          onChange={(e) => {
-                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                            if (!isNaN(value)) {
-                              handleWeightChange(set.tempId, value, 'lbs')
-                            }
-                          }}
-                          placeholder={t('weightLbs') || 'Weight (lbs)'}
-                          min="0"
-                          step="0.01"
-                        />
-                        <span className="text-xs text-muted-foreground mt-1 block">
-                          {set.weight && set.weight > 0 ? `≈ ${formatWeight(set.weight)} ${t('kg') || 'kg'}` : ''}
-                        </span>
-                      </div>
+                      {group.sets.map((set, index) => (
+                        <div key={set.tempId} className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${set.completed ? 'bg-muted/50 border-primary/50' : 'border-border'}`}>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={set.completed || false}
+                              onCheckedChange={() => handleToggleSetCompleted(set.tempId)}
+                              id={`set-${set.tempId}`}
+                            />
+                            <Label htmlFor={`set-${set.tempId}`} className="text-sm font-medium w-16 cursor-pointer">
+                              Set {index + 1}
+                            </Label>
+                          </div>
+                          <div className="flex-1 grid grid-cols-3 gap-2">
+                            <div>
+                              <Input
+                                type="number"
+                                value={set.reps}
+                                onChange={(e) => handleUpdateSet(set.tempId, 'reps', parseInt(e.target.value))}
+                                placeholder="Reps"
+                                min="1"
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                type="number"
+                                value={set.weight ? formatWeightForInput(set.weight) : ''}
+                                onChange={(e) => {
+                                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                                  if (!isNaN(value)) {
+                                    handleWeightChange(set.tempId, value, 'kg')
+                                  }
+                                }}
+                                placeholder={t('weightKg') || 'Weight (kg)'}
+                                min="0"
+                                step="0.01"
+                              />
+                              <span className="text-xs text-muted-foreground mt-1 block">
+                                {set.weight && set.weight > 0 ? `≈ ${formatWeight(getWeightInLbs(set.weight))} ${t('lbs') || 'lbs'}` : ''}
+                              </span>
+                            </div>
+                            <div>
+                              <Input
+                                type="number"
+                                value={lastLbsInput[set.tempId] !== undefined 
+                                  ? formatWeightForInput(lastLbsInput[set.tempId])
+                                  : (set.weight && set.weight > 0 ? formatWeightForInput(getWeightInLbs(set.weight)) : '')
+                                }
+                                onChange={(e) => {
+                                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                                  if (!isNaN(value)) {
+                                    handleWeightChange(set.tempId, value, 'lbs')
+                                  }
+                                }}
+                                placeholder={t('weightLbs') || 'Weight (lbs)'}
+                                min="0"
+                                step="0.01"
+                              />
+                              <span className="text-xs text-muted-foreground mt-1 block">
+                                {set.weight && set.weight > 0 ? `≈ ${formatWeight(set.weight)} ${t('kg') || 'kg'}` : ''}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveSet(set.tempId)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveSet(set.tempId)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  </SortableExerciseGroup>
+                )
+              })}
+            </Accordion>
+          </SortableContext>
+        </DndContext>
       </div>
 
       <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">

@@ -12,6 +12,7 @@ export interface WorkoutProgress {
     reps: number
     weight: number
     rest_time: number
+    completed?: boolean
   }>
   workoutData?: {
     date: string

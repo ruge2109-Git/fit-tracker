@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Accordion } from '@/components/ui/accordion'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { SortableExerciseGroup } from '@/components/workouts/sortable-exercise-group'
 import { ExerciseProgressDialog } from '@/components/workouts/exercise-progress-dialog'
 import { routineRepository } from '@/domain/repositories/routine.repository'
@@ -391,77 +392,95 @@ export default function NewWorkoutFromRoutinePage() {
                           {t('addSet') || 'Add Set'}
                         </Button>
                       </div>
-                      {group.sets.map((set, index) => (
-                        <div key={set.tempId} className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${set.completed ? 'bg-muted/50 border-primary/50' : 'border-border'}`}>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              checked={set.completed || false}
-                              onCheckedChange={() => handleToggleSetCompleted(set.tempId)}
-                              id={`set-${set.tempId}`}
-                            />
-                            <Label htmlFor={`set-${set.tempId}`} className="text-sm font-medium w-16 cursor-pointer">
-                              {t('set') || 'Set'} {index + 1}
-                            </Label>
-                          </div>
-                          <div className="flex-1 grid grid-cols-3 gap-2">
-                            <div>
-                              <Input
-                                type="number"
-                                value={set.reps}
-                                onChange={(e) => handleUpdateSet(set.tempId, 'reps', parseInt(e.target.value))}
-                                placeholder={t('reps') || 'Reps'}
-                                min="1"
-                              />
-                            </div>
-                            <div>
-                              <Input
-                                type="number"
-                                value={set.weight ? formatWeightForInput(set.weight) : ''}
-                                onChange={(e) => {
-                                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                                  if (!isNaN(value)) {
-                                    handleWeightChange(set.tempId, value, 'kg')
-                                  }
-                                }}
-                                placeholder={t('weightKg') || 'Weight (kg)'}
-                                min="0"
-                                step="0.01"
-                              />
-                              <span className="text-xs text-muted-foreground mt-1 block">
-                                {set.weight && set.weight > 0 ? `≈ ${formatWeight(getWeightInLbs(set.weight))} ${t('lbs') || 'lbs'}` : ''}
-                              </span>
-                            </div>
-                            <div>
-                              <Input
-                                type="number"
-                                value={lastLbsInput[set.tempId] !== undefined 
-                                  ? formatWeightForInput(lastLbsInput[set.tempId])
-                                  : (set.weight && set.weight > 0 ? formatWeightForInput(getWeightInLbs(set.weight)) : '')
-                                }
-                                onChange={(e) => {
-                                  const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                                  if (!isNaN(value)) {
-                                    handleWeightChange(set.tempId, value, 'lbs')
-                                  }
-                                }}
-                                placeholder={t('weightLbs') || 'Weight (lbs)'}
-                                min="0"
-                                step="0.01"
-                              />
-                              <span className="text-xs text-muted-foreground mt-1 block">
-                                {set.weight && set.weight > 0 ? `≈ ${formatWeight(set.weight)} ${t('kg') || 'kg'}` : ''}
-                              </span>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveSet(set.tempId)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
+                      <div className="rounded-md border overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-b">
+                              <TableHead className="w-8 sm:w-12 px-1 sm:px-4 py-2 text-xs sm:text-sm"></TableHead>
+                              <TableHead className="w-10 sm:w-16 text-center px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('set') || 'Set'}</TableHead>
+                              <TableHead className="min-w-[60px] sm:min-w-[80px] px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('reps') || 'Reps'}</TableHead>
+                              <TableHead className="min-w-[70px] sm:min-w-[100px] px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('weightKg') || 'Weight (kg)'}</TableHead>
+                              <TableHead className="min-w-[70px] sm:min-w-[100px] px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('weightLbs') || 'Weight (lbs)'}</TableHead>
+                              <TableHead className="w-8 sm:w-12 px-1 sm:px-4 py-2 text-xs sm:text-sm"></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {group.sets.map((set, index) => (
+                              <TableRow 
+                                key={set.tempId} 
+                                className={`border-b ${set.completed ? 'bg-muted/50' : ''}`}
+                              >
+                                <TableCell className="w-8 sm:w-12 px-1 sm:px-4 py-1.5 sm:py-2">
+                                  <Checkbox
+                                    checked={set.completed || false}
+                                    onCheckedChange={() => handleToggleSetCompleted(set.tempId)}
+                                    id={`set-${set.tempId}`}
+                                    className="h-4 w-4 sm:h-5 sm:w-5"
+                                  />
+                                </TableCell>
+                                <TableCell className="w-10 sm:w-16 text-center px-1 sm:px-4 py-1.5 sm:py-2 font-medium text-xs sm:text-sm">
+                                  {index + 1}
+                                </TableCell>
+                                <TableCell className="px-1 sm:px-4 py-1.5 sm:py-2">
+                                  <Input
+                                    id={`reps-${set.tempId}`}
+                                    type="number"
+                                    value={set.reps}
+                                    onChange={(e) => handleUpdateSet(set.tempId, 'reps', parseInt(e.target.value))}
+                                    className="w-full h-8 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
+                                    min="1"
+                                  />
+                                </TableCell>
+                                <TableCell className="px-1 sm:px-4 py-1.5 sm:py-2">
+                                  <Input
+                                    id={`weight-kg-${set.tempId}`}
+                                    type="number"
+                                    value={set.weight ? formatWeightForInput(set.weight) : ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                                      if (!isNaN(value)) {
+                                        handleWeightChange(set.tempId, value, 'kg')
+                                      }
+                                    }}
+                                    className="w-full h-8 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
+                                    min="0"
+                                    step="0.01"
+                                  />
+                                </TableCell>
+                                <TableCell className="px-1 sm:px-4 py-1.5 sm:py-2">
+                                  <Input
+                                    id={`weight-lbs-${set.tempId}`}
+                                    type="number"
+                                    value={lastLbsInput[set.tempId] !== undefined 
+                                      ? formatWeightForInput(lastLbsInput[set.tempId])
+                                      : (set.weight && set.weight > 0 ? formatWeightForInput(getWeightInLbs(set.weight)) : '')
+                                    }
+                                    onChange={(e) => {
+                                      const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                                      if (!isNaN(value)) {
+                                        handleWeightChange(set.tempId, value, 'lbs')
+                                      }
+                                    }}
+                                    className="w-full h-8 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
+                                    min="0"
+                                    step="0.01"
+                                  />
+                                </TableCell>
+                                <TableCell className="w-8 sm:w-12 px-1 sm:px-4 py-1.5 sm:py-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveSet(set.tempId)}
+                                    className="h-7 w-7 sm:h-8 sm:w-8"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   </SortableExerciseGroup>
                 )

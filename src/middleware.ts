@@ -37,6 +37,9 @@ export async function middleware(request: NextRequest) {
       })
     }
     
+    // Fix Permissions-Policy header
+    fixPermissionsPolicyHeader(response)
+    
     // After i18n, check authentication
     return handleAuth(request, response)
   }
@@ -57,7 +60,31 @@ export async function middleware(request: NextRequest) {
     })
   }
   
+  // Fix Permissions-Policy header
+  fixPermissionsPolicyHeader(intlResponse)
+  
   return handleAuth(request, intlResponse)
+}
+
+/**
+ * Fix Permissions-Policy header by removing unsupported 'browsing-topics' feature
+ */
+function fixPermissionsPolicyHeader(response: NextResponse) {
+  const permissionsPolicy = response.headers.get('Permissions-Policy')
+  if (permissionsPolicy && permissionsPolicy.includes('browsing-topics')) {
+    // Remove browsing-topics from the header
+    const cleanedPolicy = permissionsPolicy
+      .split(',')
+      .map(p => p.trim())
+      .filter(p => !p.includes('browsing-topics'))
+      .join(', ')
+    
+    if (cleanedPolicy) {
+      response.headers.set('Permissions-Policy', cleanedPolicy)
+    } else {
+      response.headers.delete('Permissions-Policy')
+    }
+  }
 }
 
 async function handleAuth(request: NextRequest, response: NextResponse) {
@@ -151,6 +178,9 @@ async function handleAuth(request: NextRequest, response: NextResponse) {
     const dashboardUrl = new URL(`/${locale}/dashboard`, request.url)
     return NextResponse.redirect(dashboardUrl)
   }
+
+  // Fix Permissions-Policy header
+  fixPermissionsPolicyHeader(authResponse)
 
   return authResponse
 }

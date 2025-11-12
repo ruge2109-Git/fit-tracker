@@ -400,7 +400,18 @@
     "notSupported": "Las notificaciones del navegador no son compatibles",
     "working": "¡Las notificaciones están funcionando!",
     "enabledSuccess": "¡Notificaciones habilitadas!",
-    "permissionDenied": "Permiso de notificación denegado"
+    "permissionDenied": "Permiso de notificación denegado",
+    "pushNotifications": "Notificaciones Push",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "pushEnabled": "¡Notificaciones push habilitadas!",
+    "pushDisabled": "Notificaciones push deshabilitadas",
+    "pushFailed": "Error al habilitar notificaciones push",
+    "pushDescription": "Habilita notificaciones push para recibir recordatorios incluso cuando la app está cerrada",
+    "enablePush": "Habilitar Notificaciones Push",
+    "disablePush": "Deshabilitar Notificaciones Push",
+    "pushNotSupported": "Las notificaciones push no son compatibles en este navegador",
+    "error": "Ocurrió un error"
   },
   "offline": {
     "offlineMode": "Modo Sin Conexión",

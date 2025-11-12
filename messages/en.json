@@ -400,7 +400,18 @@
     "notSupported": "Browser notifications are not supported",
     "working": "Notifications are working!",
     "enabledSuccess": "Notifications enabled!",
-    "permissionDenied": "Notification permission denied"
+    "permissionDenied": "Notification permission denied",
+    "pushNotifications": "Push Notifications",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pushEnabled": "Push notifications enabled!",
+    "pushDisabled": "Push notifications disabled",
+    "pushFailed": "Failed to enable push notifications",
+    "pushDescription": "Enable push notifications to receive reminders even when the app is closed",
+    "enablePush": "Enable Push Notifications",
+    "disablePush": "Disable Push Notifications",
+    "pushNotSupported": "Push notifications are not supported in this browser",
+    "error": "An error occurred"
   },
   "offline": {
     "offlineMode": "Offline Mode",

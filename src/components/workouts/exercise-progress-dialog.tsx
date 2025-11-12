@@ -136,35 +136,40 @@ export function ExerciseProgressDialog({
         <DialogTrigger asChild>
           {children}
         </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            {exerciseName} - {t('progress') || 'Progress'}
-          </DialogTitle>
-          <DialogDescription>
-            {t('exerciseProgressDescription') || 'View your historical performance and progress'}
-          </DialogDescription>
-        </DialogHeader>
+        <DialogContent className="max-w-4xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <div className="p-4 sm:p-6 pb-4 border-b sticky top-0 bg-background z-10">
+          <DialogHeader className="pb-0">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="truncate">{exerciseName}</span>
+              <span className="hidden sm:inline"> - {t('progress') || 'Progress'}</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              {t('exerciseProgressDescription') || 'View your historical performance and progress'}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        ) : workoutHistory.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              {t('noExerciseData') || 'No data available for this exercise yet'}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6 flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : workoutHistory.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                {t('noExerciseData') || 'No data available for this exercise yet'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4 sm:space-y-6 py-4 sm:py-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t('weightProgression') || 'Weight Progression'}</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">{t('weightProgression') || 'Weight Progression'}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <div className="h-[250px] sm:h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis 
@@ -203,24 +208,25 @@ export function ExerciseProgressDialog({
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="flex-1 flex flex-col overflow-hidden">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+            <Card>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
                   {t('workoutHistory') || 'Workout History'}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                   {t('volumeExplanation') || 'Volume = Weight × Reps. It represents the total work done in each set.'}
                 </p>
               </CardHeader>
-              <CardContent className="flex-1 overflow-hidden">
+              <CardContent className="p-4 sm:p-6 pt-0">
                 <div 
                   ref={scrollContainerRef}
                   onScroll={handleScroll}
-                  className="h-full overflow-y-auto pr-2"
+                  className="max-h-[400px] overflow-y-auto pr-2"
                 >
                   <Accordion type="single" collapsible className="space-y-2">
                     {displayedHistory.map((workout) => {
@@ -302,8 +308,9 @@ export function ExerciseProgressDialog({
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
         </DialogContent>
       </Dialog>
     </TooltipProvider>

@@ -192,3 +192,20 @@ export interface PaginatedResponse<T> {
   per_page: number;
 }
 
+// Push Notification types
+export interface PushSubscription extends BaseEntity {
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  updated_at?: string;
+}
+
+export interface PushSubscriptionData {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}
+

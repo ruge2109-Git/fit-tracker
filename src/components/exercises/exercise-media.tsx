@@ -73,20 +73,12 @@ export function ExerciseMedia({ exercise }: ExerciseMediaProps) {
 
       {/* Image Modal */}
       <Dialog open={showImage} onOpenChange={setShowImage}>
-        <DialogContent className="max-w-4xl p-0">
+        <DialogContent className="max-w-4xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] p-0 max-h-[90vh]">
           <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 z-10"
-              onClick={() => setShowImage(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
             <img
               src={exercise.image_url}
               alt={`${exercise.name} demonstration`}
-              className="w-full h-auto"
+              className="w-full h-auto max-h-[90vh] object-contain"
             />
           </div>
         </DialogContent>
@@ -94,20 +86,12 @@ export function ExerciseMedia({ exercise }: ExerciseMediaProps) {
 
       {/* Video Modal */}
       <Dialog open={showVideo} onOpenChange={setShowVideo}>
-        <DialogContent className="max-w-4xl p-0">
+        <DialogContent className="max-w-4xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] p-0 max-h-[90vh]">
           <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 z-10"
-              onClick={() => setShowVideo(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
             <video
               src={exercise.video_url}
               controls
-              className="w-full h-auto"
+              className="w-full h-auto max-h-[90vh]"
               autoPlay
             >
               Your browser does not support the video tag.

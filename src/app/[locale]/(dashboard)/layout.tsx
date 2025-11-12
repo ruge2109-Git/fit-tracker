@@ -6,12 +6,13 @@
 'use client'
 
 import { Suspense, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from '@/i18n/routing'
 import { NavBar } from '@/components/navigation/nav-bar'
 import { NavigationProgress } from '@/components/navigation/navigation-progress'
 import { PageTransition } from '@/components/ui/page-transition'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { OfflineIndicator } from '@/components/offline/offline-indicator'
+import { ActiveRoutineButton } from '@/components/workouts/active-routine-button'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES } from '@/lib/constants'
 
@@ -21,17 +22,17 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const { user, isLoading, loadUser } = useAuthStore()
 
   useEffect(() => {
     loadUser()
   }, [loadUser])
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push(ROUTES.AUTH)
-    }
-  }, [user, isLoading, router])
+  // Don't redirect here - let the middleware handle it
+  // The middleware already checks authentication on the server side
+  // This layout is only for authenticated users, so if we get here without a user,
+  // the middleware should have already redirected
 
   if (isLoading) {
     return (
@@ -72,6 +73,7 @@ export default function DashboardLayout({
         </Suspense>
       </main>
       <OfflineIndicator />
+      <ActiveRoutineButton />
     </div>
   )
 }

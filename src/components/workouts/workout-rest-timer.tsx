@@ -6,7 +6,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Play, Pause, RotateCcw, Timer, X, Minimize2, Maximize2 } from 'lucide-react'
+import { Play, Pause, RotateCcw, Timer, X, Minimize2, Maximize2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -215,15 +215,14 @@ export function WorkoutRestTimer() {
     )
   }
 
-  // Closed - Show button to open
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <Button
         onClick={() => setIsOpen(true)}
         size="lg"
-        className="rounded-full shadow-lg h-14 w-14"
+        className="rounded-full shadow-lg h-14 w-14 p-0"
       >
-        <Timer className="h-6 w-6" />
+        <Clock className="h-6 w-6 text-primary-foreground" />
       </Button>
     </div>
   )

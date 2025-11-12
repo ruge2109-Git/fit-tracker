@@ -163,7 +163,9 @@
     "durationMinutes": "Duration (minutes)",
     "notesOptional": "Notes (optional)",
     "dateRequired": "Date is required",
-    "durationRequired": "Duration must be at least 1 minute"
+    "durationRequired": "Duration must be at least 1 minute",
+    "progressRestored": "Your workout progress has been restored!",
+    "returnToActiveRoutine": "Return to active routine"
   },
   "exercises": {
     "title": "Exercises",

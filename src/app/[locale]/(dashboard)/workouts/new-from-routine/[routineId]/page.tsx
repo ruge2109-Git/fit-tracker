@@ -1,8 +1,3 @@
-/**
- * Create Workout from Routine
- * Start a new workout using a routine template
- */
-
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -19,6 +14,8 @@ import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
 import { RoutineWithExercises, SetFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
+import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress, WorkoutProgress } from '@/hooks/use-workout-persistence'
+import { useTranslations } from 'next-intl'
 
 interface WorkoutSet extends SetFormData {
   tempId: string
@@ -30,6 +27,7 @@ export default function NewWorkoutFromRoutinePage() {
   const router = useRouter()
   const { user } = useAuthStore()
   const { createWorkout, isLoading: isSaving } = useWorkoutStore()
+  const t = useTranslations('workouts')
   
   const routineId = params.routineId as string
   const [routine, setRoutine] = useState<RoutineWithExercises | null>(null)
@@ -38,6 +36,28 @@ export default function NewWorkoutFromRoutinePage() {
   const [duration, setDuration] = useState(60)
   const [notes, setNotes] = useState('')
   const [sets, setSets] = useState<WorkoutSet[]>([])
+  const [hasRestoredProgress, setHasRestoredProgress] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(true)
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  useWorkoutPersistence(
+    routineId,
+    { 
+      date, 
+      duration, 
+      notes, 
+      sets: sets.map(set => ({
+        tempId: set.tempId,
+        exercise_id: set.exercise_id,
+        exerciseName: set.exerciseName,
+        reps: set.reps,
+        weight: set.weight,
+        rest_time: set.rest_time || 90,
+      }))
+    },
+    undefined,
+    isRestoring || !isInitialized
+  )
 
   useEffect(() => {
     if (routineId) {
@@ -47,28 +67,51 @@ export default function NewWorkoutFromRoutinePage() {
 
   const loadRoutine = async () => {
     setIsLoading(true)
+    setIsRestoring(true)
+    
+    const savedProgress = loadWorkoutProgress(routineId)
     const result = await routineRepository.findById(routineId)
     
     if (result.data) {
       setRoutine(result.data)
-      // Pre-fill sets based on routine exercises
-      const initialSets: WorkoutSet[] = []
-      result.data.exercises?.forEach((routineExercise) => {
-        for (let i = 0; i < routineExercise.target_sets; i++) {
-          initialSets.push({
-            tempId: `${routineExercise.id}-${i}`,
-            exercise_id: routineExercise.exercise_id,
-            exerciseName: routineExercise.exercise.name,
-            reps: routineExercise.target_reps,
-            weight: routineExercise.target_weight || 0,
-            rest_time: 90,
-          })
-        }
-      })
-      setSets(initialSets)
+      
+      if (savedProgress && savedProgress.sets && savedProgress.sets.length > 0) {
+        setDate(savedProgress.date || new Date().toISOString().split('T')[0])
+        setDuration(savedProgress.duration || 60)
+        setNotes(savedProgress.notes || '')
+        setSets(savedProgress.sets as WorkoutSet[])
+        setHasRestoredProgress(true)
+        
+        setTimeout(() => {
+          setIsRestoring(false)
+          setIsInitialized(true)
+        }, 200)
+        
+        toast.success(t('progressRestored') || 'Your workout progress has been restored!')
+      } else {
+        const initialSets: WorkoutSet[] = []
+        result.data.exercises?.forEach((routineExercise) => {
+          for (let i = 0; i < routineExercise.target_sets; i++) {
+            initialSets.push({
+              tempId: `${routineExercise.id}-${i}`,
+              exercise_id: routineExercise.exercise_id,
+              exerciseName: routineExercise.exercise.name,
+              reps: routineExercise.target_reps,
+              weight: routineExercise.target_weight || 0,
+              rest_time: 90,
+            })
+          }
+        })
+        setSets(initialSets)
+        setTimeout(() => {
+          setIsRestoring(false)
+          setIsInitialized(true)
+        }, 200)
+      }
     } else {
       toast.error('Routine not found')
       router.push(ROUTES.ROUTINES)
+      setIsRestoring(false)
     }
     setIsLoading(false)
   }
@@ -109,6 +152,7 @@ export default function NewWorkoutFromRoutinePage() {
     const workoutId = await createWorkout(user.id, workoutData, setsData)
 
     if (workoutId) {
+      clearWorkoutProgress(routineId)
       toast.success('Workout created successfully!')
       router.push(ROUTES.WORKOUT_DETAIL(workoutId))
     }
@@ -122,7 +166,6 @@ export default function NewWorkoutFromRoutinePage() {
     )
   }
 
-  // Group sets by exercise
   const exerciseGroups = sets.reduce((acc, set) => {
     if (!acc[set.exercise_id]) {
       acc[set.exercise_id] = {
@@ -136,7 +179,6 @@ export default function NewWorkoutFromRoutinePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -147,7 +189,6 @@ export default function NewWorkoutFromRoutinePage() {
         </Button>
       </div>
 
-      {/* Routine Info */}
       <Card>
         <CardHeader>
           <CardTitle>Starting from: {routine.name}</CardTitle>
@@ -155,7 +196,6 @@ export default function NewWorkoutFromRoutinePage() {
         </CardHeader>
       </Card>
 
-      {/* Workout Details */}
       <Card>
         <CardHeader>
           <CardTitle>Workout Details</CardTitle>
@@ -194,7 +234,6 @@ export default function NewWorkoutFromRoutinePage() {
         </CardContent>
       </Card>
 
-      {/* Exercise Sets */}
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Exercises</h2>
         {Object.entries(exerciseGroups).map(([exerciseId, group]) => (
@@ -253,12 +292,10 @@ export default function NewWorkoutFromRoutinePage() {
         ))}
       </div>
 
-      {/* Save Button */}
       <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
         {isSaving ? 'Saving Workout...' : 'Save Workout'}
       </Button>
 
-      {/* Floating Rest Timer */}
       <WorkoutRestTimer />
     </div>
   )

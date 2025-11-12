@@ -1,11 +1,6 @@
-/**
- * New Workout Page
- * Create a new workout with exercises and sets
- */
-
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Plus, Trash2 } from 'lucide-react'
@@ -20,11 +15,14 @@ import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
 import { WorkoutFormData, SetFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
+import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress, WorkoutProgress } from '@/hooks/use-workout-persistence'
+import { useTranslations } from 'next-intl'
 
 export default function NewWorkoutPage() {
   const router = useRouter()
   const { user } = useAuthStore()
   const { createWorkout, isLoading } = useWorkoutStore()
+  const t = useTranslations('workouts')
   const [workoutData, setWorkoutData] = useState<WorkoutFormData | null>(null)
   const [sets, setSets] = useState<SetFormData[]>([])
   const [currentSet, setCurrentSet] = useState<Partial<SetFormData>>({
@@ -33,6 +31,59 @@ export default function NewWorkoutPage() {
     weight: 0,
     rest_time: 90,
   })
+
+  useEffect(() => {
+    const savedProgress = loadWorkoutProgress()
+    if (savedProgress) {
+      if (savedProgress.workoutData) {
+        setWorkoutData(savedProgress.workoutData)
+      }
+      if (savedProgress.sets && savedProgress.sets.length > 0) {
+        setSets(savedProgress.sets as SetFormData[])
+        toast.success(t('progressRestored') || 'Your workout progress has been restored!')
+      }
+      if (savedProgress.currentSet) {
+        setCurrentSet(savedProgress.currentSet)
+      }
+    }
+  }, [t])
+
+  useEffect(() => {
+    if (workoutData || sets.length > 0) {
+      const progress: WorkoutProgress = {
+        date: workoutData?.date || new Date().toISOString().split('T')[0],
+        duration: workoutData?.duration || 60,
+        notes: workoutData?.notes || '',
+        sets: sets.map(set => ({
+          exercise_id: set.exercise_id,
+          reps: set.reps,
+          weight: set.weight,
+          rest_time: set.rest_time || 90,
+        })),
+        workoutData: workoutData ? {
+          date: workoutData.date,
+          duration: workoutData.duration,
+          notes: workoutData.notes || '',
+        } : undefined,
+        currentSet: currentSet.exercise_id ? {
+          exercise_id: currentSet.exercise_id,
+          reps: currentSet.reps || 10,
+          weight: currentSet.weight || 0,
+          rest_time: currentSet.rest_time || 90,
+        } : undefined,
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('workout_progress_new', JSON.stringify({
+            ...progress,
+            savedAt: new Date().toISOString(),
+          }))
+        } catch (error) {
+          console.error('Failed to save workout progress:', error)
+        }
+      }
+    }
+  }, [workoutData, sets, currentSet])
 
   const handleWorkoutSubmit = (data: WorkoutFormData) => {
     setWorkoutData(data)
@@ -70,6 +121,7 @@ export default function NewWorkoutPage() {
     const workoutId = await createWorkout(user.id, workoutData, sets)
 
     if (workoutId) {
+      clearWorkoutProgress()
       toast.success('Workout created successfully!')
       router.push(ROUTES.WORKOUT_DETAIL(workoutId))
     } else {
@@ -84,7 +136,6 @@ export default function NewWorkoutPage() {
         <p className="text-muted-foreground">Record your training session</p>
       </div>
 
-      {/* Step 1: Workout Info */}
       <Card>
         <CardHeader>
           <CardTitle>Workout Information</CardTitle>
@@ -97,14 +148,12 @@ export default function NewWorkoutPage() {
         </CardContent>
       </Card>
 
-      {/* Step 2: Add Exercises */}
       {workoutData && (
         <Card>
           <CardHeader>
             <CardTitle>Add Exercises</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Current Set Form */}
             <div className="grid gap-4 md:grid-cols-4">
               <div className="space-y-2">
                 <Label>Exercise</Label>
@@ -154,7 +203,6 @@ export default function NewWorkoutPage() {
               Add Set
             </Button>
 
-            {/* Sets List */}
             {sets.length > 0 && (
               <div className="space-y-2">
                 <h3 className="font-semibold">Sets ({sets.length})</h3>
@@ -180,7 +228,6 @@ export default function NewWorkoutPage() {
               </div>
             )}
 
-            {/* Final Submit */}
             {sets.length > 0 && (
               <Button onClick={handleFinalSubmit} className="w-full" disabled={isLoading}>
                 {isLoading ? 'Creating...' : 'Complete Workout'}
@@ -190,7 +237,6 @@ export default function NewWorkoutPage() {
         </Card>
       )}
 
-      {/* Floating Rest Timer */}
       <WorkoutRestTimer />
     </div>
   )

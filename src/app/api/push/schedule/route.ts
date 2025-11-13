@@ -87,21 +87,44 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
-    const currentDay = now.getDay()
+    // If it's 00:15 UTC, it's 7:15 PM Colombia time of the previous day
+    // So we need to check the previous day for scheduled routines
+    let currentDay = now.getDay()
+    if (currentHour === 0 && currentMinute >= 15 && currentMinute <= 20) {
+      // It's early morning UTC, which is evening of previous day in Colombia
+      // Adjust day to previous day
+      currentDay = currentDay === 0 ? 6 : currentDay - 1
+    }
 
-    // Only send notifications at 6:55 PM Colombia time (23:55 UTC) (allow manual testing with query param)
+    // Only send notifications at 7:15 PM Colombia time (00:15 UTC next day) (allow manual testing with query param)
     const isManualTest = request.nextUrl.searchParams.get('test') === 'true'
-    const expectedHour = 23 // 11:55 PM UTC = 6:55 PM Colombia (UTC-5)
-    const expectedMinute = 55
+    const isCronRequest = request.headers.get('user-agent')?.includes('vercel-cron') || 
+                          request.headers.get('x-vercel-cron') === '1' ||
+                          request.nextUrl.searchParams.get('cron') === 'true'
     
-    if (!isManualTest && (currentHour !== expectedHour || currentMinute !== expectedMinute)) {
+    const expectedHour = 0 // 00:15 UTC = 7:15 PM Colombia (UTC-5) previous day
+    const expectedMinute = 15
+    
+    // Allow execution if it's a cron request OR if it's within 5 minutes of expected time OR if it's a manual test
+    const isWithinTimeWindow = currentHour === expectedHour && 
+                               currentMinute >= expectedMinute && 
+                               currentMinute <= expectedMinute + 5
+    
+    if (!isManualTest && !isCronRequest && !isWithinTimeWindow) {
       return NextResponse.json(
         { 
-          message: `Not the right time for notifications. Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC (${(currentHour - 5 + 24) % 24}:${currentMinute.toString().padStart(2, '0')} Colombia). Expected: ${expectedHour}:${expectedMinute.toString().padStart(2, '0')} UTC (6:55 PM Colombia). Use ?test=true to test manually.`, 
-          sent: 0 
+          message: `Not the right time for notifications. Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC (${(currentHour - 5 + 24) % 24}:${currentMinute.toString().padStart(2, '0')} Colombia). Expected: ${expectedHour.toString().padStart(2, '0')}:${expectedMinute.toString().padStart(2, '0')} UTC (7:15 PM Colombia). Use ?test=true to test manually.`, 
+          sent: 0,
+          isCronRequest: isCronRequest,
+          currentTime: `${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC`
         },
         { status: 200 }
       )
+    }
+    
+    // Log if this is a cron execution
+    if (isCronRequest) {
+      logger.info(`Cron job executed at ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC`, 'PushScheduleAPI')
     }
 
     // Get all active routines with scheduled days (using admin client to bypass RLS)

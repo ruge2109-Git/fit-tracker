@@ -1,10 +1,3 @@
-/**
- * API Route: Schedule Routine Notifications
- * POST /api/push/schedule
- * This endpoint should be called by a cron job to send scheduled notifications
- * Can also be called manually to trigger notification scheduling
- */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
@@ -15,12 +8,10 @@ import { DAYS_OF_WEEK_OPTIONS } from '@/lib/constants'
 import { DayOfWeek } from '@/types'
 import { logger } from '@/lib/logger'
 
-// Configure VAPID keys
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 
 if (vapidPublicKey && vapidPrivateKey) {
-  // Ensure VAPID email is in correct format (mailto:)
   let vapidEmail = process.env.VAPID_EMAIL || 'mailto:jonathan.ruge.77@gmail.com'
   if (!vapidEmail.startsWith('mailto:')) {
     vapidEmail = `mailto:${vapidEmail}`
@@ -37,7 +28,7 @@ function getNextNotificationTime(day: DayOfWeek): Date | null {
   if (dayIndex === -1) return null
 
   const today = new Date()
-  const currentDay = today.getDay() // 0 = Sunday, 1 = Monday, etc.
+  const currentDay = today.getDay()
   const targetDay = dayIndex === 0 ? 0 : dayIndex
 
   let daysUntil = targetDay - currentDay
@@ -64,7 +55,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use service role client to bypass RLS for cron job
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     
@@ -76,7 +66,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create admin client that bypasses RLS
     const supabase = createAdminClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -87,25 +76,16 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
-    // If it's 00:15 UTC, it's 7:15 PM Colombia time of the previous day
-    // So we need to check the previous day for scheduled routines
-    let currentDay = now.getDay()
-    if (currentHour === 0 && currentMinute >= 15 && currentMinute <= 20) {
-      // It's early morning UTC, which is evening of previous day in Colombia
-      // Adjust day to previous day
-      currentDay = currentDay === 0 ? 6 : currentDay - 1
-    }
+    const currentDay = now.getDay()
 
-    // Only send notifications at 7:15 PM Colombia time (00:15 UTC next day) (allow manual testing with query param)
     const isManualTest = request.nextUrl.searchParams.get('test') === 'true'
     const isCronRequest = request.headers.get('user-agent')?.includes('vercel-cron') || 
                           request.headers.get('x-vercel-cron') === '1' ||
                           request.nextUrl.searchParams.get('cron') === 'true'
     
-    const expectedHour = 0 // 00:15 UTC = 7:15 PM Colombia (UTC-5) previous day
-    const expectedMinute = 15
+    const expectedHour = 13
+    const expectedMinute = 0
     
-    // Allow execution if it's a cron request OR if it's within 5 minutes of expected time OR if it's a manual test
     const isWithinTimeWindow = currentHour === expectedHour && 
                                currentMinute >= expectedMinute && 
                                currentMinute <= expectedMinute + 5
@@ -113,7 +93,7 @@ export async function POST(request: NextRequest) {
     if (!isManualTest && !isCronRequest && !isWithinTimeWindow) {
       return NextResponse.json(
         { 
-          message: `Not the right time for notifications. Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC (${(currentHour - 5 + 24) % 24}:${currentMinute.toString().padStart(2, '0')} Colombia). Expected: ${expectedHour.toString().padStart(2, '0')}:${expectedMinute.toString().padStart(2, '0')} UTC (7:15 PM Colombia). Use ?test=true to test manually.`, 
+          message: `Not the right time for notifications. Current time: ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC (${(currentHour - 5 + 24) % 24}:${currentMinute.toString().padStart(2, '0')} Colombia). Expected: ${expectedHour.toString().padStart(2, '0')}:${expectedMinute.toString().padStart(2, '0')} UTC (8:00 AM Colombia). Use ?test=true to test manually.`, 
           sent: 0,
           isCronRequest: isCronRequest,
           currentTime: `${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC`
@@ -122,12 +102,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Log if this is a cron execution
     if (isCronRequest) {
       logger.info(`Cron job executed at ${currentHour}:${currentMinute.toString().padStart(2, '0')} UTC`, 'PushScheduleAPI')
     }
 
-    // Get all active routines with scheduled days (using admin client to bypass RLS)
     const { data: routines, error: routinesError } = await supabase
       .from('routines')
       .select('*')
@@ -152,7 +130,6 @@ export async function POST(request: NextRequest) {
       subscriptionsFound: 0,
     }
 
-    // Process each routine
     for (const routine of routines) {
       diagnostics.routinesProcessed++
       
@@ -160,11 +137,9 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // Check if today is a scheduled day
       const dayIndex = DAYS_OF_WEEK_OPTIONS.findIndex(d => d.value === routine.scheduled_days[0])
       const targetDay = dayIndex === 0 ? 0 : dayIndex
       
-      // Check if any scheduled day matches today
       const isTodayScheduled = routine.scheduled_days.some((day: DayOfWeek) => {
         const dayIdx = DAYS_OF_WEEK_OPTIONS.findIndex(d => d.value === day)
         const tDay = dayIdx === 0 ? 0 : dayIdx
@@ -177,7 +152,6 @@ export async function POST(request: NextRequest) {
 
       diagnostics.routinesWithTodayScheduled++
 
-      // Get user's push subscriptions (using admin client)
       const subscriptionsResult = await pushSubscriptionRepository.findByUserId(routine.user_id, supabase)
 
       if (subscriptionsResult.error || !subscriptionsResult.data || subscriptionsResult.data.length === 0) {
@@ -202,7 +176,6 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Send to all user's subscriptions
       for (const subscription of subscriptionsResult.data) {
         try {
           await webpush.sendNotification(
@@ -217,7 +190,6 @@ export async function POST(request: NextRequest) {
           )
           totalSent++
         } catch (error: any) {
-          // Remove invalid subscriptions
           if (error.statusCode === 410 || error.statusCode === 404) {
             await pushSubscriptionRepository.deleteByEndpoint(routine.user_id, subscription.endpoint, supabase)
             logger.warn(`Removed invalid subscription: ${subscription.endpoint}`, 'PushScheduleAPI')
@@ -250,7 +222,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow GET for manual testing
 export async function GET() {
   return POST(new NextRequest('http://localhost/api/push/schedule', { method: 'POST' }))
 }

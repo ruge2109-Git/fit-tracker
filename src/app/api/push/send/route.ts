@@ -1,21 +1,13 @@
-/**
- * API Route: Send Push Notification
- * POST /api/push/send
- * This endpoint is for internal use or can be called by a cron job
- */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { pushSubscriptionRepository } from '@/domain/repositories/push-subscription.repository'
 import webpush from 'web-push'
 import { logger } from '@/lib/logger'
 
-// Configure VAPID keys
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 
 if (vapidPublicKey && vapidPrivateKey) {
-  // Ensure VAPID email is in correct format (mailto:)
   let vapidEmail = process.env.VAPID_EMAIL || 'mailto:jonathan.ruge.77@gmail.com'
   if (!vapidEmail.startsWith('mailto:')) {
     vapidEmail = `mailto:${vapidEmail}`
@@ -29,7 +21,6 @@ if (vapidPublicKey && vapidPrivateKey) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify this is an internal request (you can add API key authentication here)
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -50,7 +41,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's push subscriptions
     const targetUserId = userId || user.id
     const subscriptionsResult = await pushSubscriptionRepository.findByUserId(targetUserId)
 
@@ -74,7 +64,6 @@ export async function POST(request: NextRequest) {
     let sentCount = 0
     const errors: string[] = []
 
-    // Send to all subscriptions
     for (const subscription of subscriptionsResult.data) {
       try {
         await webpush.sendNotification(
@@ -89,7 +78,6 @@ export async function POST(request: NextRequest) {
         )
         sentCount++
       } catch (error: any) {
-        // If subscription is invalid, remove it
         if (error.statusCode === 410 || error.statusCode === 404) {
           await pushSubscriptionRepository.deleteByEndpoint(targetUserId, subscription.endpoint)
           logger.warn(`Removed invalid subscription: ${subscription.endpoint}`, 'PushSendAPI')

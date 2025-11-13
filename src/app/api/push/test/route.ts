@@ -1,21 +1,13 @@
-/**
- * API Route: Test Push Notification
- * POST /api/push/test
- * Simple endpoint to test push notifications without requiring routines
- */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { pushSubscriptionRepository } from '@/domain/repositories/push-subscription.repository'
 import webpush from 'web-push'
 import { logger } from '@/lib/logger'
 
-// Configure VAPID keys
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 
 if (vapidPublicKey && vapidPrivateKey) {
-  // Ensure VAPID email is in correct format (mailto:)
   let vapidEmail = process.env.VAPID_EMAIL || 'mailto:jonathan.ruge.77@gmail.com'
   if (!vapidEmail.startsWith('mailto:')) {
     vapidEmail = `mailto:${vapidEmail}`
@@ -40,7 +32,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId } = body
 
-    // Get user ID from request or use authenticated user
     let targetUserId = userId
     
     if (!targetUserId) {
@@ -54,7 +45,6 @@ export async function POST(request: NextRequest) {
       targetUserId = user.id
     }
 
-    // Get user's push subscriptions
     const subscriptionsResult = await pushSubscriptionRepository.findByUserId(targetUserId, supabase)
 
     if (subscriptionsResult.error || !subscriptionsResult.data || subscriptionsResult.data.length === 0) {
@@ -83,7 +73,6 @@ export async function POST(request: NextRequest) {
     let sentCount = 0
     const errors: string[] = []
 
-    // Send to all user's subscriptions
     for (const subscription of subscriptionsResult.data) {
       try {
         await webpush.sendNotification(
@@ -98,7 +87,6 @@ export async function POST(request: NextRequest) {
         )
         sentCount++
       } catch (error: any) {
-        // Remove invalid subscriptions
         if (error.statusCode === 410 || error.statusCode === 404) {
           await pushSubscriptionRepository.deleteByEndpoint(targetUserId, subscription.endpoint, supabase)
           logger.warn(`Removed invalid subscription: ${subscription.endpoint}`, 'PushTestAPI')
@@ -131,7 +119,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow GET for manual testing (will use authenticated user)
 export async function GET() {
   const request = new NextRequest('http://localhost/api/push/test', { method: 'POST' })
   return POST(request)

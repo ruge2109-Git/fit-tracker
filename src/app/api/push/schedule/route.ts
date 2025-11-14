@@ -55,8 +55,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl) {
+      return NextResponse.json(
+        { error: 'NEXT_PUBLIC_SUPABASE_URL not configured' },
+        { status: 500 }
+      )
+    }
     
     if (!supabaseServiceKey) {
       logger.error('SUPABASE_SERVICE_ROLE_KEY not configured', new Error('Missing service role key'), 'PushScheduleAPI')

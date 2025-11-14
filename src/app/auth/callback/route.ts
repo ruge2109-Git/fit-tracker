@@ -7,6 +7,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { routing } from '@/i18n/routing'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -17,8 +18,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (error) {
-      console.error('Error exchanging code for session:', error)
-      // Redirect to auth page with error
+      logger.error('Error exchanging code for session', error, 'AuthCallback')
       return NextResponse.redirect(new URL(`/${routing.defaultLocale}/auth`, requestUrl.origin))
     }
   }

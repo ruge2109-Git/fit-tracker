@@ -17,6 +17,7 @@ import { WorkoutFormData, SetFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
 import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress, WorkoutProgress } from '@/hooks/use-workout-persistence'
 import { useTranslations } from 'next-intl'
+import { logger } from '@/lib/logger'
 
 export default function NewWorkoutPage() {
   const router = useRouter()
@@ -79,7 +80,7 @@ export default function NewWorkoutPage() {
             savedAt: new Date().toISOString(),
           }))
         } catch (error) {
-          console.error('Failed to save workout progress:', error)
+          logger.error('Failed to save workout progress', error instanceof Error ? error : new Error(String(error)), 'NewWorkoutPage')
         }
       }
     }

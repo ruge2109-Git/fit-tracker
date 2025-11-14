@@ -62,12 +62,35 @@ export class WorkoutRepository extends BaseRepository<Workout> implements IWorko
     try {
       const { data, error } = await supabase
         .from(this.tableName)
-        .select('*')
+        .select(`
+          *,
+          routine:routines (
+            name
+          )
+        `)
         .eq('user_id', userId)
         .order('date', { ascending: false })
 
-      if (error) return this.handleError(error)
-      return this.success(data as Workout[])
+      if (error) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('user_id', userId)
+          .order('date', { ascending: false })
+
+        if (fallbackError) return this.handleError(fallbackError)
+        
+        const workouts = (fallbackData || []) as Workout[]
+        return this.success(workouts)
+      }
+      
+      const workouts = (data || []).map((workout: any) => ({
+        ...workout,
+        routine_name: workout.routine?.name || null,
+        routine: undefined
+      })) as Workout[]
+      
+      return this.success(workouts)
     } catch (error) {
       return this.handleError(error)
     }

@@ -28,6 +28,7 @@ export interface Workout extends BaseEntity {
   duration: number; // in minutes
   notes?: string;
   routine_id?: string; // Optional reference to routine template
+  routine_name?: string; // Name of the routine (populated via join)
 }
 
 export interface WorkoutWithSets extends Workout {
@@ -71,6 +72,7 @@ export interface Set extends BaseEntity {
   weight: number; // in kg
   rest_time?: number; // in seconds
   set_order: number;
+  completed?: boolean;
 }
 
 export interface SetWithExercise extends Set {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Trash2, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, TrendingUp, Clock } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -194,6 +194,12 @@ export default function NewWorkoutFromRoutinePage() {
       weightInKg = roundToTwoDecimals(weightInKg)
     }
     handleUpdateSet(tempId, 'weight', weightInKg)
+    
+    if (value > 0) {
+      setSets(prev => prev.map(set => 
+        set.tempId === tempId ? { ...set, completed: true } : set
+      ))
+    }
   }
 
   const getWeightInLbs = (weightInKg: number): number => {
@@ -239,7 +245,7 @@ export default function NewWorkoutFromRoutinePage() {
     if (!user) return
 
     if (sets.length === 0) {
-      toast.error('Add at least one set')
+      toast.error(t('atLeastOneSet') || 'Add at least one set')
       return
     }
 
@@ -250,8 +256,12 @@ export default function NewWorkoutFromRoutinePage() {
 
     if (workoutId) {
       clearWorkoutProgress(routineId)
-      toast.success('Workout created successfully!')
-      router.push(ROUTES.WORKOUT_DETAIL(workoutId))
+      toast.success(t('workoutSavedSuccessfully') || 'Workout saved successfully!')
+      setTimeout(() => {
+        router.push(ROUTES.WORKOUT_DETAIL(workoutId))
+      }, 500)
+    } else {
+      toast.error(t('failedToSaveWorkout') || 'Failed to save workout')
     }
   }
 
@@ -307,7 +317,9 @@ export default function NewWorkoutFromRoutinePage() {
       <Card>
         <CardHeader>
           <CardTitle>{t('fromRoutine') || 'Starting from'}: {routine.name}</CardTitle>
-          <CardDescription>{t('adjustSets') || 'Adjust the sets as needed for today\'s workout'}</CardDescription>
+          <CardDescription>
+            {routine.description || t('adjustSets') || 'Adjust the sets as needed for today\'s workout'}
+          </CardDescription>
         </CardHeader>
       </Card>
 
@@ -374,15 +386,23 @@ export default function NewWorkoutFromRoutinePage() {
                   >
                     <div className="space-y-3 pt-2">
                       <div className="flex justify-between items-center mb-2">
-                        <ExerciseProgressDialog
-                          exerciseId={exerciseId}
-                          exerciseName={group.name}
-                        >
-                          <Button variant="outline" size="sm">
-                            <TrendingUp className="h-4 w-4 mr-2" />
-                            {t('viewProgress') || 'View Progress'}
-                          </Button>
-                        </ExerciseProgressDialog>
+                        <div className="flex items-center gap-2">
+                          <ExerciseProgressDialog
+                            exerciseId={exerciseId}
+                            exerciseName={group.name}
+                          >
+                            <Button variant="outline" size="sm">
+                              <TrendingUp className="h-4 w-4 mr-2" />
+                              {t('viewProgress') || 'View Progress'}
+                            </Button>
+                          </ExerciseProgressDialog>
+                          {group.sets.length > 0 && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {t('restTime') || 'Rest'}: {group.sets[0]?.rest_time || 90}s
+                            </div>
+                          )}
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"

@@ -12,32 +12,104 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useTranslations } from 'next-intl'
 
+const STORAGE_KEY = 'workout-rest-timer'
+
+interface TimerState {
+  duration: number
+  timeLeft: number
+  isRunning: boolean
+  isFinished: boolean
+  startTime: number | null
+}
+
 export function WorkoutRestTimer() {
   const t = useTranslations('restTimer')
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
-  const [duration, setDuration] = useState(90) // seconds
+  const [duration, setDuration] = useState(90)
   const [timeLeft, setTimeLeft] = useState(90)
   const [isRunning, setIsRunning] = useState(false)
   const [isFinished, setIsFinished] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const state: TimerState = JSON.parse(saved)
+        if (state.isRunning && state.startTime) {
+          const elapsed = Math.floor((Date.now() - state.startTime) / 1000)
+          const newTimeLeft = Math.max(0, state.timeLeft - elapsed)
+          setTimeLeft(newTimeLeft)
+          setDuration(state.duration)
+          setIsRunning(newTimeLeft > 0)
+          setIsFinished(newTimeLeft === 0)
+          if (newTimeLeft > 0) {
+            startTimeRef.current = Date.now() - (state.timeLeft - newTimeLeft) * 1000
+          }
+        } else {
+          setTimeLeft(state.timeLeft)
+          setDuration(state.duration)
+          setIsFinished(state.isFinished)
+        }
+      } catch (e) {
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isRunning && startTimeRef.current) {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
+        const newTimeLeft = Math.max(0, timeLeft - elapsed)
+        setTimeLeft(newTimeLeft)
+        if (newTimeLeft === 0) {
+          setIsRunning(false)
+          setIsFinished(true)
+          playSound()
+          updateBadge(null)
+        } else {
+          startTimeRef.current = Date.now() - (timeLeft - newTimeLeft) * 1000
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [isRunning, timeLeft])
 
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
+      startTimeRef.current = Date.now() - (duration - timeLeft) * 1000
       intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
+        const now = Date.now()
+        if (startTimeRef.current) {
+          const elapsed = Math.floor((now - startTimeRef.current) / 1000)
+          const newTimeLeft = Math.max(0, duration - elapsed)
+          
+          setTimeLeft(newTimeLeft)
+          updateBadge(newTimeLeft > 0 ? newTimeLeft : null)
+          
+          if (newTimeLeft === 0) {
             setIsRunning(false)
             setIsFinished(true)
             playSound()
-            return 0
+            updateBadge(null)
+            saveState({ duration, timeLeft: 0, isRunning: false, isFinished: true, startTime: null })
+          } else {
+            saveState({ duration, timeLeft: newTimeLeft, isRunning: true, isFinished: false, startTime: startTimeRef.current })
           }
-          return prev - 1
-        })
+        }
       }, 1000)
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      if (!isRunning) {
+        updateBadge(null)
+        saveState({ duration, timeLeft, isRunning: false, isFinished, startTime: null })
       }
     }
 
@@ -46,7 +118,25 @@ export function WorkoutRestTimer() {
         clearInterval(intervalRef.current)
       }
     }
-  }, [isRunning, timeLeft])
+  }, [isRunning, timeLeft, duration, isFinished])
+
+  const saveState = (state: TimerState) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch (e) {
+    }
+  }
+
+  const updateBadge = (seconds: number | null) => {
+    if ('setAppBadge' in navigator && typeof navigator.setAppBadge === 'function') {
+      if (seconds === null) {
+        navigator.setAppBadge(0).catch(() => {})
+      } else {
+        const mins = Math.ceil(seconds / 60)
+        navigator.setAppBadge(mins).catch(() => {})
+      }
+    }
+  }
 
   const playSound = () => {
     const context = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -70,19 +160,28 @@ export function WorkoutRestTimer() {
     if (timeLeft === 0) {
       setTimeLeft(duration)
       setIsFinished(false)
+      startTimeRef.current = null
+    } else if (!startTimeRef.current) {
+      startTimeRef.current = Date.now() - (duration - timeLeft) * 1000
     }
     setIsRunning(true)
     setIsOpen(true)
+    updateBadge(timeLeft)
   }
 
   const handlePause = () => {
     setIsRunning(false)
+    startTimeRef.current = null
+    updateBadge(null)
   }
 
   const handleReset = () => {
     setIsRunning(false)
     setTimeLeft(duration)
     setIsFinished(false)
+    startTimeRef.current = null
+    updateBadge(null)
+    saveState({ duration, timeLeft: duration, isRunning: false, isFinished: false, startTime: null })
   }
 
   const formatTime = (seconds: number) => {
@@ -202,6 +301,9 @@ export function WorkoutRestTimer() {
                     setTimeLeft(preset)
                     setIsRunning(false)
                     setIsFinished(false)
+                    startTimeRef.current = null
+                    updateBadge(null)
+                    saveState({ duration: preset, timeLeft: preset, isRunning: false, isFinished: false, startTime: null })
                   }}
                   disabled={isRunning}
                 >

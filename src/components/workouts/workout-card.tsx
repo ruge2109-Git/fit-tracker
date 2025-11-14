@@ -23,7 +23,7 @@ export function WorkoutCard({ workout, setsCount = 0 }: WorkoutCardProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Dumbbell className="h-5 w-5" />
-            Workout
+            {workout.routine_name || 'Workout'}
           </CardTitle>
           <CardDescription className="flex items-center gap-4 text-sm">
             <span className="flex items-center gap-1">

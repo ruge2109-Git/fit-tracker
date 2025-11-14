@@ -68,9 +68,11 @@ export function WorkoutRestTimer() {
   const [isRunning, setIsRunning] = useState(initialState.isRunning)
   const [isFinished, setIsFinished] = useState(initialState.isFinished)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const notificationIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const startTimeRef = useRef<number | null>(initialState.startTime)
   const durationRef = useRef<number>(initialState.duration)
   const isInitializedRef = useRef(false)
+  const lastNotificationUpdateRef = useRef<number>(0)
 
   useEffect(() => {
     if (isInitializedRef.current) return
@@ -96,12 +98,53 @@ export function WorkoutRestTimer() {
           startTimeRef.current = null
           saveState({ duration: durationRef.current, timeLeft: 0, isRunning: false, isFinished: true, startTime: null })
           showTimerNotification()
+        } else {
+          updateBadge(newTimeLeft)
+        }
+        if (notificationIntervalRef.current) {
+          clearInterval(notificationIntervalRef.current)
+          notificationIntervalRef.current = null
+        }
+      } else if (document.hidden && startTimeRef.current) {
+        if (!notificationIntervalRef.current) {
+          notificationIntervalRef.current = setInterval(() => {
+            if (startTimeRef.current) {
+              const now = Date.now()
+              const elapsed = Math.floor((now - startTimeRef.current) / 1000)
+              const newTimeLeft = Math.max(0, durationRef.current - elapsed)
+              updateBadge(newTimeLeft > 0 ? newTimeLeft : null)
+              if (newTimeLeft === 0) {
+                setIsRunning(false)
+                setIsFinished(true)
+                playSound()
+                updateBadge(null)
+                startTimeRef.current = null
+                saveState({ duration: durationRef.current, timeLeft: 0, isRunning: false, isFinished: true, startTime: null })
+                showTimerNotification()
+                if (notificationIntervalRef.current) {
+                  clearInterval(notificationIntervalRef.current)
+                  notificationIntervalRef.current = null
+                }
+              }
+            }
+          }, 5000)
         }
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    
+    if (document.hidden && startTimeRef.current) {
+      handleVisibilityChange()
+    }
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (notificationIntervalRef.current) {
+        clearInterval(notificationIntervalRef.current)
+        notificationIntervalRef.current = null
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -177,6 +220,10 @@ export function WorkoutRestTimer() {
               clearInterval(intervalRef.current)
               intervalRef.current = null
             }
+            if (notificationIntervalRef.current) {
+              clearInterval(notificationIntervalRef.current)
+              notificationIntervalRef.current = null
+            }
           } else {
             saveState({ duration: durationRef.current, timeLeft: newTimeLeft, isRunning: true, isFinished: false, startTime: startTimeRef.current })
           }
@@ -185,10 +232,25 @@ export function WorkoutRestTimer() {
 
       updateTimer()
       intervalRef.current = setInterval(updateTimer, 1000)
+      
+      if (document.hidden && !notificationIntervalRef.current) {
+        notificationIntervalRef.current = setInterval(() => {
+          if (startTimeRef.current) {
+            const now = Date.now()
+            const elapsed = Math.floor((now - startTimeRef.current) / 1000)
+            const newTimeLeft = Math.max(0, durationRef.current - elapsed)
+            updateBadge(newTimeLeft > 0 ? newTimeLeft : null)
+          }
+        }, 5000)
+      }
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
+      }
+      if (notificationIntervalRef.current) {
+        clearInterval(notificationIntervalRef.current)
+        notificationIntervalRef.current = null
       }
       if (!isRunning && startTimeRef.current === null) {
         updateBadge(null)
@@ -201,6 +263,10 @@ export function WorkoutRestTimer() {
         clearInterval(intervalRef.current)
         intervalRef.current = null
       }
+      if (notificationIntervalRef.current) {
+        clearInterval(notificationIntervalRef.current)
+        notificationIntervalRef.current = null
+      }
     }
   }, [isRunning])
 
@@ -211,6 +277,21 @@ export function WorkoutRestTimer() {
     }
   }
 
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const originalTitleRef = useRef<string>('FitTrackr')
+
+  useEffect(() => {
+    originalTitleRef.current = document.title
+    return () => {
+      document.title = originalTitleRef.current
+    }
+  }, [])
+
   const updateBadge = (seconds: number | null) => {
     if ('setAppBadge' in navigator && typeof navigator.setAppBadge === 'function') {
       if (seconds === null) {
@@ -219,6 +300,31 @@ export function WorkoutRestTimer() {
         const mins = Math.ceil(seconds / 60)
         navigator.setAppBadge(mins).catch(() => {})
       }
+    }
+
+    const now = Date.now()
+    const shouldUpdateNotification = now - lastNotificationUpdateRef.current > 5000
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        if (registration.active) {
+          registration.active.postMessage({
+            type: 'UPDATE_TIMER_BADGE',
+            seconds: seconds,
+            timeString: seconds !== null ? formatTime(seconds) : null,
+            updateNotification: shouldUpdateNotification
+          })
+          if (shouldUpdateNotification) {
+            lastNotificationUpdateRef.current = now
+          }
+        }
+      }).catch(() => {})
+    }
+
+    if (seconds !== null && isRunning) {
+      document.title = `${formatTime(seconds)} - FitTrackr`
+    } else {
+      document.title = originalTitleRef.current
     }
   }
 
@@ -269,11 +375,6 @@ export function WorkoutRestTimer() {
     saveState({ duration, timeLeft: duration, isRunning: false, isFinished: false, startTime: null })
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
 
   const presets = [30, 60, 90, 120, 180]
 

@@ -74,5 +74,30 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting()
   }
+  
+  if (event.data && event.data.type === 'UPDATE_TIMER_BADGE') {
+    const { seconds, timeString, updateNotification } = event.data
+    
+    if (updateNotification !== false && seconds !== null && seconds > 0 && timeString) {
+      const mins = Math.ceil(seconds / 60)
+      self.registration.showNotification('⏱️ ' + timeString, {
+        body: `Descanso: ${mins} minuto${mins !== 1 ? 's' : ''} restante${mins !== 1 ? 's' : ''}`,
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-96x96.png',
+        tag: 'rest-timer-active',
+        requireInteraction: false,
+        silent: true,
+        renotify: true,
+        data: {
+          url: '/',
+          timerActive: true,
+        },
+      }).catch(() => {})
+    } else if (seconds === null || seconds === 0) {
+      self.registration.getNotifications({ tag: 'rest-timer-active' }).then(notifications => {
+        notifications.forEach(notification => notification.close())
+      })
+    }
+  }
 })
 

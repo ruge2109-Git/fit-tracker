@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
+import { logger } from '@/lib/logger'
 
 export interface WorkoutProgress {
   routineId?: string
@@ -45,7 +46,7 @@ export const saveWorkoutProgress = (progress: WorkoutProgress, routineId?: strin
       savedAt: new Date().toISOString(),
     }))
   } catch (error) {
-    console.error('Failed to save workout progress:', error)
+    logger.error('Failed to save workout progress', error instanceof Error ? error : new Error(String(error)), 'WorkoutPersistence')
   }
 }
 
@@ -69,7 +70,7 @@ export const loadWorkoutProgress = (routineId?: string): WorkoutProgress | null 
     
     return progress
   } catch (error) {
-    console.error('Failed to load workout progress:', error)
+    logger.error('Failed to load workout progress', error instanceof Error ? error : new Error(String(error)), 'WorkoutPersistence')
     return null
   }
 }
@@ -81,7 +82,7 @@ export const clearWorkoutProgress = (routineId?: string): void => {
     const key = getStorageKey(routineId)
     localStorage.removeItem(key)
   } catch (error) {
-    console.error('Failed to clear workout progress:', error)
+    logger.error('Failed to clear workout progress', error instanceof Error ? error : new Error(String(error)), 'WorkoutPersistence')
   }
 }
 

@@ -344,5 +344,5 @@ La arquitectura permite:
 
 ---
 
-**Última actualización**: 2024
+**Última actualización**: 14/11/2025
 

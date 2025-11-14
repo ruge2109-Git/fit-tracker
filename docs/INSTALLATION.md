@@ -1,302 +1,345 @@
-# 🚀 FitTrackr Installation Guide
+# 🚀 Guía de Instalación - FitTrackr
 
-Complete step-by-step guide to get FitTrackr running on your machine.
+Guía completa paso a paso para instalar y configurar FitTrackr en tu máquina local.
 
-## Prerequisites
+## 📋 Prerrequisitos
 
-Before you begin, ensure you have:
-- ✅ Node.js 18 or higher installed
-- ✅ npm or yarn package manager
-- ✅ A Supabase account (free tier works perfectly)
-- ✅ Git installed
+Antes de comenzar, asegúrate de tener instalado:
 
-## Step-by-Step Installation
+- ✅ Node.js 18 o superior
+- ✅ npm 9 o superior (o yarn)
+- ✅ Cuenta de Supabase (gratis)
+- ✅ Git instalado
+- ✅ Navegador moderno (Chrome, Firefox, Safari, Edge)
 
-### 1. Clone the Repository
+## Paso 1: Clonar el Repositorio
 
 ```bash
-git clone https://github.com/yourusername/fittrackr.git
-cd fittrackr
+git clone https://github.com/ruge2109-Git/fit-tracker.git
+cd fit-tracker
 ```
 
-### 2. Install Dependencies
+## Paso 2: Instalar Dependencias
 
-Using npm:
 ```bash
 npm install
 ```
 
-Or using yarn:
-```bash
-yarn install
-```
-
-This will install all required packages including:
+Esto instalará todas las dependencias necesarias, incluyendo:
 - Next.js 14
 - React 18
 - TypeScript
 - TailwindCSS
 - Supabase client
 - Zustand
-- React Hook Form
-- Zod
-- Recharts
-- And more...
+- Y todas las demás dependencias
 
-### 3. Create Supabase Project
+## Paso 3: Crear Proyecto en Supabase
 
-1. Go to [supabase.com](https://supabase.com)
-2. Click **"New Project"**
-3. Fill in the details:
-   - **Name**: FitTrackr (or any name you prefer)
-   - **Database Password**: Choose a strong password
-   - **Region**: Select closest to your location
-4. Click **"Create new project"**
-5. Wait 2-3 minutes for the database to be provisioned
+1. Ve a [supabase.com](https://supabase.com)
+2. Haz clic en **"New Project"**
+3. Completa los detalles:
+   - **Name**: FitTrackr (o el nombre que prefieras)
+   - **Database Password**: Elige una contraseña segura (guárdala)
+   - **Region**: Selecciona la más cercana a tu ubicación
+4. Haz clic en **"Create new project"**
+5. Espera 2-3 minutos mientras se provisiona la base de datos
 
-### 4. Get Supabase Credentials
+## Paso 4: Obtener Credenciales de Supabase
 
-Once your project is ready:
+Una vez que tu proyecto esté listo:
 
-1. Go to **Project Settings** (gear icon in sidebar)
-2. Click on **API** in the settings menu
-3. You'll see two important values:
+1. Ve a **Project Settings** (ícono de engranaje en la barra lateral)
+2. Haz clic en **API** en el menú de configuración
+3. Verás dos valores importantes:
    - **Project URL**: `https://xxxxxxxxxxxxx.supabase.co`
-   - **anon/public key**: `eyJhbGc...` (long string)
-4. Keep this tab open, you'll need these values
+   - **anon/public key**: Una cadena larga que comienza con `eyJhbGc...`
+4. Mantén esta pestaña abierta, necesitarás estos valores
 
-**Note**: You'll also need the `service_role` key for some operations, but for this app, the `anon` key is sufficient.
+**Nota**: También necesitarás el `service_role` key más adelante para push notifications, pero por ahora el `anon` key es suficiente.
 
-### 5. Set Up Environment Variables
+## Paso 5: Configurar Variables de Entorno
 
-1. In your project root, create a `.env.local` file:
-   ```bash
-   # Windows
-   type nul > .env.local
-   
-   # Linux/Mac
-   touch .env.local
-   ```
+1. En la raíz del proyecto, crea un archivo `.env.local`:
 
-2. Open `.env.local` in your text editor
+```bash
+# Windows
+type nul > .env.local
 
-3. Add your Supabase credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-actual-anon-key-here
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
+# Linux/Mac
+touch .env.local
+```
 
-**Important**: 
-- Replace `your-project-id` with your actual Supabase project ID
-- Replace `your-actual-anon-key-here` with your actual anon key
-- The `NEXT_PUBLIC_APP_URL` is used for PWA and metadata
+2. Abre `.env.local` en tu editor de texto
 
-### 6. Set Up Database Schema
+3. Agrega tus credenciales de Supabase:
 
-Now we need to create the database tables. You need to run **three migrations** in order:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-#### Migration 1: Initial Schema
+**Importante:**
+- Reemplaza `tu-proyecto-id` con tu ID real de proyecto Supabase
+- Reemplaza `tu-anon-key-aqui` con tu anon key real
+- No agregues comillas alrededor de los valores
+- No dejes espacios alrededor del signo `=`
 
-1. In your Supabase project, go to **SQL Editor** (left sidebar)
-2. Click **"New query"**
-3. Open `supabase/migrations/001_initial_schema.sql` from the project
-4. Copy the entire contents
-5. Paste into the SQL Editor
-6. Click **"Run"** (or press Ctrl/Cmd + Enter)
-7. You should see "Success. No rows returned"
+## Paso 6: Ejecutar Migraciones de Base de Datos
 
-This creates:
-- `workouts` table
-- `exercises` table (with 10 default exercises)
-- `sets` table
-- `routines` table
-- `routine_exercises` table
-- Row-Level Security policies
+Necesitas ejecutar **5 migraciones** en orden. Todas se ejecutan desde el SQL Editor de Supabase.
 
-#### Migration 2: Routine Scheduling
+### Migración 1: Esquema Inicial
 
-1. Click **"New query"** again
-2. Open `supabase/migrations/002_add_routine_scheduling.sql`
-3. Copy and paste the contents
-4. Click **"Run"**
+1. En tu proyecto de Supabase, ve a **SQL Editor** (ícono en la barra lateral izquierda)
+2. Haz clic en **"New query"**
+3. Abre el archivo `supabase/migrations/001_initial_schema.sql` de tu proyecto
+4. Copia todo el contenido
+5. Pégalo en el SQL Editor
+6. Haz clic en **"Run"** (o presiona `Ctrl/Cmd + Enter`)
+7. Deberías ver "Success. No rows returned"
 
-This adds:
-- `frequency` column to `routines` table
-- `scheduled_days` column to `routines` table
-- `routine_id` column to `workouts` table
+Esto crea:
+- Tabla `workouts`
+- Tabla `exercises` (con 10 ejercicios por defecto)
+- Tabla `sets`
+- Tabla `routines`
+- Tabla `routine_exercises`
+- Row-Level Security (RLS) policies
+- Índices para optimización
 
-#### Migration 3: Multimedia Support
+### Migración 2: Programación de Rutinas
 
-1. Click **"New query"** again
-2. Open `supabase/migrations/003_add_multimedia.sql`
-3. Copy and paste the contents
-4. Click **"Run"**
+1. Haz clic en **"New query"** nuevamente
+2. Abre `supabase/migrations/002_add_routine_scheduling.sql`
+3. Copia y pega el contenido
+4. Haz clic en **"Run"**
 
-This adds:
-- `image_url` column to `exercises` table
-- `video_url` column to `exercises` table
-- `demonstration_gif` column to `exercises` table
+Esto agrega:
+- Columna `frequency` a la tabla `routines`
+- Columna `scheduled_days` a la tabla `routines`
+- Columna `routine_id` a la tabla `workouts`
 
-### 7. Verify Database Setup
+### Migración 3: Soporte Multimedia
 
-In Supabase Dashboard:
-1. Go to **Table Editor**
-2. You should see these tables:
-   - ✅ `workouts` - Your workout sessions
-   - ✅ `exercises` - Exercise catalog (with 10 default exercises)
-   - ✅ `sets` - Individual sets in workouts
-   - ✅ `routines` - Workout templates
-   - ✅ `routine_exercises` - Exercises in routines
+1. Haz clic en **"New query"** nuevamente
+2. Abre `supabase/migrations/003_add_multimedia.sql`
+3. Copia y pega el contenido
+4. Haz clic en **"Run"**
 
-3. Verify columns:
-   - `routines` table should have `frequency` and `scheduled_days` columns
-   - `exercises` table should have `image_url`, `video_url`, and `demonstration_gif` columns
-   - `workouts` table should have `routine_id` column
+Esto agrega:
+- Columna `image_url` a la tabla `exercises`
+- Columna `video_url` a la tabla `exercises`
+- Columna `demonstration_gif` a la tabla `exercises`
 
-### 8. Run the Development Server
+### Migración 4: Columna Completed en Sets
+
+1. Haz clic en **"New query"** nuevamente
+2. Abre `supabase/migrations/004_add_completed_to_sets.sql`
+3. Copia y pega el contenido
+4. Haz clic en **"Run"**
+
+Esto agrega:
+- Columna `completed` (BOOLEAN) a la tabla `sets`
+
+### Migración 5: Push Subscriptions (Opcional)
+
+Solo necesaria si vas a usar notificaciones push:
+
+1. Haz clic en **"New query"** nuevamente
+2. Abre `supabase/migrations/create_push_subscriptions_table.sql`
+3. Copia y pega el contenido
+4. Haz clic en **"Run"**
+
+Esto crea:
+- Tabla `push_subscriptions` con RLS habilitado
+
+**Nota**: Puedes hacer esta migración más adelante si no vas a usar push notifications inmediatamente.
+
+## Paso 7: Verificar la Configuración de la Base de Datos
+
+En Supabase Dashboard:
+
+1. Ve a **Table Editor**
+2. Deberías ver estas tablas:
+   - ✅ `workouts`
+   - ✅ `exercises` (con 10 ejercicios por defecto)
+   - ✅ `sets`
+   - ✅ `routines`
+   - ✅ `routine_exercises`
+   - ✅ `push_subscriptions` (si ejecutaste la migración 5)
+
+3. Verifica columnas:
+   - `routines` debe tener `frequency` y `scheduled_days`
+   - `exercises` debe tener `image_url`, `video_url`, `demonstration_gif`
+   - `workouts` debe tener `routine_id`
+   - `sets` debe tener `completed`
+
+## Paso 8: Ejecutar el Servidor de Desarrollo
 
 ```bash
 npm run dev
 ```
 
-You should see:
+Deberías ver:
+
 ```
   ▲ Next.js 14.x.x
   - Local:        http://localhost:3000
   - Ready in Xms
 ```
 
-### 9. Open the App
+## Paso 9: Abrir la Aplicación
 
-1. Open your browser
-2. Navigate to [http://localhost:3000](http://localhost:3000)
-3. You should see the FitTrackr login/signup page
+1. Abre tu navegador
+2. Navega a [http://localhost:3000](http://localhost:3000)
+3. Deberías ver la página de inicio/login de FitTrackr
 
-### 10. Create Your Account
+## Paso 10: Crear tu Cuenta
 
-1. Click on the **"Sign Up"** tab
-2. Fill in:
-   - Name: Your name
-   - Email: Your email
-   - Password: At least 6 characters
-3. Click **"Sign Up"**
-4. You'll be automatically logged in and redirected to the dashboard
+1. Haz clic en la pestaña **"Sign Up"**
+2. Completa el formulario:
+   - **Name**: Tu nombre
+   - **Email**: Tu email
+   - **Password**: Al menos 6 caracteres
+3. Haz clic en **"Sign Up"**
+4. Serás redirigido automáticamente al dashboard después del registro
 
-🎉 **Congratulations!** FitTrackr is now running on your machine!
+🎉 **¡Felicitaciones!** FitTrackr está ahora funcionando en tu máquina.
 
-## Next Steps
+## Próximos Pasos
 
-### Test the App
+### Probar las Características
 
-Try these features:
-1. ✅ Create your first workout
-2. ✅ Add exercises from the catalog
-3. ✅ View your dashboard statistics and charts
-4. ✅ Try the dark mode toggle
-5. ✅ Browse the exercises library
-6. ✅ Create a routine with scheduled days
-7. ✅ Start a workout from a routine
-8. ✅ Use the rest timer during workouts
-9. ✅ Try the 1RM calculator
-10. ✅ Check your profile page
-11. ✅ Test offline mode (disconnect internet)
-12. ✅ Change language (if i18n is configured)
+1. ✅ Crear tu primer workout
+2. ✅ Agregar ejercicios desde el catálogo
+3. ✅ Ver estadísticas en el dashboard
+4. ✅ Probar el modo oscuro
+5. ✅ Explorar la biblioteca de ejercicios
+6. ✅ Crear una rutina con días programados
+7. ✅ Iniciar un workout desde una rutina
+8. ✅ Usar el temporizador de descanso durante workouts
+9. ✅ Probar la calculadora 1RM
+10. ✅ Revisar tu página de perfil
 
-### Enable OAuth (Optional)
+### Configurar OAuth (Opcional)
 
-To enable Google Sign-In:
+Para habilitar Google Sign-In:
 
-1. In Supabase Dashboard, go to **Authentication** → **Providers**
-2. Find **Google** and click **Enable**
-3. Follow the instructions to set up Google OAuth
-4. Add your Google Client ID and Secret
-5. Save the configuration
+1. En Supabase Dashboard, ve a **Authentication** → **Providers**
+2. Encuentra **Google** y haz clic en **Enable**
+3. Sigue las instrucciones para configurar Google OAuth
+4. Agrega tu Google Client ID y Secret
+5. Guarda la configuración
+
+### Configurar Push Notifications (Opcional)
+
+Si quieres usar notificaciones push:
+
+1. Sigue la guía completa en [docs/PUSH_NOTIFICATIONS.md](./PUSH_NOTIFICATIONS.md)
+2. Genera VAPID keys: `npm run generate-vapid-keys`
+3. Agrega las variables de entorno necesarias
+4. Ejecuta la migración de push subscriptions (si no lo hiciste antes)
 
 ## Troubleshooting
 
-### "Module not found" errors
+### Error: "Module not found"
 
 ```bash
-# Delete node_modules and reinstall
+# Eliminar node_modules y reinstalar
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Database connection errors
+### Error: Variables de entorno no funcionan
 
-- ✅ Verify `.env.local` values are correct
-- ✅ Check that your Supabase project is running
-- ✅ Ensure you ran the database migration
+- Reinicia el servidor de desarrollo después de cambiar `.env.local`
+- Asegúrate de que las variables empiecen con `NEXT_PUBLIC_` si se usan en el cliente
+- Verifica que no haya espacios extra o comillas alrededor de los valores
 
-### Authentication not working
+### Error: Conexión a base de datos falla
 
-- ✅ Clear browser cookies and cache
-- ✅ Check browser console for errors
-- ✅ Verify Supabase URL and key in `.env.local`
+- ✅ Verifica que las credenciales en `.env.local` sean correctas
+- ✅ Verifica que tu proyecto de Supabase esté activo
+- ✅ Asegúrate de que ejecutaste las migraciones SQL
 
-### Port 3000 already in use
-
-```bash
-# Use a different port
-npm run dev -- -p 3001
-```
-
-### Build errors
+### Error: Build falla con errores de TypeScript
 
 ```bash
-# Clear Next.js cache
+# Limpiar caché de Next.js
 rm -rf .next
 npm run build
 ```
 
-## Common Issues
+### Error: Autenticación no funciona
 
-### Issue: "Invalid API key"
-**Solution**: Double-check your `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`. Make sure there are no extra spaces or quotes.
+- ✅ Limpia cookies y caché del navegador
+- ✅ Verifica que Supabase Auth esté habilitado en el dashboard
+- ✅ Verifica que las URLs de redirección estén configuradas
 
-### Issue: Tables not found
-**Solution**: Run the SQL migration script again. Make sure all tables were created successfully.
+### Error: Ejercicios no aparecen
 
-### Issue: Login fails
-**Solution**: 
-1. Check browser console for errors
-2. Verify Supabase project is active
-3. Check email confirmation (Supabase sends confirmation emails by default)
+La migración inicial debería haber creado 10 ejercicios por defecto. Verifica:
 
-### Issue: Exercises not showing
-**Solution**: The seed data should have created default exercises. Check the `exercises` table in Supabase Table Editor.
-
-## Development Tips
-
-### Hot Reload
-Next.js supports hot module replacement. Changes to files will automatically refresh the browser.
-
-### TypeScript Errors
-If you see TypeScript errors in your editor, try:
-```bash
-# Restart TypeScript server in VS Code
-Cmd/Ctrl + Shift + P → "TypeScript: Restart TS Server"
+```sql
+-- En Supabase SQL Editor
+SELECT COUNT(*) FROM exercises;
 ```
 
-### Database Changes
-If you modify the database schema:
-1. Make changes in Supabase SQL Editor
-2. Update TypeScript types in `src/types/index.ts`
-3. Update repositories if needed
+Si no hay ejercicios, puedes ejecutar nuevamente la parte de seed data de `001_initial_schema.sql`.
 
-## Getting Help
+### Error: Puerto 3000 ya en uso
 
-- 📖 Check the main [README.md](README.md) for detailed documentation
-- 🐛 [Open an issue](https://github.com/yourusername/fittrackr/issues) on GitHub
-- 💬 Check existing issues for solutions
-- 📧 Contact: your-email@example.com
+```bash
+# Usar un puerto diferente
+npm run dev -- -p 3001
+```
 
-## Production Deployment
+Luego accede a `http://localhost:3001`
 
-Ready to deploy? See [DEPLOYMENT.md](DEPLOYMENT.md) for instructions on deploying to Vercel.
+## Consejos de Desarrollo
+
+### Hot Reload
+
+Next.js soporta hot module replacement. Los cambios en los archivos se reflejarán automáticamente en el navegador.
+
+### Errores de TypeScript
+
+Si ves errores de TypeScript en tu editor:
+
+1. Reinicia el servidor TypeScript en VS Code:
+   - `Cmd/Ctrl + Shift + P` → "TypeScript: Restart TS Server"
+
+### Cambios en la Base de Datos
+
+Si modificas el esquema de la base de datos:
+
+1. Haz los cambios en Supabase SQL Editor
+2. Actualiza los tipos TypeScript en `src/types/index.ts`
+3. Actualiza los repositorios si es necesario
+
+### Variables de Entorno
+
+- Las variables que empiezan con `NEXT_PUBLIC_` están disponibles en el cliente
+- Las variables sin ese prefijo solo están disponibles en el servidor
+- Reinicia el servidor después de cambiar variables de entorno
+
+## Obtener Ayuda
+
+- 📖 Revisa la [documentación principal](./README.md)
+- 🐛 [Abrir un issue](https://github.com/ruge2109-Git/fit-tracker/issues) en GitHub
+- 💬 [Supabase Discord](https://discord.supabase.com)
+- 💬 [Next.js Discussions](https://github.com/vercel/next.js/discussions)
+
+## Despliegue a Producción
+
+Cuando estés listo para desplegar:
+
+1. Revisa la guía completa en [docs/DEPLOYMENT.md](./DEPLOYMENT.md)
+2. Configura variables de entorno en tu plataforma de hosting
+3. Ejecuta las migraciones en tu base de datos de producción
 
 ---
 
 **Happy Coding! 💪**
-

@@ -11,11 +11,11 @@ Aplicación completa de tracking de entrenamientos construida con Next.js 14, Ty
 - 📝 **Rutinas** - Plantillas reutilizables con frecuencia y días programados
 - 📈 **Progreso** - Visualización con gráficas interactivas
 - 📱 **PWA** - Instalable como app nativa, funciona offline
-- 🔔 **Notificaciones** - Recordatorios para rutinas programadas
+- 🔔 **Notificaciones Push** - Recordatorios para rutinas programadas
 - 🎬 **Multimedia** - Soporte para imágenes, videos y GIFs de ejercicios
 - 🌓 **Dark Mode** - Tema claro/oscuro con detección del sistema
 - 🌍 **i18n** - Soporte multi-idioma (Español/Inglés)
-- ⏱️ **Rest Timer** - Temporizador de descanso integrado
+- ⏱️ **Rest Timer** - Temporizador de descanso integrado con notificaciones
 - 🧮 **1RM Calculator** - Calculadora de repetición máxima
 - 🎯 **Drag & Drop** - Reordenar ejercicios en rutinas
 
@@ -46,11 +46,13 @@ npm start
 
 Toda la documentación está disponible en la carpeta [`/docs`](./docs/):
 
-- **[README Principal](./docs/README.md)** - Documentación completa del proyecto
+- **[Índice de Documentación](./docs/README.md)** - Guía completa del proyecto
 - **[Instalación](./docs/INSTALLATION.md)** - Guía de instalación detallada paso a paso
 - **[Despliegue](./docs/DEPLOYMENT.md)** - Instrucciones de despliegue a producción
 - **[Arquitectura](./docs/ARCHITECTURE.md)** - Arquitectura y patrones de diseño
-- **[Pre-commit](./docs/PRE_COMMIT.md)** - Scripts de pre-commit y calidad de código
+- **[Desarrollo](./docs/DEVELOPMENT.md)** - Guía de desarrollo y buenas prácticas
+- **[PWA](./docs/PWA.md)** - Configuración y características de Progressive Web App
+- **[Notificaciones Push](./docs/PUSH_NOTIFICATIONS.md)** - Configuración y uso de notificaciones push
 
 ## 🛠️ Scripts Disponibles
 
@@ -61,6 +63,7 @@ npm run start        # Servidor de producción
 npm run lint         # Linting con ESLint
 npm run type-check   # Verificación de tipos TypeScript
 npm run pre-commit   # Ejecutar checks pre-commit
+npm run generate-vapid-keys  # Generar claves VAPID para push notifications
 ```
 
 ## 🏗️ Arquitectura
@@ -104,29 +107,15 @@ Ver [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) para más detalles.
 - TypeScript strict mode
 - Pre-commit hooks
 
-## 📝 Pre-commit
-
-Antes de cada commit, ejecuta:
-
-```bash
-npm run pre-commit
-```
-
-Esto ejecuta:
-- ✅ Type checking (TypeScript)
-- Linting (ESLint)
-- ⚠️ Detección de console.log (debería usarse logger)
-- ⚠️ Lista de TODOs/FIXMEs
-
-Ver [`docs/PRE_COMMIT.md`](./docs/PRE_COMMIT.md) para configuración de git hooks.
-
 ## 🗄️ Base de Datos
 
-El proyecto requiere **3 migraciones** en orden:
+El proyecto requiere **4 migraciones** en orden:
 
 1. `001_initial_schema.sql` - Esquema inicial (tablas, RLS, seed data)
 2. `002_add_routine_scheduling.sql` - Frecuencia y días programados
 3. `003_add_multimedia.sql` - Soporte multimedia para ejercicios
+4. `004_add_completed_to_sets.sql` - Columna completed para sets
+5. `create_push_subscriptions_table.sql` - Tabla para suscripciones push
 
 Ver [`docs/INSTALLATION.md`](./docs/INSTALLATION.md) para instrucciones detalladas.
 
@@ -135,6 +124,7 @@ Ver [`docs/INSTALLATION.md`](./docs/INSTALLATION.md) para instrucciones detallad
 Despliegue recomendado:
 - **Frontend**: Vercel (gratis)
 - **Backend**: Supabase Cloud (gratis)
+- **Cron Jobs**: Vercel Cron Jobs o GitHub Actions
 
 Ver [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) para guía completa.
 
@@ -158,4 +148,3 @@ Este proyecto está bajo la licencia MIT. Ver [LICENSE](./LICENSE) para más det
 **Built with ❤️ and TypeScript**
 
 Happy training! 💪🏋️‍♂️
-

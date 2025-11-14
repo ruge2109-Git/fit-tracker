@@ -1,13 +1,13 @@
-# 🚀 Deployment Guide - FitTrackr
+# 🚀 Guía de Despliegue - FitTrackr
 
-This guide will help you deploy FitTrackr to production using Vercel (frontend) and Supabase (backend).
+Esta guía te ayudará a desplegar FitTrackr a producción usando Vercel (frontend) y Supabase (backend).
 
-## Prerequisites
+## Prerrequisitos
 
-- ✅ A working FitTrackr installation
-- ✅ GitHub account
-- ✅ Vercel account (free tier is sufficient)
-- ✅ Supabase project already set up
+- ✅ Instalación funcional de FitTrackr
+- ✅ Cuenta de GitHub
+- ✅ Cuenta de Vercel (el tier gratuito es suficiente)
+- ✅ Proyecto de Supabase ya configurado
 
 ## Deployment Architecture
 

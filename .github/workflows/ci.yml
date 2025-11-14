@@ -1,0 +1,60 @@
+name: CI - Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  checks:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run type-check
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Check for console statements
+        run: |
+          echo "🔍 Checking for console statements..."
+          console_files=$(grep -r "console\.\(log\|error\|warn\|debug\)" src/ --exclude-dir=node_modules --exclude="logger.ts" --exclude="*.test.ts" --exclude="*.test.tsx" | grep -v "//.*console" | grep -v "logger.ts" || true)
+          
+          if [ -n "$console_files" ]; then
+            echo "❌ Found console statements. Use logger service instead."
+            echo ""
+            echo "Files with console statements:"
+            echo "$console_files"
+            echo ""
+            echo "Please replace console.log/error/warn/debug with logger service:"
+            echo "  import { logger } from '@/lib/logger'"
+            echo "  logger.info('message')"
+            echo "  logger.error('message', error)"
+            exit 1
+          else
+            echo "✅ No console statements found (excluding logger.ts)"
+          fi
+

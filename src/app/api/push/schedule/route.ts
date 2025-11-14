@@ -124,31 +124,58 @@ export async function POST(request: NextRequest) {
 
     let totalSent = 0
     const errors: string[] = []
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    const todayName = dayNames[currentDay]
+    
     const diagnostics: any = {
       totalRoutines: routines.length,
       routinesProcessed: 0,
       routinesWithTodayScheduled: 0,
       routinesWithSubscriptions: 0,
       subscriptionsFound: 0,
+      currentDay: todayName,
+      currentDayIndex: currentDay,
+      routinesDetails: [] as any[],
     }
 
     for (const routine of routines) {
       diagnostics.routinesProcessed++
+      const routineDetail: any = {
+        routineId: routine.id,
+        routineName: routine.name,
+        userId: routine.user_id,
+        isActive: routine.is_active,
+        scheduledDays: routine.scheduled_days || [],
+        hasScheduledDays: !!(routine.scheduled_days && routine.scheduled_days.length > 0),
+        isTodayScheduled: false,
+        hasSubscriptions: false,
+        subscriptionCount: 0,
+      }
       
       if (!routine.scheduled_days || routine.scheduled_days.length === 0) {
+        diagnostics.routinesDetails.push(routineDetail)
         continue
       }
 
-      const dayIndex = DAYS_OF_WEEK_OPTIONS.findIndex(d => d.value === routine.scheduled_days[0])
-      const targetDay = dayIndex === 0 ? 0 : dayIndex
-      
       const isTodayScheduled = routine.scheduled_days.some((day: DayOfWeek) => {
-        const dayIdx = DAYS_OF_WEEK_OPTIONS.findIndex(d => d.value === day)
-        const tDay = dayIdx === 0 ? 0 : dayIdx
-        return tDay === currentDay
+        const dayName = day.toLowerCase()
+        const dayMap: Record<string, number> = {
+          'sunday': 0,
+          'monday': 1,
+          'tuesday': 2,
+          'wednesday': 3,
+          'thursday': 4,
+          'friday': 5,
+          'saturday': 6,
+        }
+        const dayIndex = dayMap[dayName]
+        return dayIndex === currentDay
       })
 
+      routineDetail.isTodayScheduled = isTodayScheduled
+
       if (!isTodayScheduled) {
+        diagnostics.routinesDetails.push(routineDetail)
         continue
       }
 
@@ -157,11 +184,17 @@ export async function POST(request: NextRequest) {
       const subscriptionsResult = await pushSubscriptionRepository.findByUserId(routine.user_id, supabase)
 
       if (subscriptionsResult.error || !subscriptionsResult.data || subscriptionsResult.data.length === 0) {
+        routineDetail.subscriptionError = subscriptionsResult.error || 'No subscriptions found'
+        diagnostics.routinesDetails.push(routineDetail)
         continue
       }
 
+      routineDetail.hasSubscriptions = true
+      routineDetail.subscriptionCount = subscriptionsResult.data.length
       diagnostics.routinesWithSubscriptions++
       diagnostics.subscriptionsFound += subscriptionsResult.data.length
+      
+      diagnostics.routinesDetails.push(routineDetail)
 
       const payload = JSON.stringify({
         title: 'FitTrackr - Workout Reminder',

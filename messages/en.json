@@ -363,6 +363,7 @@
     "reset": "Reset",
     "restart": "Restart",
     "restComplete": "Rest complete!",
+    "restTimerComplete": "FitTrackr - Rest Complete",
     "presets": "Quick Presets",
     "duration": "Duration (seconds)",
     "timerWillBeep": "Timer will beep when complete"

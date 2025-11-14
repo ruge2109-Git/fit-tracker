@@ -79,8 +79,10 @@ export async function POST(request: NextRequest) {
     const currentDay = now.getDay()
 
     const isManualTest = request.nextUrl.searchParams.get('test') === 'true'
-    const isCronRequest = request.headers.get('user-agent')?.includes('vercel-cron') || 
+    const userAgent = request.headers.get('user-agent') || ''
+    const isCronRequest = userAgent.includes('vercel-cron') || 
                           request.headers.get('x-vercel-cron') === '1' ||
+                          userAgent.includes('GitHub Actions') ||
                           request.nextUrl.searchParams.get('cron') === 'true'
     
     const expectedHour = 13

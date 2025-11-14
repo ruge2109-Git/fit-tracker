@@ -22,71 +22,145 @@ interface TimerState {
   startTime: number | null
 }
 
-export function WorkoutRestTimer() {
-  const t = useTranslations('restTimer')
-  const [isOpen, setIsOpen] = useState(false)
-  const [isMinimized, setIsMinimized] = useState(false)
-  const [duration, setDuration] = useState(90)
-  const [timeLeft, setTimeLeft] = useState(90)
-  const [isRunning, setIsRunning] = useState(false)
-  const [isFinished, setIsFinished] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const startTimeRef = useRef<number | null>(null)
-
-  useEffect(() => {
+const getInitialState = (): { duration: number; timeLeft: number; isRunning: boolean; isFinished: boolean; startTime: number | null } => {
+  try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
-      try {
-        const state: TimerState = JSON.parse(saved)
-        if (state.isRunning && state.startTime) {
-          const elapsed = Math.floor((Date.now() - state.startTime) / 1000)
-          const newTimeLeft = Math.max(0, state.timeLeft - elapsed)
-          setTimeLeft(newTimeLeft)
-          setDuration(state.duration)
-          setIsRunning(newTimeLeft > 0)
-          setIsFinished(newTimeLeft === 0)
-          if (newTimeLeft > 0) {
-            startTimeRef.current = Date.now() - (state.timeLeft - newTimeLeft) * 1000
-          }
-        } else {
-          setTimeLeft(state.timeLeft)
-          setDuration(state.duration)
-          setIsFinished(state.isFinished)
+      const state: TimerState = JSON.parse(saved)
+      if (state.isRunning && state.startTime) {
+        const elapsed = Math.floor((Date.now() - state.startTime) / 1000)
+        const newTimeLeft = Math.max(0, state.duration - elapsed)
+        return {
+          duration: state.duration,
+          timeLeft: newTimeLeft,
+          isRunning: newTimeLeft > 0,
+          isFinished: newTimeLeft === 0,
+          startTime: newTimeLeft > 0 ? state.startTime : null
         }
-      } catch (e) {
+      } else {
+        return {
+          duration: state.duration,
+          timeLeft: state.timeLeft,
+          isRunning: false,
+          isFinished: state.isFinished,
+          startTime: null
+        }
       }
     }
-  }, [])
+  } catch (e) {
+  }
+  return {
+    duration: 90,
+    timeLeft: 90,
+    isRunning: false,
+    isFinished: false,
+    startTime: null
+  }
+}
+
+export function WorkoutRestTimer() {
+  const t = useTranslations('restTimer')
+  const initialState = getInitialState()
+  const [isOpen, setIsOpen] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
+  const [duration, setDuration] = useState(initialState.duration)
+  const [timeLeft, setTimeLeft] = useState(initialState.timeLeft)
+  const [isRunning, setIsRunning] = useState(initialState.isRunning)
+  const [isFinished, setIsFinished] = useState(initialState.isFinished)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = useRef<number | null>(initialState.startTime)
+  const durationRef = useRef<number>(initialState.duration)
+  const isInitializedRef = useRef(false)
+
+  useEffect(() => {
+    if (isInitializedRef.current) return
+    isInitializedRef.current = true
+    
+    if (initialState.isRunning && initialState.startTime) {
+      startTimeRef.current = initialState.startTime
+      setIsRunning(true)
+    }
+  }, [initialState.isRunning, initialState.startTime])
 
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && isRunning && startTimeRef.current) {
+      if (!document.hidden && startTimeRef.current) {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
-        const newTimeLeft = Math.max(0, timeLeft - elapsed)
+        const newTimeLeft = Math.max(0, durationRef.current - elapsed)
         setTimeLeft(newTimeLeft)
         if (newTimeLeft === 0) {
           setIsRunning(false)
           setIsFinished(true)
           playSound()
           updateBadge(null)
-        } else {
-          startTimeRef.current = Date.now() - (timeLeft - newTimeLeft) * 1000
+          startTimeRef.current = null
+          saveState({ duration: durationRef.current, timeLeft: 0, isRunning: false, isFinished: true, startTime: null })
+          showTimerNotification()
         }
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [isRunning, timeLeft])
+  }, [])
 
   useEffect(() => {
-    if (isRunning && timeLeft > 0) {
-      startTimeRef.current = Date.now() - (duration - timeLeft) * 1000
-      intervalRef.current = setInterval(() => {
+    durationRef.current = duration
+  }, [duration])
+
+  const showTimerNotification = async () => {
+    if (!('Notification' in window)) return
+    
+    if (Notification.permission !== 'granted') {
+      try {
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') return
+      } catch (e) {
+        return
+      }
+    }
+
+    const notificationOptions = {
+      body: t('restComplete') || 'Rest time is complete!',
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon-96x96.png',
+      tag: 'rest-timer-complete',
+      requireInteraction: false,
+      vibrate: [200, 100, 200],
+      silent: false,
+      data: {
+        url: window.location.href,
+      },
+    }
+
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.ready
+        await registration.showNotification(
+          t('restTimerComplete') || 'FitTrackr - Rest Complete',
+          notificationOptions
+        )
+      } catch (e) {
+        new Notification(
+          t('restTimerComplete') || 'FitTrackr - Rest Complete',
+          notificationOptions
+        )
+      }
+    } else {
+      new Notification(
+        t('restTimerComplete') || 'FitTrackr - Rest Complete',
+        notificationOptions
+      )
+    }
+  }
+
+  useEffect(() => {
+    if (isRunning && startTimeRef.current) {
+      const updateTimer = () => {
         const now = Date.now()
         if (startTimeRef.current) {
           const elapsed = Math.floor((now - startTimeRef.current) / 1000)
-          const newTimeLeft = Math.max(0, duration - elapsed)
+          const newTimeLeft = Math.max(0, durationRef.current - elapsed)
           
           setTimeLeft(newTimeLeft)
           updateBadge(newTimeLeft > 0 ? newTimeLeft : null)
@@ -96,29 +170,39 @@ export function WorkoutRestTimer() {
             setIsFinished(true)
             playSound()
             updateBadge(null)
-            saveState({ duration, timeLeft: 0, isRunning: false, isFinished: true, startTime: null })
+            startTimeRef.current = null
+            saveState({ duration: durationRef.current, timeLeft: 0, isRunning: false, isFinished: true, startTime: null })
+            showTimerNotification()
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current)
+              intervalRef.current = null
+            }
           } else {
-            saveState({ duration, timeLeft: newTimeLeft, isRunning: true, isFinished: false, startTime: startTimeRef.current })
+            saveState({ duration: durationRef.current, timeLeft: newTimeLeft, isRunning: true, isFinished: false, startTime: startTimeRef.current })
           }
         }
-      }, 1000)
+      }
+
+      updateTimer()
+      intervalRef.current = setInterval(updateTimer, 1000)
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
       }
-      if (!isRunning) {
+      if (!isRunning && startTimeRef.current === null) {
         updateBadge(null)
-        saveState({ duration, timeLeft, isRunning: false, isFinished, startTime: null })
+        saveState({ duration: durationRef.current, timeLeft, isRunning: false, isFinished, startTime: null })
       }
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-  }, [isRunning, timeLeft, duration, isFinished])
+  }, [isRunning])
 
   const saveState = (state: TimerState) => {
     try {
@@ -160,13 +244,14 @@ export function WorkoutRestTimer() {
     if (timeLeft === 0) {
       setTimeLeft(duration)
       setIsFinished(false)
-      startTimeRef.current = null
+      startTimeRef.current = Date.now()
     } else if (!startTimeRef.current) {
-      startTimeRef.current = Date.now() - (duration - timeLeft) * 1000
+      startTimeRef.current = Date.now() - (durationRef.current - timeLeft) * 1000
     }
     setIsRunning(true)
     setIsOpen(true)
     updateBadge(timeLeft)
+    saveState({ duration: durationRef.current, timeLeft, isRunning: true, isFinished: false, startTime: startTimeRef.current })
   }
 
   const handlePause = () => {

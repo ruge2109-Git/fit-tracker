@@ -363,6 +363,7 @@
     "reset": "Reiniciar",
     "restart": "Reiniciar",
     "restComplete": "¡Descanso completo!",
+    "restTimerComplete": "FitTrackr - Descanso Completo",
     "presets": "Presets Rápidos",
     "duration": "Duración (segundos)",
     "timerWillBeep": "El temporizador sonará cuando termine"

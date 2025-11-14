@@ -107,17 +107,18 @@ export function WorkoutRestTimer() {
         }
       } else if (document.hidden && startTimeRef.current) {
         if (!notificationIntervalRef.current) {
+          updateBadge(timeLeft, true)
           notificationIntervalRef.current = setInterval(() => {
             if (startTimeRef.current) {
               const now = Date.now()
               const elapsed = Math.floor((now - startTimeRef.current) / 1000)
               const newTimeLeft = Math.max(0, durationRef.current - elapsed)
-              updateBadge(newTimeLeft > 0 ? newTimeLeft : null)
+              updateBadge(newTimeLeft > 0 ? newTimeLeft : null, true)
               if (newTimeLeft === 0) {
                 setIsRunning(false)
                 setIsFinished(true)
                 playSound()
-                updateBadge(null)
+                updateBadge(null, true)
                 startTimeRef.current = null
                 saveState({ duration: durationRef.current, timeLeft: 0, isRunning: false, isFinished: true, startTime: null })
                 showTimerNotification()
@@ -292,7 +293,7 @@ export function WorkoutRestTimer() {
     }
   }, [])
 
-  const updateBadge = (seconds: number | null) => {
+  const updateBadge = (seconds: number | null, forceNotificationUpdate: boolean = false) => {
     if ('setAppBadge' in navigator && typeof navigator.setAppBadge === 'function') {
       if (seconds === null) {
         navigator.setAppBadge(0).catch(() => {})
@@ -303,22 +304,36 @@ export function WorkoutRestTimer() {
     }
 
     const now = Date.now()
-    const shouldUpdateNotification = now - lastNotificationUpdateRef.current > 5000
+    const isAppInBackground = document.hidden
+    const shouldUpdateNotification = forceNotificationUpdate || (isAppInBackground && now - lastNotificationUpdateRef.current > 5000)
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(registration => {
-        if (registration.active) {
-          registration.active.postMessage({
-            type: 'UPDATE_TIMER_BADGE',
-            seconds: seconds,
-            timeString: seconds !== null ? formatTime(seconds) : null,
-            updateNotification: shouldUpdateNotification
-          })
-          if (shouldUpdateNotification) {
-            lastNotificationUpdateRef.current = now
+      if (isAppInBackground && (shouldUpdateNotification || seconds === null || seconds === 0)) {
+        navigator.serviceWorker.ready.then(registration => {
+          if (registration.active) {
+            registration.active.postMessage({
+              type: 'UPDATE_TIMER_BADGE',
+              seconds: seconds,
+              timeString: seconds !== null ? formatTime(seconds) : null,
+              updateNotification: shouldUpdateNotification
+            })
+            if (shouldUpdateNotification) {
+              lastNotificationUpdateRef.current = now
+            }
           }
-        }
-      }).catch(() => {})
+        }).catch(() => {})
+      } else if (!isAppInBackground && (seconds === null || seconds === 0)) {
+        navigator.serviceWorker.ready.then(registration => {
+          if (registration.active) {
+            registration.active.postMessage({
+              type: 'UPDATE_TIMER_BADGE',
+              seconds: seconds,
+              timeString: null,
+              updateNotification: false
+            })
+          }
+        }).catch(() => {})
+      }
     }
 
     if (seconds !== null && isRunning) {

@@ -8,6 +8,9 @@ import { DAYS_OF_WEEK_OPTIONS } from '@/lib/constants'
 import { DayOfWeek } from '@/types'
 import { logger } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 

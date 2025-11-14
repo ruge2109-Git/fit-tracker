@@ -8,6 +8,9 @@ import { createClient } from '@/lib/supabase/server'
 import { pushSubscriptionRepository } from '@/domain/repositories/push-subscription.repository'
 import { logger } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()

@@ -4,6 +4,9 @@ import { pushSubscriptionRepository } from '@/domain/repositories/push-subscript
 import webpush from 'web-push'
 import { logger } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 

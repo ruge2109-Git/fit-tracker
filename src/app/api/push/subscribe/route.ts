@@ -9,6 +9,9 @@ import { pushSubscriptionRepository } from '@/domain/repositories/push-subscript
 import { PushSubscriptionData } from '@/types'
 import { logger } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()

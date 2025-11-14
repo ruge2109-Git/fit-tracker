@@ -1,0 +1,75 @@
+name: PR Status Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+      - main
+
+jobs:
+  validate-pr:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run type-check
+        continue-on-error: false
+
+      - name: ESLint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Build
+        run: npm run build
+        continue-on-error: false
+
+      - name: Check for console statements
+        run: |
+          echo "🔍 Checking for console statements..."
+          console_files=$(grep -r "console\.\(log\|error\|warn\|debug\)" src/ --exclude-dir=node_modules --exclude="logger.ts" --exclude="*.test.ts" --exclude="*.test.tsx" | grep -v "//.*console" | grep -v "logger.ts" || true)
+          
+          if [ -n "$console_files" ]; then
+            echo "❌ Found console statements. Use logger service instead."
+            echo ""
+            echo "Files with console statements:"
+            echo "$console_files"
+            echo ""
+            echo "Please replace console.log/error/warn/debug with logger service:"
+            echo "  import { logger } from '@/lib/logger'"
+            echo "  logger.info('message')"
+            echo "  logger.error('message', error)"
+            exit 1
+          else
+            echo "✅ No console statements found (excluding logger.ts)"
+          fi
+        continue-on-error: false
+
+      - name: Comment PR on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Los checks de CI han fallado.**\n\nPor favor, corrige los errores antes de hacer merge:\n- Revisa los logs del workflow para ver los detalles\n- Asegúrate de que todos los checks pasen\n\nLos siguientes checks deben pasar:\n- ✅ TypeScript type check\n- ✅ ESLint\n- ✅ Build\n- ✅ Check for console statements'
+            })
+

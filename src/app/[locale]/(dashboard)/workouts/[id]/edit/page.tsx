@@ -91,7 +91,7 @@ export default function EditWorkoutPage() {
       created_at: new Date().toISOString(),
       exercise: {
         id: '',
-        name: 'Select Exercise',
+        name: t('selectExercise') || 'Select Exercise',
         type: 'strength' as any,
         muscle_group: 'chest' as any,
         created_at: new Date().toISOString(),
@@ -159,10 +159,10 @@ export default function EditWorkoutPage() {
 
       await Promise.all(promises)
 
-      toast.success('Workout updated successfully!')
+      toast.success(t('workoutUpdatedSuccessfully') || 'Workout updated successfully!')
       router.push(ROUTES.WORKOUT_DETAIL(workoutId))
     } catch (error) {
-      toast.error('Failed to update workout')
+      toast.error(t('failedToUpdateWorkout') || 'Failed to update workout')
       logger.error('Failed to update workout', error as Error, 'EditWorkoutPage')
     } finally {
       setIsSaving(false)
@@ -180,7 +180,7 @@ export default function EditWorkoutPage() {
   // Group sets by exercise (excluding deleted)
   const activeSets = sets.filter(s => !s.isDeleted)
   const exerciseGroups = activeSets.reduce((acc, set) => {
-    const exerciseName = set.exercise.name || 'Select Exercise'
+    const exerciseName = set.exercise.name || t('selectExercise') || 'Select Exercise'
     if (!acc[exerciseName]) {
       acc[exerciseName] = []
     }

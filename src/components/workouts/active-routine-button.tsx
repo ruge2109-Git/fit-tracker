@@ -6,6 +6,7 @@ import { Dumbbell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { loadWorkoutProgress } from '@/hooks/use-workout-persistence'
 import { useTranslations } from 'next-intl'
+import { ROUTES } from '@/lib/constants'
 
 export function ActiveRoutineButton() {
   const router = useRouter()
@@ -56,13 +57,14 @@ export function ActiveRoutineButton() {
 
   const handleReturnToRoutine = () => {
     if (activeRoutineId) {
-      router.push(`/workouts/new-from-routine/${activeRoutineId}`)
+      router.push(ROUTES.WORKOUT_FROM_ROUTINE(activeRoutineId))
     }
   }
 
   if (!activeRoutineId) return null
 
-  const isOnRoutinePage = pathname.includes(`/workouts/new-from-routine/${activeRoutineId}`)
+  const activeRoutinePath = ROUTES.WORKOUT_FROM_ROUTINE(activeRoutineId)
+  const isOnRoutinePage = pathname.includes(activeRoutinePath)
   if (isOnRoutinePage) return null
 
   return (

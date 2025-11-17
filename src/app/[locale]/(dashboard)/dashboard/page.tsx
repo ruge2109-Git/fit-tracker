@@ -84,8 +84,8 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.name}!</h1>
-        <p className="text-muted-foreground">Here's your fitness overview</p>
+        <h1 className="text-4xl font-bold mb-2">{t('welcomeBack', { name: user?.name || '' })}</h1>
+        <p className="text-muted-foreground">{t('fitnessOverview')}</p>
       </div>
 
       {/* Stats Cards */}
@@ -102,60 +102,60 @@ export default function DashboardPage() {
           <>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Workouts</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('totalWorkouts')}</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats?.total_workouts || 0}</div>
-                <p className="text-xs text-muted-foreground">All time</p>
+                <p className="text-xs text-muted-foreground">{t('allTime')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('totalVolume')}</CardTitle>
                 <Dumbbell className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalVolume.toLocaleString()} kg</div>
-                <p className="text-xs text-muted-foreground">Weight × Reps</p>
+                <p className="text-xs text-muted-foreground">{t('weightTimesReps')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Duration</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('totalDuration')}</CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
                   {formatDuration(stats?.total_duration || 0)}
                 </div>
-                <p className="text-xs text-muted-foreground">Time training</p>
+                <p className="text-xs text-muted-foreground">{t('timeTraining')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Sets</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('totalSets')}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats?.total_sets || 0}</div>
-                <p className="text-xs text-muted-foreground">Sets completed</p>
+                <p className="text-xs text-muted-foreground">{t('setsCompleted')}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg. Duration</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('avgDuration')}</CardTitle>
                 <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
                   {formatDuration(stats?.average_duration || 0)}
                 </div>
-                <p className="text-xs text-muted-foreground">Per workout</p>
+                <p className="text-xs text-muted-foreground">{t('perWorkout')}</p>
               </CardContent>
             </Card>
           </>
@@ -194,12 +194,12 @@ export default function DashboardPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Workouts</CardTitle>
-              <CardDescription>Your last 5 training sessions</CardDescription>
+              <CardTitle>{t('recentWorkouts')}</CardTitle>
+              <CardDescription>{t('last5Sessions')}</CardDescription>
             </div>
             <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)} size="sm">
               <Activity className="h-4 w-4 mr-2" />
-              Log Workout
+              {t('logWorkout')}
             </Button>
           </div>
         </CardHeader>
@@ -207,11 +207,11 @@ export default function DashboardPage() {
           {recentWorkouts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
-                {t('noWorkoutsYet') || 'No workouts yet. Start tracking your fitness journey!'}
+                {t('noWorkoutsYet')}
               </p>
               <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)}>
                 <Activity className="h-4 w-4 mr-2" />
-                {t('logFirstWorkout') || 'Log Your First Workout'}
+                {t('logFirstWorkout')}
               </Button>
             </div>
           ) : (
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-medium">{formatDuration(workout.duration)}</p>
-                    <p className="text-xs text-muted-foreground">Click to view</p>
+                    <p className="text-xs text-muted-foreground">{t('clickToView')}</p>
                   </div>
                 </div>
               ))}

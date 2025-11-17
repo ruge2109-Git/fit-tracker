@@ -98,9 +98,9 @@ export default function RoutinesPage() {
     })
 
     if (result.error) {
-      toast.error('Failed to create routine')
+      toast.error(t('failedToCreate') || 'Failed to create routine')
     } else {
-      toast.success('Routine created successfully!')
+      toast.success(t('routineCreated') || 'Routine created successfully!')
       reset()
       setSelectedDays([])
       setDialogOpen(false)
@@ -130,87 +130,125 @@ export default function RoutinesPage() {
               {t('newRoutine') || 'New Routine'}
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('createRoutine') || 'Create New Routine'}</DialogTitle>
-              <DialogDescription>
-                {t('createRoutineDescription') || 'Create a workout template to quickly start your training sessions'}
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit(handleCreateRoutine)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">{t('routineName') || 'Routine Name'}</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Push Day, Leg Day"
-                  {...register('name')}
-                  disabled={isSubmitting}
-                />
-                {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">{tCommon('description') || 'Description'} ({t('optional') || 'optional'})</Label>
-                <Input
-                  id="description"
-                  placeholder={t('routineDescriptionPlaceholder') || 'Brief description of this routine'}
-                  {...register('description')}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="frequency">{t('frequency') || 'Frequency'}</Label>
-                <Controller
-                  name="frequency"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('howOften') || 'How often?'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROUTINE_FREQUENCY_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-
-              {selectedFrequency === RoutineFrequency.CUSTOM && (
-                <div className="space-y-2">
-                  <Label>{t('scheduledDays') || 'Scheduled Days'}</Label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {DAYS_OF_WEEK_OPTIONS.map((day) => (
-                      <Button
-                        key={day.value}
-                        type="button"
-                        variant={selectedDays.includes(day.value) ? 'default' : 'outline'}
-                        className="text-xs"
-                        onClick={() => toggleDay(day.value)}
-                        disabled={isSubmitting}
-                      >
-                        {day.short}
-                      </Button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('selectScheduledDays') || 'Select the days you plan to do this routine'}
+          <DialogContent className="max-w-3xl p-0 overflow-hidden">
+            <DialogDescription className="sr-only">
+              {t('createRoutineDescription') ||
+                'Create a workout template to quickly start your training sessions'}
+            </DialogDescription>
+            <div className="flex flex-col md:flex-row">
+              <div className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-6 md:w-5/12 space-y-6">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-primary-foreground/80">
+                    {t('newRoutine') || 'New Routine'}
+                  </p>
+                  <h3 className="text-2xl font-semibold mt-2">{t('createRoutine') || 'Create Routine'}</h3>
+                  <p className="text-sm text-primary-foreground/85 mt-2">
+                    {t('createRoutineDescription') ||
+                      'Create a workout template to quickly start your training sessions'}
                   </p>
                 </div>
-              )}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="rounded-lg bg-white/10 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-primary-foreground/70">
+                      {tCommon('routines') || 'Routines'}
+                    </p>
+                    <p className="text-2xl font-semibold">{routines.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/10 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-primary-foreground/70">
+                      {t('scheduledDays') || 'Scheduled Days'}
+                    </p>
+                    <p className="text-2xl font-semibold">{selectedDays.length}</p>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-white/10 px-4 py-3 text-xs leading-relaxed">
+                  <p>{t('createRoutinesDescription') || 'Create routines to quickly start workouts with predefined exercises'}</p>
+                </div>
+              </div>
+              <div className="flex-1 bg-background p-6">
+                <DialogHeader className="pb-4">
+                  <DialogTitle className="text-xl">{t('createRoutine') || 'Create New Routine'}</DialogTitle>
+                  <DialogDescription>
+                    {t('createRoutineDescription') ||
+                      'Create a workout template to quickly start your training sessions'}
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit(handleCreateRoutine)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">{t('routineName') || 'Routine Name'}</Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g., Push Day, Leg Day"
+                      {...register('name')}
+                      disabled={isSubmitting}
+                    />
+                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                  </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? t('creating') || 'Creating...' : t('createRoutine') || 'Create Routine'}
-              </Button>
-            </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">
+                      {tCommon('description') || 'Description'} ({t('optional') || 'optional'})
+                    </Label>
+                    <Input
+                      id="description"
+                      placeholder={t('routineDescriptionPlaceholder') || 'Brief description of this routine'}
+                      {...register('description')}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="frequency">{t('frequency') || 'Frequency'}</Label>
+                    <Controller
+                      name="frequency"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('howOften') || 'How often?'} />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-56">
+                            {ROUTINE_FREQUENCY_OPTIONS.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
+                  {selectedFrequency === RoutineFrequency.CUSTOM && (
+                    <div className="space-y-2">
+                      <Label>{t('scheduledDays') || 'Scheduled Days'}</Label>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {DAYS_OF_WEEK_OPTIONS.map((day) => (
+                          <Button
+                            key={day.value}
+                            type="button"
+                            variant={selectedDays.includes(day.value) ? 'default' : 'outline'}
+                            size="sm"
+                            className="justify-center text-xs font-semibold"
+                            onClick={() => toggleDay(day.value)}
+                            disabled={isSubmitting}
+                          >
+                            {day.short}
+                          </Button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t('selectScheduledDays') || 'Select the days you plan to do this routine'}
+                      </p>
+                    </div>
+                  )}
+
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? t('creating') || 'Creating...' : t('createRoutine') || 'Create Routine'}
+                  </Button>
+                </form>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -236,13 +274,52 @@ export default function RoutinesPage() {
                 {t('createFirst') || 'Create Your First Routine'}
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('createRoutine') || 'Create New Routine'}</DialogTitle>
-                <DialogDescription>
-                  {t('createRoutineDescription') || 'Create a workout template to quickly start your training sessions'}
-                </DialogDescription>
-              </DialogHeader>
+            <DialogContent className="max-w-3xl p-0 overflow-hidden">
+              <DialogDescription className="sr-only">
+                {t('createRoutineDescription') ||
+                  'Create a workout template to quickly start your training sessions'}
+              </DialogDescription>
+              <div className="flex flex-col md:flex-row">
+                <div className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-6 md:w-5/12 space-y-6">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-primary-foreground/80">
+                      {t('newRoutine') || 'New Routine'}
+                    </p>
+                    <h3 className="text-2xl font-semibold mt-2">{t('createRoutine') || 'Create Routine'}</h3>
+                    <p className="text-sm text-primary-foreground/85 mt-2">
+                      {t('createRoutineDescription') ||
+                        'Create a workout template to quickly start your training sessions'}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="rounded-lg bg-white/10 px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-primary-foreground/70">
+                        {tCommon('routines') || 'Routines'}
+                      </p>
+                      <p className="text-2xl font-semibold">{routines.length}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/10 px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-primary-foreground/70">
+                        {t('scheduledDays') || 'Scheduled Days'}
+                      </p>
+                      <p className="text-2xl font-semibold">{selectedDays.length}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg bg-white/10 px-4 py-3 text-xs leading-relaxed">
+                    <p>
+                      {t('createRoutinesDescription') ||
+                        'Create routines to quickly start workouts with predefined exercises'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-1 bg-background p-6">
+                  <DialogHeader className="pb-4">
+                    <DialogTitle className="text-xl">{t('createRoutine') || 'Create New Routine'}</DialogTitle>
+                    <DialogDescription>
+                      {t('createRoutineDescription') ||
+                        'Create a workout template to quickly start your training sessions'}
+                    </DialogDescription>
+                  </DialogHeader>
 
                   <form onSubmit={handleSubmit(handleCreateRoutine)} className="space-y-4">
                     <div className="space-y-2">
@@ -253,13 +330,13 @@ export default function RoutinesPage() {
                         {...register('name')}
                         disabled={isSubmitting}
                       />
-                      {errors.name && (
-                        <p className="text-sm text-destructive">{errors.name.message}</p>
-                      )}
+                      {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="description-empty">{tCommon('description') || 'Description'} ({t('optional') || 'optional'})</Label>
+                      <Label htmlFor="description-empty">
+                        {tCommon('description') || 'Description'} ({t('optional') || 'optional'})
+                      </Label>
                       <Input
                         id="description-empty"
                         placeholder={t('routineDescriptionPlaceholder') || 'Brief description of this routine'}
@@ -278,7 +355,7 @@ export default function RoutinesPage() {
                             <SelectTrigger>
                               <SelectValue placeholder={t('howOften') || 'How often?'} />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-56">
                               {ROUTINE_FREQUENCY_OPTIONS.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
@@ -293,13 +370,14 @@ export default function RoutinesPage() {
                     {selectedFrequency === RoutineFrequency.CUSTOM && (
                       <div className="space-y-2">
                         <Label>{t('scheduledDays') || 'Scheduled Days'}</Label>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                           {DAYS_OF_WEEK_OPTIONS.map((day) => (
                             <Button
                               key={day.value}
                               type="button"
                               variant={selectedDays.includes(day.value) ? 'default' : 'outline'}
-                              className="text-xs"
+                              size="sm"
+                              className="justify-center text-xs font-semibold"
                               onClick={() => toggleDay(day.value)}
                               disabled={isSubmitting}
                             >
@@ -317,6 +395,8 @@ export default function RoutinesPage() {
                       {isSubmitting ? t('creating') || 'Creating...' : t('createRoutine') || 'Create Routine'}
                     </Button>
                   </form>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

@@ -98,25 +98,43 @@ export default function WorkoutDetailPage() {
   }, {} as Record<string, typeof currentWorkout.sets>)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => router.back()}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <Button variant="ghost" onClick={() => router.back()} className="w-full sm:w-auto">
           <ArrowLeft className="h-4 w-4 mr-2" />
           {tCommon('back') || 'Back'}
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDuplicate} disabled={isDuplicating}>
-            <Copy className="h-4 w-4 mr-2" />
-            {isDuplicating ? t('duplicating') || 'Duplicating...' : t('duplicate') || 'Duplicate'}
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+          <Button 
+            variant="outline" 
+            onClick={handleDuplicate} 
+            disabled={isDuplicating}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
+            <Copy className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">
+              {isDuplicating ? t('duplicating') || 'Duplicating...' : t('duplicate') || 'Duplicate'}
+            </span>
           </Button>
-          <Button variant="outline" onClick={() => router.push(ROUTES.WORKOUT_EDIT(workoutId))}>
-            <Edit className="h-4 w-4 mr-2" />
-            {tCommon('edit') || 'Edit'}
+          <Button 
+            variant="outline" 
+            onClick={() => router.push(ROUTES.WORKOUT_EDIT(workoutId))}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{tCommon('edit') || 'Edit'}</span>
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            {tCommon('delete') || 'Delete'}
+          <Button 
+            variant="destructive" 
+            onClick={handleDelete}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
+            <Trash2 className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{tCommon('delete') || 'Delete'}</span>
           </Button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
 import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
+import { useTranslations } from 'next-intl'
 
 interface SortableExerciseGroupProps {
   id: string
@@ -18,6 +19,7 @@ export function SortableExerciseGroup({
   children,
   value,
 }: SortableExerciseGroupProps) {
+  const t = useTranslations('common')
   const {
     attributes,
     listeners,
@@ -41,10 +43,12 @@ export function SortableExerciseGroup({
             <div
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Drag to reorder"
+              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors touch-manipulation -ml-1 p-1"
+              aria-label={t('dragToReorder')}
+              style={{ touchAction: 'none' }}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
             >
               <GripVertical className="h-5 w-5" />
             </div>

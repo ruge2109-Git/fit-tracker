@@ -5,6 +5,28 @@
 
 import { ExerciseType, MuscleGroup, RoutineFrequency, DayOfWeek } from '@/types'
 
+// Helper function to get translated exercise type options
+// This should be used in components with useTranslations
+export const getExerciseTypeOptions = (t: (key: string) => string) => [
+  { value: ExerciseType.STRENGTH, label: t('strength') },
+  { value: ExerciseType.CARDIO, label: t('cardio') },
+  { value: ExerciseType.MOBILITY, label: t('mobility') },
+  { value: ExerciseType.FLEXIBILITY, label: t('flexibility') },
+] as const
+
+// Helper function to get translated muscle group options
+// This should be used in components with useTranslations
+export const getMuscleGroupOptions = (t: (key: string) => string) => [
+  { value: MuscleGroup.CHEST, label: t('chest') },
+  { value: MuscleGroup.BACK, label: t('back') },
+  { value: MuscleGroup.LEGS, label: t('legs') },
+  { value: MuscleGroup.SHOULDERS, label: t('shoulders') },
+  { value: MuscleGroup.ARMS, label: t('arms') },
+  { value: MuscleGroup.CORE, label: t('core') },
+  { value: MuscleGroup.FULL_BODY, label: t('fullBody') },
+  { value: MuscleGroup.CARDIO, label: t('cardio') },
+] as const
+
 export const APP_NAME = 'FitTrackr'
 export const APP_DESCRIPTION = 'Track your workouts, analyze your progress, achieve your goals'
 
@@ -18,6 +40,7 @@ export const ROUTES = {
   WORKOUTS: '/workouts',
   WORKOUT_DETAIL: (id: string) => `/workouts/${id}`,
   WORKOUT_EDIT: (id: string) => `/workouts/${id}/edit`,
+  WORKOUT_FROM_ROUTINE: (id: string) => `/workouts/new-from-routine/${id}`,
   NEW_WORKOUT: '/workouts/new',
   EXERCISES: '/exercises',
   EXERCISE_STATS: (id: string) => `/exercises/${id}/stats`,

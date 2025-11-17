@@ -88,12 +88,12 @@ export default function NewWorkoutPage() {
 
   const handleWorkoutSubmit = (data: WorkoutFormData) => {
     setWorkoutData(data)
-    toast.success('Workout info saved. Now add exercises!')
+    toast.success(t('workoutInfoSaved') || 'Workout info saved. Now add exercises!')
   }
 
   const handleAddSet = () => {
     if (!currentSet.exercise_id) {
-      toast.error('Please select an exercise')
+      toast.error(t('pleaseSelectExercise') || 'Please select an exercise')
       return
     }
 
@@ -104,7 +104,7 @@ export default function NewWorkoutPage() {
       weight: 0,
       rest_time: 90,
     })
-    toast.success('Set added!')
+    toast.success(t('setAdded') || 'Set added!')
   }
 
   const handleRemoveSet = (index: number) => {
@@ -115,7 +115,7 @@ export default function NewWorkoutPage() {
     if (!user || !workoutData) return
 
     if (sets.length === 0) {
-      toast.error('Add at least one set')
+      toast.error(t('addAtLeastOneSet') || 'Add at least one set')
       return
     }
 
@@ -123,23 +123,25 @@ export default function NewWorkoutPage() {
 
     if (workoutId) {
       clearWorkoutProgress()
-      toast.success('Workout created successfully!')
+      toast.success(t('workoutCreatedSuccessfully') || 'Workout created successfully!')
       router.push(ROUTES.WORKOUT_DETAIL(workoutId))
     } else {
-      toast.error('Failed to create workout')
+      toast.error(t('failedToCreateWorkout') || 'Failed to create workout')
     }
   }
 
+  const tCommon = useTranslations('common')
+  
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">New Workout</h1>
-        <p className="text-muted-foreground">Record your training session</p>
+        <h1 className="text-3xl font-bold mb-2">{t('newWorkout') || 'New Workout'}</h1>
+        <p className="text-muted-foreground">{t('recordSession') || 'Record your training session'}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Workout Information</CardTitle>
+          <CardTitle>{t('workoutInformation') || 'Workout Information'}</CardTitle>
         </CardHeader>
         <CardContent>
           <WorkoutForm

@@ -15,6 +15,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -25,7 +26,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { ArrowLeft, Plus, Trash2, Dumbbell, Edit, Copy } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Dumbbell, Edit, Copy, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -36,8 +37,10 @@ import { Label } from '@/components/ui/label'
 import { ExerciseSelect } from '@/components/exercises/exercise-select'
 import { SortableExerciseItem } from '@/components/routines/sortable-exercise-item'
 import { routineRepository } from '@/domain/repositories/routine.repository'
-import { RoutineWithExercises } from '@/types'
-import { ROUTES, ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS } from '@/lib/constants'
+import { RoutineWithExercises, ExerciseFormData } from '@/types'
+import { ROUTES, ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS, getExerciseTypeOptions, getMuscleGroupOptions } from '@/lib/constants'
+import { useExerciseStore } from '@/store/exercise.store'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const addExerciseSchema = z.object({
   exercise_id: z.string().min(1, 'Please select an exercise'),
@@ -46,24 +49,50 @@ const addExerciseSchema = z.object({
   target_weight: z.coerce.number().min(0, 'Weight cannot be negative').optional(),
 })
 
+const createExerciseSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  type: z.string(),
+  muscle_group: z.string(),
+  description: z.string().optional(),
+})
+
 type AddExerciseFormData = z.infer<typeof addExerciseSchema>
+type CreateExerciseFormData = z.infer<typeof createExerciseSchema>
 
 export default function RoutineDetailPage() {
   const params = useParams()
   const router = useRouter()
   const t = useTranslations('routines')
   const tCommon = useTranslations('common')
+  const tExerciseTypes = useTranslations('exerciseTypes')
+  const tMuscleGroups = useTranslations('muscleGroups')
+  
+  const exerciseTypeOptions = getExerciseTypeOptions(tExerciseTypes)
+  const muscleGroupOptions = getMuscleGroupOptions(tMuscleGroups)
   const [routine, setRoutine] = useState<RoutineWithExercises | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDuplicating, setIsDuplicating] = useState(false)
   const [isReordering, setIsReordering] = useState(false)
+  const [showCreateExercise, setShowCreateExercise] = useState(false)
+  const [isCreatingExercise, setIsCreatingExercise] = useState(false)
   const routineId = params.id as string
+  const { createExercise, loadExercises } = useExerciseStore()
 
-  // Drag and drop sensors
+  // Drag and drop sensors - optimized for mobile
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -83,6 +112,16 @@ export default function RoutineDetailPage() {
       target_reps: 10,
       target_weight: 0,
     },
+  })
+
+  const {
+    register: registerCreate,
+    handleSubmit: handleSubmitCreate,
+    setValue: setValueCreate,
+    formState: { errors: errorsCreate },
+    reset: resetCreate,
+  } = useForm<CreateExerciseFormData>({
+    resolver: zodResolver(createExerciseSchema),
   })
 
   const selectedExerciseId = watch('exercise_id')
@@ -173,6 +212,35 @@ export default function RoutineDetailPage() {
     } finally {
       setIsDuplicating(false)
     }
+  }
+
+  const handleCreateExercise = async (data: CreateExerciseFormData) => {
+    setIsCreatingExercise(true)
+    try {
+      const exerciseId = await createExercise({
+        name: data.name,
+        type: data.type as any,
+        muscle_group: data.muscle_group as any,
+        description: data.description,
+      })
+      if (exerciseId) {
+        await loadExercises()
+        setValue('exercise_id', exerciseId)
+        setShowCreateExercise(false)
+        resetCreate()
+        toast.success(t('exerciseCreated') || 'Exercise created successfully!')
+      } else {
+        toast.error(t('failedToCreateExercise') || 'Failed to create exercise')
+      }
+    } catch (error) {
+      toast.error(t('failedToCreateExercise') || 'Failed to create exercise')
+    } finally {
+      setIsCreatingExercise(false)
+    }
+  }
+
+  const handleOpenCreateExercise = () => {
+    setShowCreateExercise(true)
   }
 
   const handleAddExercise = async (data: AddExerciseFormData) => {
@@ -279,31 +347,51 @@ export default function RoutineDetailPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => router.back()}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <Button variant="ghost" onClick={() => router.back()} className="w-full sm:w-auto">
           <ArrowLeft className="h-4 w-4 mr-2" />
           {tCommon('back') || 'Back'}
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDuplicate} disabled={isDuplicating}>
-            <Copy className="h-4 w-4 mr-2" />
-            {isDuplicating ? t('duplicating') || 'Duplicating...' : t('duplicate') || 'Duplicate'}
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+          <Button 
+            variant="outline" 
+            onClick={handleDuplicate} 
+            disabled={isDuplicating}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
+            <Copy className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">
+              {isDuplicating ? t('duplicating') || 'Duplicating...' : t('duplicate') || 'Duplicate'}
+            </span>
           </Button>
-          <Button variant="outline" onClick={() => router.push(ROUTES.ROUTINE_EDIT(routineId))}>
-            <Edit className="h-4 w-4 mr-2" />
-            {tCommon('edit') || 'Edit'}
+          <Button 
+            variant="outline" 
+            onClick={() => router.push(ROUTES.ROUTINE_EDIT(routineId))}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{tCommon('edit') || 'Edit'}</span>
           </Button>
           <Button
             variant={routine.is_active ? 'outline' : 'default'}
             onClick={handleToggleActive}
+            size="sm"
+            className="flex-1 sm:flex-initial"
           >
             {routine.is_active ? t('deactivate') || 'Deactivate' : t('activate') || 'Activate'}
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            {tCommon('delete') || 'Delete'}
+          <Button 
+            variant="destructive" 
+            onClick={handleDelete}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
+            <Trash2 className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{tCommon('delete') || 'Delete'}</span>
           </Button>
         </div>
       </div>
@@ -378,79 +466,196 @@ export default function RoutineDetailPage() {
                 {t('addExercise') || 'Add Exercise'}
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('addExerciseToRoutine') || 'Add Exercise to Routine'}</DialogTitle>
-                <DialogDescription>
-                  {t('addExerciseDescription') || 'Select an exercise and set your target sets, reps, and weight'}
-                </DialogDescription>
-              </DialogHeader>
+            <DialogContent className="max-w-2xl p-0 overflow-hidden">
+              <DialogDescription className="sr-only">
+                {t('addExerciseDescription') ||
+                  'Select an exercise and set your target sets, reps, and weight'}
+              </DialogDescription>
+              <div className="grid md:grid-cols-[220px_1fr]">
+                <div className="bg-muted/50 p-5 space-y-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t('addExercise') || 'Add Exercise'}
+                    </p>
+                    <h3 className="text-xl font-semibold mt-2">{routine.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {t('addExerciseDescription') ||
+                        'Select an exercise and set your target sets, reps, and weight'}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-dashed border-muted-foreground/40 p-3 text-xs text-muted-foreground">
+                    {t('exercisesInRoutine') || 'Exercises in Routine'}: {routine.exercises?.length || 0}
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {showCreateExercise
+                        ? t('createNewExercise') || 'Create New Exercise'
+                        : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
+                    </DialogTitle>
+                  </DialogHeader>
 
-              <form onSubmit={handleSubmit(handleAddExercise)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="exercise">{tCommon('exercises') || 'Exercise'}</Label>
-                  <ExerciseSelect
-                    value={selectedExerciseId || ''}
-                    onChange={(value) => setValue('exercise_id', value)}
-                    disabled={isSubmitting}
-                  />
-                  {errors.exercise_id && (
-                    <p className="text-sm text-destructive">{errors.exercise_id.message}</p>
+                  {showCreateExercise ? (
+                    <form onSubmit={handleSubmitCreate(handleCreateExercise)} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">{tCommon('name') || 'Name'}</Label>
+                        <Input
+                          id="name"
+                          {...registerCreate('name')}
+                          placeholder="Bench Press"
+                          disabled={isCreatingExercise}
+                        />
+                        {errorsCreate.name && (
+                          <p className="text-sm text-destructive">{errorsCreate.name.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="type">{tCommon('type') || 'Type'}</Label>
+                        <Select
+                          onValueChange={(value) => setValueCreate('type', value as any)}
+                          disabled={isCreatingExercise}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('selectType') || 'Select type'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {exerciseTypeOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errorsCreate.type && (
+                          <p className="text-sm text-destructive">{errorsCreate.type.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="muscle_group">{t('muscleGroup') || 'Muscle Group'}</Label>
+                        <Select
+                          onValueChange={(value) => setValueCreate('muscle_group', value as any)}
+                          disabled={isCreatingExercise}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('selectMuscleGroup') || 'Select muscle group'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {muscleGroupOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errorsCreate.muscle_group && (
+                          <p className="text-sm text-destructive">{errorsCreate.muscle_group.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="description">
+                          {tCommon('description') || 'Description'} ({t('optional') || 'optional'})
+                        </Label>
+                        <Input
+                          id="description"
+                          {...registerCreate('description')}
+                          placeholder={t('exerciseDescriptionPlaceholder') || 'Exercise description'}
+                          disabled={isCreatingExercise}
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowCreateExercise(false)}
+                          disabled={isCreatingExercise}
+                          className="flex-1"
+                        >
+                          {tCommon('cancel') || 'Cancel'}
+                        </Button>
+                        <Button type="submit" disabled={isCreatingExercise} className="flex-1">
+                          {isCreatingExercise
+                            ? t('creating') || 'Creating...'
+                            : t('createExercise') || 'Create Exercise'}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleSubmit(handleAddExercise)} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="exercise">{tCommon('exercises') || 'Exercise'}</Label>
+                        <ExerciseSelect
+                          value={selectedExerciseId || ''}
+                          onChange={(value) => setValue('exercise_id', value)}
+                          disabled={isSubmitting}
+                          onCreateExercise={handleOpenCreateExercise}
+                        />
+                        {errors.exercise_id && (
+                          <p className="text-sm text-destructive">{errors.exercise_id.message}</p>
+                        )}
+                      </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="target_sets">{t('targetSets') || 'Target Sets'}</Label>
+                        <Input
+                          id="target_sets"
+                          type="number"
+                          min="1"
+                          max="20"
+                          {...register('target_sets')}
+                          disabled={isSubmitting}
+                        />
+                        {errors.target_sets && (
+                          <p className="text-xs text-destructive">{errors.target_sets.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="target_reps">{t('targetReps') || 'Target Reps'}</Label>
+                        <Input
+                          id="target_reps"
+                          type="number"
+                          min="1"
+                          max="100"
+                          {...register('target_reps')}
+                          disabled={isSubmitting}
+                        />
+                        {errors.target_reps && (
+                          <p className="text-xs text-destructive">{errors.target_reps.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="target_weight">{t('targetWeight') || 'Weight (kg)'}</Label>
+                        <Input
+                          id="target_weight"
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          {...register('target_weight')}
+                          disabled={isSubmitting}
+                          placeholder={t('optional') || 'Optional'}
+                        />
+                        {errors.target_weight && (
+                          <p className="text-xs text-destructive">{errors.target_weight.message}</p>
+                        )}
+                      </div>
+                    </div>
+
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting
+                          ? t('adding') || 'Adding...'
+                          : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
+                      </Button>
+                    </form>
                   )}
                 </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="target_sets">{t('targetSets') || 'Target Sets'}</Label>
-                    <Input
-                      id="target_sets"
-                      type="number"
-                      min="1"
-                      max="20"
-                      {...register('target_sets')}
-                      disabled={isSubmitting}
-                    />
-                    {errors.target_sets && (
-                      <p className="text-xs text-destructive">{errors.target_sets.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="target_reps">{t('targetReps') || 'Target Reps'}</Label>
-                    <Input
-                      id="target_reps"
-                      type="number"
-                      min="1"
-                      max="100"
-                      {...register('target_reps')}
-                      disabled={isSubmitting}
-                    />
-                    {errors.target_reps && (
-                      <p className="text-xs text-destructive">{errors.target_reps.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="target_weight">{t('targetWeight') || 'Weight (kg)'}</Label>
-                    <Input
-                      id="target_weight"
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      {...register('target_weight')}
-                      disabled={isSubmitting}
-                      placeholder={t('optional') || 'Optional'}
-                    />
-                    {errors.target_weight && (
-                      <p className="text-xs text-destructive">{errors.target_weight.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? t('adding') || 'Adding...' : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
-                </Button>
-              </form>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -467,79 +672,196 @@ export default function RoutineDetailPage() {
                     {t('addFirstExercise') || 'Add Your First Exercise'}
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t('addExerciseToRoutine') || 'Add Exercise to Routine'}</DialogTitle>
-                    <DialogDescription>
-                      {t('addExerciseDescription') || 'Select an exercise and set your target sets, reps, and weight'}
-                    </DialogDescription>
-                  </DialogHeader>
+                <DialogContent className="max-w-2xl p-0 overflow-hidden">
+                  <DialogDescription className="sr-only">
+                    {t('addExerciseDescription') ||
+                      'Select an exercise and set your target sets, reps, and weight'}
+                  </DialogDescription>
+                  <div className="grid md:grid-cols-[220px_1fr]">
+                    <div className="bg-muted/50 p-5 space-y-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          {t('addExercise') || 'Add Exercise'}
+                        </p>
+                        <h3 className="text-xl font-semibold mt-2">{routine.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {t('addExerciseDescription') ||
+                            'Select an exercise and set your target sets, reps, and weight'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-dashed border-muted-foreground/40 p-3 text-xs text-muted-foreground">
+                        {t('readyToTrain') || 'Ready to train?'}
+                      </div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {showCreateExercise
+                            ? t('createNewExercise') || 'Create New Exercise'
+                            : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
+                        </DialogTitle>
+                      </DialogHeader>
 
-                  <form onSubmit={handleSubmit(handleAddExercise)} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="exercise-empty">{tCommon('exercises') || 'Exercise'}</Label>
-                      <ExerciseSelect
-                        value={selectedExerciseId || ''}
-                        onChange={(value) => setValue('exercise_id', value)}
-                        disabled={isSubmitting}
-                      />
-                      {errors.exercise_id && (
-                        <p className="text-sm text-destructive">{errors.exercise_id.message}</p>
+                      {showCreateExercise ? (
+                        <form onSubmit={handleSubmitCreate(handleCreateExercise)} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name-empty">{tCommon('name') || 'Name'}</Label>
+                            <Input
+                              id="name-empty"
+                              {...registerCreate('name')}
+                              placeholder="Bench Press"
+                              disabled={isCreatingExercise}
+                            />
+                            {errorsCreate.name && (
+                              <p className="text-sm text-destructive">{errorsCreate.name.message}</p>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="type-empty">{tCommon('type') || 'Type'}</Label>
+                            <Select
+                              onValueChange={(value) => setValueCreate('type', value as any)}
+                              disabled={isCreatingExercise}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('selectType') || 'Select type'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {exerciseTypeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {errorsCreate.type && (
+                              <p className="text-sm text-destructive">{errorsCreate.type.message}</p>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="muscle_group-empty">{t('muscleGroup') || 'Muscle Group'}</Label>
+                            <Select
+                              onValueChange={(value) => setValueCreate('muscle_group', value as any)}
+                              disabled={isCreatingExercise}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('selectMuscleGroup') || 'Select muscle group'} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {muscleGroupOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {errorsCreate.muscle_group && (
+                              <p className="text-sm text-destructive">{errorsCreate.muscle_group.message}</p>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="description-empty">
+                              {tCommon('description') || 'Description'} ({t('optional') || 'optional'})
+                            </Label>
+                            <Input
+                              id="description-empty"
+                              {...registerCreate('description')}
+                              placeholder={t('exerciseDescriptionPlaceholder') || 'Exercise description'}
+                              disabled={isCreatingExercise}
+                            />
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setShowCreateExercise(false)}
+                              disabled={isCreatingExercise}
+                              className="flex-1"
+                            >
+                              {tCommon('cancel') || 'Cancel'}
+                            </Button>
+                            <Button type="submit" disabled={isCreatingExercise} className="flex-1">
+                              {isCreatingExercise
+                                ? t('creating') || 'Creating...'
+                                : t('createExercise') || 'Create Exercise'}
+                            </Button>
+                          </div>
+                        </form>
+                      ) : (
+                        <form onSubmit={handleSubmit(handleAddExercise)} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="exercise-empty">{tCommon('exercises') || 'Exercise'}</Label>
+                            <ExerciseSelect
+                              value={selectedExerciseId || ''}
+                              onChange={(value) => setValue('exercise_id', value)}
+                              disabled={isSubmitting}
+                              onCreateExercise={handleOpenCreateExercise}
+                            />
+                            {errors.exercise_id && (
+                              <p className="text-sm text-destructive">{errors.exercise_id.message}</p>
+                            )}
+                          </div>
+
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="target_sets_empty">{t('targetSets') || 'Target Sets'}</Label>
+                            <Input
+                              id="target_sets_empty"
+                              type="number"
+                              min="1"
+                              max="20"
+                              {...register('target_sets')}
+                              disabled={isSubmitting}
+                            />
+                            {errors.target_sets && (
+                              <p className="text-xs text-destructive">{errors.target_sets.message}</p>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="target_reps_empty">{t('targetReps') || 'Target Reps'}</Label>
+                            <Input
+                              id="target_reps_empty"
+                              type="number"
+                              min="1"
+                              max="100"
+                              {...register('target_reps')}
+                              disabled={isSubmitting}
+                            />
+                            {errors.target_reps && (
+                              <p className="text-xs text-destructive">{errors.target_reps.message}</p>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="target_weight_empty">{t('targetWeight') || 'Weight (kg)'}</Label>
+                            <Input
+                              id="target_weight_empty"
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              {...register('target_weight')}
+                              disabled={isSubmitting}
+                              placeholder={t('optional') || 'Optional'}
+                            />
+                            {errors.target_weight && (
+                              <p className="text-xs text-destructive">{errors.target_weight.message}</p>
+                            )}
+                          </div>
+                        </div>
+
+                          <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting
+                              ? t('adding') || 'Adding...'
+                              : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
+                          </Button>
+                        </form>
                       )}
                     </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="target_sets_empty">{t('targetSets') || 'Target Sets'}</Label>
-                        <Input
-                          id="target_sets_empty"
-                          type="number"
-                          min="1"
-                          max="20"
-                          {...register('target_sets')}
-                          disabled={isSubmitting}
-                        />
-                        {errors.target_sets && (
-                          <p className="text-xs text-destructive">{errors.target_sets.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="target_reps_empty">{t('targetReps') || 'Target Reps'}</Label>
-                        <Input
-                          id="target_reps_empty"
-                          type="number"
-                          min="1"
-                          max="100"
-                          {...register('target_reps')}
-                          disabled={isSubmitting}
-                        />
-                        {errors.target_reps && (
-                          <p className="text-xs text-destructive">{errors.target_reps.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="target_weight_empty">{t('targetWeight') || 'Weight (kg)'}</Label>
-                        <Input
-                          id="target_weight_empty"
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          {...register('target_weight')}
-                          disabled={isSubmitting}
-                          placeholder={t('optional') || 'Optional'}
-                        />
-                        {errors.target_weight && (
-                          <p className="text-xs text-destructive">{errors.target_weight.message}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? t('adding') || 'Adding...' : t('addExerciseToRoutine') || 'Add Exercise to Routine'}
-                    </Button>
-                  </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             </CardContent>
@@ -556,7 +878,7 @@ export default function RoutineDetailPage() {
                 .map(ex => ex.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-3">
+              <div className="space-y-3 touch-pan-y" style={{ touchAction: 'pan-y' }}>
                 {routine.exercises
                   .sort((a, b) => a.order - b.order)
                   .map((routineExercise, index) => (
@@ -582,7 +904,7 @@ export default function RoutineDetailPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 {t('startWorkoutDescription') || 'Start a workout using this routine'}
               </p>
-              <Button onClick={() => router.push(`/workouts/new-from-routine/${routineId}`)} size="lg">
+              <Button onClick={() => router.push(ROUTES.WORKOUT_FROM_ROUTINE(routineId))} size="lg">
                 <Dumbbell className="h-4 w-4 mr-2" />
                 {t('startWorkoutFromRoutine') || 'Start Workout from Routine'}
               </Button>

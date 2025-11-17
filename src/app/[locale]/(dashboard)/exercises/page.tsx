@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { useExerciseStore } from '@/store/exercise.store'
-import { EXERCISE_TYPE_OPTIONS, MUSCLE_GROUP_OPTIONS } from '@/lib/constants'
+import { getExerciseTypeOptions, getMuscleGroupOptions } from '@/lib/constants'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -49,6 +49,11 @@ export default function ExercisesPage() {
   const router = useRouter()
   const t = useTranslations('exercises')
   const tCommon = useTranslations('common')
+  const tExerciseTypes = useTranslations('exerciseTypes')
+  const tMuscleGroups = useTranslations('muscleGroups')
+  
+  const exerciseTypeOptions = getExerciseTypeOptions(tExerciseTypes)
+  const muscleGroupOptions = getMuscleGroupOptions(tMuscleGroups)
   const {
     exercises,
     loadExercises,
@@ -89,11 +94,11 @@ export default function ExercisesPage() {
   const handleCreateExercise = async (data: ExerciseFormData) => {
     const id = await createExercise(data)
     if (id) {
-      toast.success('Exercise created!')
+      toast.success(t('exerciseCreated') || 'Exercise created!')
       setDialogOpen(false)
       reset()
     } else {
-      toast.error('Failed to create exercise')
+      toast.error(t('failedToCreateExercise') || 'Failed to create exercise')
     }
   }
 
@@ -102,38 +107,38 @@ export default function ExercisesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Exercises</h1>
-          <p className="text-muted-foreground">Browse and manage your exercise library</p>
+          <h1 className="text-3xl font-bold">{t('title') || 'Exercises'}</h1>
+          <p className="text-muted-foreground">{t('subtitle') || 'Browse and manage your exercise library'}</p>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Exercise
+              {t('newExercise') || 'New Exercise'}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Exercise</DialogTitle>
-              <DialogDescription>Add a new exercise to your library</DialogDescription>
+              <DialogTitle>{t('createExercise') || 'Create Exercise'}</DialogTitle>
+              <DialogDescription>{t('createExerciseDescription') || 'Add a new exercise to your library'}</DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit(handleCreateExercise)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">{tCommon('name') || 'Name'}</Label>
                 <Input id="name" {...register('name')} placeholder="Bench Press" />
                 {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type">Type</Label>
+                <Label htmlFor="type">{tCommon('type') || 'Type'}</Label>
                 <Select onValueChange={(value) => setValue('type', value as any)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder={t('selectType') || 'Select type'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {EXERCISE_TYPE_OPTIONS.map((option) => (
+                    {exerciseTypeOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -149,7 +154,7 @@ export default function ExercisesPage() {
                     <SelectValue placeholder={t('selectMuscleGroup') || 'Select muscle group'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {MUSCLE_GROUP_OPTIONS.map((option) => (
+                    {muscleGroupOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -187,13 +192,13 @@ export default function ExercisesPage() {
           />
         </div>
 
-        <Select onValueChange={(value) => filterByType(value as any)}>
+        <Select onValueChange={(value) => filterByType(value === 'all' ? null : (value as any))}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder={t('filterByType') || 'Filter by type'} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('allTypes') || 'All Types'}</SelectItem>
-            {EXERCISE_TYPE_OPTIONS.map((option) => (
+            {exerciseTypeOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -201,13 +206,13 @@ export default function ExercisesPage() {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={(value) => filterByMuscleGroup(value as any)}>
+        <Select onValueChange={(value) => filterByMuscleGroup(value === 'all' ? null : (value as any))}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder={t('filterByMuscle') || 'Filter by muscle'} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('allMuscles') || 'All Muscles'}</SelectItem>
-            {MUSCLE_GROUP_OPTIONS.map((option) => (
+            {muscleGroupOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -233,18 +238,22 @@ export default function ExercisesPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          {exercises.map((exercise) => (
-            <Card key={exercise.id} className="cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => router.push(`/exercises/${exercise.id}/stats`)}>
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <Dumbbell className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">{exercise.name}</CardTitle>
-                </div>
-                <CardDescription className="capitalize">
-                  {exercise.type} • {exercise.muscle_group.replace('_', ' ')}
-                </CardDescription>
-              </CardHeader>
+          {exercises.map((exercise) => {
+            const typeLabel = exerciseTypeOptions.find((opt) => opt.value === exercise.type)?.label ?? exercise.type
+            const muscleLabel = muscleGroupOptions.find((opt) => opt.value === exercise.muscle_group)?.label ?? exercise.muscle_group
+            
+            return (
+              <Card key={exercise.id} className="cursor-pointer hover:bg-accent/50 transition-colors"
+                    onClick={() => router.push(`/exercises/${exercise.id}/stats`)}>
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Dumbbell className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">{exercise.name}</CardTitle>
+                  </div>
+                  <CardDescription>
+                    {typeLabel} • {muscleLabel}
+                  </CardDescription>
+                </CardHeader>
               <CardContent className="space-y-3">
                 {exercise.description && (
                   <p className="text-sm text-muted-foreground">{exercise.description}</p>
@@ -253,7 +262,8 @@ export default function ExercisesPage() {
                 <p className="text-xs text-primary mt-2">{t('viewStats') || 'Click to view stats'} →</p>
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

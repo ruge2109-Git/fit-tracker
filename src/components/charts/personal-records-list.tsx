@@ -75,7 +75,7 @@ export function PersonalRecordsList({ data }: PersonalRecordsListProps) {
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold">{formatWeight(record.max_weight)}</p>
-                <p className="text-xs text-muted-foreground">{record.reps} reps</p>
+                <p className="text-xs text-muted-foreground">{record.reps} {t('reps')}</p>
               </div>
             </div>
           ))}

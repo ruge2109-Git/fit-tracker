@@ -11,6 +11,8 @@ import { Trash2, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RoutineExercise } from '@/types'
+import { useTranslations } from 'next-intl'
+import { getExerciseTypeOptions, getMuscleGroupOptions } from '@/lib/constants'
 
 interface SortableExerciseItemProps {
   routineExercise: RoutineExercise
@@ -23,6 +25,14 @@ export function SortableExerciseItem({
   index,
   onRemove,
 }: SortableExerciseItemProps) {
+  const t = useTranslations('common')
+  const tRoutines = useTranslations('routines')
+  const tExerciseTypes = useTranslations('exerciseTypes')
+  const tMuscleGroups = useTranslations('muscleGroups')
+  
+  const exerciseTypeOptions = getExerciseTypeOptions(tExerciseTypes)
+  const muscleGroupOptions = getMuscleGroupOptions(tMuscleGroups)
+  
   const {
     attributes,
     listeners,
@@ -31,6 +41,14 @@ export function SortableExerciseItem({
     transition,
     isDragging,
   } = useSortable({ id: routineExercise.id })
+  
+  const getTypeLabel = (type: string) => {
+    return exerciseTypeOptions.find((option) => option.value === type)?.label ?? type
+  }
+  
+  const getMuscleLabel = (muscle: string) => {
+    return muscleGroupOptions.find((option) => option.value === muscle)?.label ?? muscle
+  }
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -48,8 +66,9 @@ export function SortableExerciseItem({
               <button
                 {...attributes}
                 {...listeners}
-                className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Drag to reorder"
+                className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors touch-manipulation -ml-1 p-1"
+                aria-label={t('dragToReorder')}
+                style={{ touchAction: 'none' }}
               >
                 <GripVertical className="h-5 w-5" />
               </button>
@@ -63,8 +82,8 @@ export function SortableExerciseItem({
                     {routineExercise.exercise.name}
                   </CardTitle>
                 </div>
-                <CardDescription className="capitalize mt-1">
-                  {routineExercise.exercise.type} • {routineExercise.exercise.muscle_group.replace('_', ' ')}
+                <CardDescription className="mt-1">
+                  {getTypeLabel(routineExercise.exercise.type)} • {getMuscleLabel(routineExercise.exercise.muscle_group)}
                 </CardDescription>
               </div>
             </div>
@@ -81,17 +100,17 @@ export function SortableExerciseItem({
         <CardContent>
           <div className="flex gap-6 text-sm">
             <div>
-              <span className="text-muted-foreground">Target Sets: </span>
+              <span className="text-muted-foreground">{tRoutines('targetSets')}: </span>
               <span className="font-medium">{routineExercise.target_sets}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Target Reps: </span>
+              <span className="text-muted-foreground">{tRoutines('targetReps')}: </span>
               <span className="font-medium">{routineExercise.target_reps}</span>
             </div>
             {routineExercise.target_weight && (
               <div>
-                <span className="text-muted-foreground">Target Weight: </span>
-                <span className="font-medium">{routineExercise.target_weight} kg</span>
+                <span className="text-muted-foreground">{tRoutines('targetWeight')}: </span>
+                <span className="font-medium">{routineExercise.target_weight} {t('kg')}</span>
               </div>
             )}
           </div>

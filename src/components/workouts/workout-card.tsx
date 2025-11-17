@@ -4,12 +4,15 @@
  * Following Single Responsibility Principle
  */
 
+'use client'
+
 import Link from 'next/link'
 import { Calendar, Clock, Dumbbell } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Workout } from '@/types'
 import { formatDate, formatDuration } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
+import { useTranslations } from 'next-intl'
 
 interface WorkoutCardProps {
   workout: Workout
@@ -17,13 +20,16 @@ interface WorkoutCardProps {
 }
 
 export function WorkoutCard({ workout, setsCount = 0 }: WorkoutCardProps) {
+  const t = useTranslations('common')
+  const tWorkouts = useTranslations('workouts')
+  
   return (
     <Link href={ROUTES.WORKOUT_DETAIL(workout.id)}>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Dumbbell className="h-5 w-5" />
-            {workout.routine_name || 'Workout'}
+            {workout.routine_name || t('workout')}
           </CardTitle>
           <CardDescription className="flex items-center gap-4 text-sm">
             <span className="flex items-center gap-1">
@@ -43,7 +49,7 @@ export function WorkoutCard({ workout, setsCount = 0 }: WorkoutCardProps) {
             </p>
           )}
           <p className="text-sm font-medium">
-            {setsCount} {setsCount === 1 ? 'set' : 'sets'}
+            {setsCount} {setsCount === 1 ? tWorkouts('set') : tWorkouts('sets')}
           </p>
         </CardContent>
       </Card>

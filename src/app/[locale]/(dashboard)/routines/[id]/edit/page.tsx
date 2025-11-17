@@ -74,7 +74,7 @@ export default function EditRoutinePage() {
       setValue('is_active', result.data.is_active)
       setSelectedDays(result.data.scheduled_days || [])
     } else {
-      toast.error('Routine not found')
+      toast.error(t('routineNotFound') || 'Routine not found')
       router.push(ROUTES.ROUTINES)
     }
     setIsLoading(false)
@@ -98,9 +98,9 @@ export default function EditRoutinePage() {
     })
 
     if (result.error) {
-      toast.error('Failed to update routine')
+      toast.error(t('failedToUpdateRoutine') || 'Failed to update routine')
     } else {
-      toast.success('Routine updated successfully!')
+      toast.success(t('routineUpdatedSuccessfully') || 'Routine updated successfully!')
       router.push(ROUTES.ROUTINE_DETAIL(routineId))
     }
     setIsSaving(false)
@@ -253,7 +253,7 @@ export default function EditRoutinePage() {
         size="lg"
       >
         <Save className="h-4 w-4 mr-2" />
-        {isSaving ? 'Saving Changes...' : 'Save Routine'}
+        {isSaving ? t('savingChanges') || 'Saving Changes...' : t('saveRoutine') || 'Save Routine'}
       </Button>
     </div>
   )

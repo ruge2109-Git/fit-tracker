@@ -9,6 +9,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -78,8 +79,19 @@ export default function NewWorkoutFromRoutinePage() {
   const [lastLbsInput, setLastLbsInput] = useState<Record<string, number>>({})
   const [exerciseOrder, setExerciseOrder] = useState<string[]>([])
 
+  // Drag and drop sensors - optimized for mobile
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -163,7 +175,7 @@ export default function NewWorkoutFromRoutinePage() {
         }, 200)
       }
     } else {
-      toast.error('Routine not found')
+      toast.error(t('routineNotFound') || 'Routine not found')
       router.push(ROUTES.ROUTINES)
       setIsRestoring(false)
     }

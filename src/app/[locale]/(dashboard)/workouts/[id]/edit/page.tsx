@@ -6,7 +6,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
@@ -31,7 +32,7 @@ interface WorkoutSet extends SetWithExercise {
 
 export default function EditWorkoutPage() {
   const params = useParams()
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { currentWorkout, loadWorkout } = useWorkoutStore()
   const t = useTranslations('workouts')
   const tCommon = useTranslations('common')

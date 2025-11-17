@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { toast } from 'sonner'
 import { ArrowLeft, Plus, Trash2, TrendingUp, Clock } from 'lucide-react'
 import {
@@ -61,7 +62,7 @@ const roundToTwoDecimals = (value: number): number => {
 
 export default function NewWorkoutFromRoutinePage() {
   const params = useParams()
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { user } = useAuthStore()
   const { createWorkout, isLoading: isSaving } = useWorkoutStore()
   const t = useTranslations('workouts')

@@ -5,6 +5,7 @@
 
 'use client'
 
+import { memo, useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTranslations } from 'next-intl'
@@ -17,14 +18,14 @@ interface VolumeChartProps {
   }[]
 }
 
-export function VolumeChart({ data }: VolumeChartProps) {
+export const VolumeChart = memo(function VolumeChart({ data }: VolumeChartProps) {
   const t = useTranslations('dashboard')
   const tCharts = useTranslations('charts')
   
-  const formattedData = data.map(item => ({
+  const formattedData = useMemo(() => data.map(item => ({
     ...item,
     week: new Date(item.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-  }))
+  })), [data])
 
   if (data.length === 0) {
     return (
@@ -85,5 +86,5 @@ export function VolumeChart({ data }: VolumeChartProps) {
       </CardContent>
     </Card>
   )
-}
+})
 

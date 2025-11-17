@@ -6,7 +6,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -61,7 +62,7 @@ type CreateExerciseFormData = z.infer<typeof createExerciseSchema>
 
 export default function RoutineDetailPage() {
   const params = useParams()
-  const router = useRouter()
+  const router = useNavigationRouter()
   const t = useTranslations('routines')
   const tCommon = useTranslations('common')
   const tExerciseTypes = useTranslations('exerciseTypes')

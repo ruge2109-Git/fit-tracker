@@ -7,7 +7,8 @@
 
 import { useEffect } from 'react'
 import { useLocale } from 'next-intl'
-import { useRouter, usePathname } from '@/i18n/routing'
+import { usePathname } from '@/i18n/routing'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import {
   Select,
   SelectContent,
@@ -27,7 +28,7 @@ const LOCALE_COOKIE_NAME = 'NEXT_LOCALE'
 
 export function LanguageSelector() {
   const locale = useLocale()
-  const router = useRouter()
+  const router = useNavigationRouter()
   const pathname = usePathname()
 
   // Load saved locale preference on mount (only once)

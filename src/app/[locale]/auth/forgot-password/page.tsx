@@ -6,7 +6,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from '@/i18n/routing'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -28,7 +28,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const t = useTranslations('auth')
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)

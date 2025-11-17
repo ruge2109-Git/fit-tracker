@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { LogOut, User as UserIcon, TrendingUp, Calendar, Award } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,7 +22,7 @@ import { formatDate, formatDuration } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 
 export default function ProfilePage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { user, signOut } = useAuthStore()
   const { workouts, loadWorkouts } = useWorkoutStore()
   const t = useTranslations('profile')

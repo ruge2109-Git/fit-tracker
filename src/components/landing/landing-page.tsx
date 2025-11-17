@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from '@/i18n/routing'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,7 +29,7 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ locale }: LandingPageProps) {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const t = useTranslations('landing')
 
   const features = [

@@ -9,6 +9,8 @@ import { Suspense, useEffect } from 'react'
 import { useRouter, usePathname } from '@/i18n/routing'
 import { NavBar } from '@/components/navigation/nav-bar'
 import { NavigationProgress } from '@/components/navigation/navigation-progress'
+import { NavigationLoader } from '@/components/navigation/navigation-loader'
+import { NavigationInterceptor } from '@/components/navigation/navigation-interceptor'
 import { PageTransition } from '@/components/ui/page-transition'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { OfflineIndicator } from '@/components/offline/offline-indicator'
@@ -48,7 +50,9 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <NavigationInterceptor />
       <NavigationProgress />
+      <NavigationLoader />
       <NavBar />
       <main className="container mx-auto px-4 py-8">
         <Suspense

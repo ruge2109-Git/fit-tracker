@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { Check, ChevronsUpDown, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command'
@@ -40,21 +40,21 @@ export function ExerciseSelect({ value, onChange, disabled, onCreateExercise }: 
     [exercises, value],
   )
 
-  const getMuscleLabel = (muscle: string) => {
+  const getMuscleLabel = useCallback((muscle: string) => {
     return muscleGroupOptions.find((option) => option.value === muscle)?.label ?? muscle
-  }
+  }, [muscleGroupOptions])
 
-  const handleSelect = (exerciseId: string) => {
+  const handleSelect = useCallback((exerciseId: string) => {
     onChange(exerciseId)
     setOpen(false)
-  }
+  }, [onChange])
 
-  const handleCreateClick = () => {
+  const handleCreateClick = useCallback(() => {
     setOpen(false)
     if (onCreateExercise) {
       onCreateExercise()
     }
-  }
+  }, [onCreateExercise])
 
   const triggerDisabled = disabled || isLoading
 

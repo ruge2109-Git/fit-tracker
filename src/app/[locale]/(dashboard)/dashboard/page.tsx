@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { Activity, TrendingUp, Calendar, Target, Dumbbell } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,17 +14,33 @@ import { useWorkoutStore } from '@/store/workout.store'
 import { statsService, VolumeByWeek, ExerciseFrequency, PersonalRecord } from '@/domain/services/stats.service'
 import { WorkoutStats, MuscleGroup } from '@/types'
 import { formatDuration } from '@/lib/utils'
-import { VolumeChart } from '@/components/charts/volume-chart'
-import { MuscleGroupChart } from '@/components/charts/muscle-group-chart'
-import { TopExercisesChart } from '@/components/charts/top-exercises-chart'
-import { PersonalRecordsList } from '@/components/charts/personal-records-list'
+import dynamic from 'next/dynamic'
 import { ChartSkeleton, StatsCardSkeleton, CardSkeleton } from '@/components/ui/loading-skeleton'
-import { useRouter } from 'next/navigation'
+
+// Lazy load heavy chart components for better initial load performance
+const VolumeChart = dynamic(() => import('@/components/charts/volume-chart').then(mod => ({ default: mod.VolumeChart })), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+})
+const MuscleGroupChart = dynamic(() => import('@/components/charts/muscle-group-chart').then(mod => ({ default: mod.MuscleGroupChart })), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+})
+const TopExercisesChart = dynamic(() => import('@/components/charts/top-exercises-chart').then(mod => ({ default: mod.TopExercisesChart })), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+})
+const PersonalRecordsList = dynamic(() => import('@/components/charts/personal-records-list').then(mod => ({ default: mod.PersonalRecordsList })), {
+  loading: () => <CardSkeleton />,
+  ssr: false,
+})
+
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { ROUTES } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
 
 export default function DashboardPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { user } = useAuthStore()
   const { workouts, loadWorkouts } = useWorkoutStore()
   const t = useTranslations('dashboard')
@@ -37,14 +53,7 @@ export default function DashboardPage() {
   const [totalVolume, setTotalVolume] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    if (user) {
-      // Start loading immediately without blocking
-      loadData()
-    }
-  }, [user])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return
     
     // Don't set loading to true - show content immediately
@@ -75,10 +84,17 @@ export default function DashboardPage() {
       if (recordsResult.data) setPersonalRecords(recordsResult.data)
       if (totalVolumeResult.data) setTotalVolume(totalVolumeResult.data)
     })
-  }
+  }, [user, loadWorkouts])
 
-  const recentWorkouts = workouts.slice(0, 5)
-  const hasData = stats || volumeData.length > 0 || topExercises.length > 0
+  useEffect(() => {
+    if (user) {
+      // Start loading immediately without blocking
+      loadData()
+    }
+  }, [user, loadData])
+
+  const recentWorkouts = useMemo(() => workouts.slice(0, 5), [workouts])
+  const hasData = useMemo(() => stats || volumeData.length > 0 || topExercises.length > 0, [stats, volumeData, topExercises])
 
   return (
     <div className="space-y-8">

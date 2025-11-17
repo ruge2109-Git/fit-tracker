@@ -5,8 +5,8 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { Search, Plus, Dumbbell } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { useExerciseStore } from '@/store/exercise.store'
+import { debounce } from '@/lib/utils'
 import { getExerciseTypeOptions, getMuscleGroupOptions } from '@/lib/constants'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -46,7 +47,7 @@ const exerciseSchema = z.object({
 })
 
 export default function ExercisesPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const t = useTranslations('exercises')
   const tCommon = useTranslations('common')
   const tExerciseTypes = useTranslations('exerciseTypes')
@@ -82,16 +83,24 @@ export default function ExercisesPage() {
     loadExercises()
   }, [loadExercises])
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    if (query) {
-      searchExercises(query)
-    } else {
-      loadExercises()
-    }
-  }
+  // Debounced search function
+  const debouncedSearch = useMemo(
+    () => debounce((query: string) => {
+      if (query) {
+        searchExercises(query)
+      } else {
+        loadExercises()
+      }
+    }, 300),
+    [searchExercises, loadExercises]
+  )
 
-  const handleCreateExercise = async (data: ExerciseFormData) => {
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query)
+    debouncedSearch(query)
+  }, [debouncedSearch])
+
+  const handleCreateExercise = useCallback(async (data: ExerciseFormData) => {
     const id = await createExercise(data)
     if (id) {
       toast.success(t('exerciseCreated') || 'Exercise created!')
@@ -100,7 +109,7 @@ export default function ExercisesPage() {
     } else {
       toast.error(t('failedToCreateExercise') || 'Failed to create exercise')
     }
-  }
+  }, [createExercise, t, reset])
 
   return (
     <div className="space-y-6">

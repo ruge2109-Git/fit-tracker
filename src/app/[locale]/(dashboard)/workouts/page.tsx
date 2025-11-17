@@ -6,7 +6,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { Plus, Search, Filter, X, Calendar, Sparkles, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,7 @@ import { Routine } from '@/types'
 import { toast } from 'sonner'
 
 export default function WorkoutsPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { user } = useAuthStore()
   const { workouts, loadWorkouts, isLoading } = useWorkoutStore()
   const t = useTranslations('workouts')

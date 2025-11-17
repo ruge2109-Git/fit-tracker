@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { toast } from 'sonner'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ import { useTranslations } from 'next-intl'
 import { logger } from '@/lib/logger'
 
 export default function NewWorkoutPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { user } = useAuthStore()
   const { createWorkout, isLoading } = useWorkoutStore()
   const t = useTranslations('workouts')

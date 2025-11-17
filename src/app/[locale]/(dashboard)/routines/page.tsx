@@ -6,7 +6,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -36,7 +36,7 @@ const routineSchema = z.object({
 type RoutineFormData = z.infer<typeof routineSchema>
 
 export default function RoutinesPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { user } = useAuthStore()
   const t = useTranslations('routines')
   const tCommon = useTranslations('common')

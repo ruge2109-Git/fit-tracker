@@ -7,6 +7,7 @@
 'use client'
 
 import Link from 'next/link'
+import { memo } from 'react'
 import { Calendar, Clock, Dumbbell } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Workout } from '@/types'
@@ -19,7 +20,7 @@ interface WorkoutCardProps {
   setsCount?: number
 }
 
-export function WorkoutCard({ workout, setsCount = 0 }: WorkoutCardProps) {
+export const WorkoutCard = memo(function WorkoutCard({ workout, setsCount = 0 }: WorkoutCardProps) {
   const t = useTranslations('common')
   const tWorkouts = useTranslations('workouts')
   
@@ -55,5 +56,5 @@ export function WorkoutCard({ workout, setsCount = 0 }: WorkoutCardProps) {
       </Card>
     </Link>
   )
-}
+})
 

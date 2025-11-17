@@ -6,7 +6,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from '@/i18n/routing'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -27,7 +27,7 @@ type ResetPasswordFormData = {
 }
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const t = useTranslations('auth')
 
   const [isLoading, setIsLoading] = useState(false)

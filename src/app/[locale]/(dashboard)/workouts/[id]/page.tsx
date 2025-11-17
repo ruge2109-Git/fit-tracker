@@ -6,7 +6,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { Calendar, Clock, ArrowLeft, Trash2, Edit, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,7 +20,7 @@ import { useTranslations } from 'next-intl'
 
 export default function WorkoutDetailPage() {
   const params = useParams()
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { currentWorkout, loadWorkout, deleteWorkout, createWorkout, isLoading } = useWorkoutStore()
   const { user } = useAuthStore()
   const t = useTranslations('workouts')

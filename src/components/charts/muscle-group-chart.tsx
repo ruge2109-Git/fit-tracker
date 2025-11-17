@@ -5,6 +5,7 @@
 
 'use client'
 
+import { memo, useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTranslations } from 'next-intl'
@@ -24,11 +25,11 @@ const COLORS = [
   '#ffc658',
 ]
 
-export function MuscleGroupChart({ data }: MuscleGroupChartProps) {
+export const MuscleGroupChart = memo(function MuscleGroupChart({ data }: MuscleGroupChartProps) {
   const t = useTranslations('dashboard')
   const tCharts = useTranslations('charts')
   
-  const MUSCLE_GROUP_LABELS: Record<string, string> = {
+  const MUSCLE_GROUP_LABELS: Record<string, string> = useMemo(() => ({
     chest: tCharts('muscleGroups.chest'),
     back: tCharts('muscleGroups.back'),
     legs: tCharts('muscleGroups.legs'),
@@ -37,12 +38,12 @@ export function MuscleGroupChart({ data }: MuscleGroupChartProps) {
     core: tCharts('muscleGroups.core'),
     full_body: tCharts('muscleGroups.fullBody'),
     cardio: tCharts('muscleGroups.cardio'),
-  }
+  }), [tCharts])
 
-  const chartData = Object.entries(data).map(([key, value]) => ({
+  const chartData = useMemo(() => Object.entries(data).map(([key, value]) => ({
     name: MUSCLE_GROUP_LABELS[key] || key,
     value,
-  })).filter(item => item.value > 0)
+  })).filter(item => item.value > 0), [data, MUSCLE_GROUP_LABELS])
 
   if (chartData.length === 0) {
     return (
@@ -96,5 +97,5 @@ export function MuscleGroupChart({ data }: MuscleGroupChartProps) {
       </CardContent>
     </Card>
   )
-}
+})
 

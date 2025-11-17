@@ -131,3 +131,17 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
   },
 }))
 
+// Selectors for better performance - prevents unnecessary re-renders
+export const useExercises = () => useExerciseStore((state) => state.exercises)
+export const useExerciseLoading = () => useExerciseStore((state) => state.isLoading)
+export const useExerciseError = () => useExerciseStore((state) => state.error)
+export const useExerciseActions = () => useExerciseStore((state) => ({
+  loadExercises: state.loadExercises,
+  searchExercises: state.searchExercises,
+  filterByType: state.filterByType,
+  filterByMuscleGroup: state.filterByMuscleGroup,
+  createExercise: state.createExercise,
+  resetFilters: state.resetFilters,
+  clearError: state.clearError,
+}))
+

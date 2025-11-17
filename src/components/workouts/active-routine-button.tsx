@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from '@/i18n/routing'
+import { usePathname } from '@/i18n/routing'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { Dumbbell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { loadWorkoutProgress } from '@/hooks/use-workout-persistence'
@@ -9,7 +10,7 @@ import { useTranslations } from 'next-intl'
 import { ROUTES } from '@/lib/constants'
 
 export function ActiveRoutineButton() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const pathname = usePathname()
   const t = useTranslations('workouts')
   const [activeRoutineId, setActiveRoutineId] = useState<string | null>(null)

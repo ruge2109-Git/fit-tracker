@@ -6,7 +6,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { ArrowLeft, TrendingUp, Weight, Target, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,7 +23,7 @@ import { useTranslations } from 'next-intl'
 
 export default function ExerciseStatsPage() {
   const params = useParams()
-  const router = useRouter()
+  const router = useNavigationRouter()
   const { user } = useAuthStore()
   const t = useTranslations('exercises')
   const tCommon = useTranslations('common')

@@ -6,7 +6,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, usePathname } from '@/i18n/routing'
+import { usePathname } from '@/i18n/routing'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -35,7 +36,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 type SignUpFormData = z.infer<typeof signUpSchema>
 
 export default function AuthPage() {
-  const router = useRouter()
+  const router = useNavigationRouter()
   const pathname = usePathname()
   const t = useTranslations('auth')
   const { signIn, signUp, isLoading } = useAuthStore()

@@ -56,7 +56,15 @@
     "targetSets": "Target Sets",
     "targetReps": "Target Reps",
     "targetWeight": "Target Weight",
-    "kg": "kg"
+    "kg": "kg",
+    "nav": {
+      "main": "Main",
+      "training": "Training",
+      "utilities": "Utilities",
+      "support": "Support",
+      "account": "Account",
+      "administration": "Administration"
+    }
   },
   "auth": {
     "title": "Welcome to FitTrackr",

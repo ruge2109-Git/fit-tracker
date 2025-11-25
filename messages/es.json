@@ -56,7 +56,15 @@
     "targetSets": "Series Objetivo",
     "targetReps": "Repeticiones Objetivo",
     "targetWeight": "Peso Objetivo",
-    "kg": "kg"
+    "kg": "kg",
+    "nav": {
+      "main": "Principal",
+      "training": "Entrenamiento",
+      "utilities": "Utilidades",
+      "support": "Soporte",
+      "account": "Cuenta",
+      "administration": "Administración"
+    }
   },
   "auth": {
     "title": "Bienvenido a FitTrackr",

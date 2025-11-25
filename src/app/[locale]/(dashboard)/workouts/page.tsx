@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { Routine } from '@/types'
 import { toast } from 'sonner'
+import { SavedFiltersManager } from '@/components/filters/saved-filters-manager'
 
 export default function WorkoutsPage() {
   const router = useNavigationRouter()
@@ -145,6 +146,22 @@ export default function WorkoutsPage() {
     setMinDuration('')
     setMaxDuration('')
   }
+
+  const applySavedFilter = (filters: Record<string, any>) => {
+    setSearchTerm(filters.searchTerm || '')
+    setStartDate(filters.startDate || '')
+    setEndDate(filters.endDate || '')
+    setMinDuration(filters.minDuration || '')
+    setMaxDuration(filters.maxDuration || '')
+  }
+
+  const getCurrentFilters = () => ({
+    searchTerm,
+    startDate,
+    endDate,
+    minDuration,
+    maxDuration,
+  })
 
   const hasActiveFilters = searchTerm || startDate || endDate || minDuration || maxDuration
 
@@ -282,8 +299,8 @@ export default function WorkoutsPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="flex gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by notes..."
@@ -292,6 +309,11 @@ export default function WorkoutsPage() {
                   className="pl-10"
                 />
               </div>
+              <SavedFiltersManager
+                type="workout"
+                currentFilters={getCurrentFilters()}
+                onApplyFilter={applySavedFilter}
+              />
               <Button
                 variant={showFilters ? "default" : "outline"}
                 onClick={() => setShowFilters(!showFilters)}

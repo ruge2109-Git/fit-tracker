@@ -27,7 +27,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { ArrowLeft, Plus, Trash2, Dumbbell, Edit, Copy, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Dumbbell, Edit, Copy, MoreVertical, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -78,6 +78,8 @@ export default function RoutineDetailPage() {
   const [isReordering, setIsReordering] = useState(false)
   const [showCreateExercise, setShowCreateExercise] = useState(false)
   const [isCreatingExercise, setIsCreatingExercise] = useState(false)
+  const [shareLink, setShareLink] = useState('')
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const routineId = params.id as string
   const { createExercise, loadExercises } = useExerciseStore()
 
@@ -212,6 +214,20 @@ export default function RoutineDetailPage() {
       toast.error(t('failedToDuplicate') || 'Failed to duplicate routine')
     } finally {
       setIsDuplicating(false)
+    }
+  }
+
+  const handleShare = () => {
+    if (!routine) return
+    const url = `${window.location.origin}${ROUTES.ROUTINE_DETAIL(routineId)}`
+    setShareLink(url)
+    setShareDialogOpen(true)
+    
+    // Copy to clipboard
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        toast.success(t('linkCopied') || 'Link copied to clipboard')
+      })
     }
   }
 
@@ -356,6 +372,15 @@ export default function RoutineDetailPage() {
           {tCommon('back') || 'Back'}
         </Button>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+          <Button 
+            variant="outline" 
+            onClick={handleShare}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
+            <Share2 className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('share') || 'Share'}</span>
+          </Button>
           <Button 
             variant="outline" 
             onClick={handleDuplicate} 
@@ -897,6 +922,34 @@ export default function RoutineDetailPage() {
           </DndContext>
         )}
       </div>
+
+      {/* Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('shareRoutine') || 'Share Routine'}</DialogTitle>
+            <DialogDescription>
+              {t('shareRoutineDescription') || 'Copy this link to share your routine'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex gap-2">
+              <Input value={shareLink} readOnly className="flex-1" />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareLink)
+                    toast.success(t('linkCopied') || 'Link copied to clipboard')
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Start Workout Button */}
       {routine.exercises && routine.exercises.length > 0 && (

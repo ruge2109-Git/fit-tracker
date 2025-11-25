@@ -17,6 +17,7 @@ interface WorkoutState {
   loadWorkouts: (userId: string) => Promise<void>
   loadWorkout: (id: string) => Promise<void>
   createWorkout: (userId: string, data: WorkoutFormData, sets: SetFormData[]) => Promise<string | null>
+  updateWorkout: (id: string, data: Partial<WorkoutFormData>) => Promise<boolean>
   deleteWorkout: (id: string) => Promise<boolean>
   clearError: () => void
 }
@@ -64,6 +65,26 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     await get().loadWorkouts(userId)
     set({ isLoading: false })
     return result.data!.id
+  },
+
+  updateWorkout: async (id, data) => {
+    set({ isLoading: true, error: null })
+    const result = await workoutService.updateWorkout(id, data)
+
+    if (result.error) {
+      set({ error: result.error, isLoading: false })
+      return false
+    }
+
+    // Update local state
+    set((state) => ({
+      workouts: state.workouts.map(w => w.id === id ? { ...w, ...data } : w),
+      currentWorkout: state.currentWorkout?.id === id 
+        ? { ...state.currentWorkout, ...data } 
+        : state.currentWorkout,
+      isLoading: false,
+    }))
+    return true
   },
 
   deleteWorkout: async (id) => {

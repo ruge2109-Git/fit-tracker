@@ -5,12 +5,13 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
-import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Save, Undo2, Redo2 } from 'lucide-react'
+import { useHistory } from '@/hooks/use-history'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -45,6 +46,84 @@ export default function EditWorkoutPage() {
   const [notes, setNotes] = useState('')
   const [sets, setSets] = useState<WorkoutSet[]>([])
 
+  // History for undo/redo
+  interface WorkoutEditState {
+    date: string
+    duration: number
+    notes: string
+    sets: WorkoutSet[]
+  }
+
+  const history = useHistory<WorkoutEditState>(null)
+
+  // Track if we're updating from history (to avoid loops)
+  const isUpdatingFromHistoryRef = useRef(false)
+
+  // Update history when state changes
+  const updateStateWithHistory = useCallback((updates: Partial<WorkoutEditState>) => {
+    // Don't update history if we're applying a history state
+    if (isUpdatingFromHistoryRef.current) {
+      isUpdatingFromHistoryRef.current = false
+      // Just update the state without adding to history
+      if (updates.date !== undefined) setDate(updates.date)
+      if (updates.duration !== undefined) setDuration(updates.duration)
+      if (updates.notes !== undefined) setNotes(updates.notes)
+      if (updates.sets !== undefined) setSets(updates.sets)
+      return
+    }
+
+    const newState: WorkoutEditState = {
+      date: updates.date ?? date,
+      duration: updates.duration ?? duration,
+      notes: updates.notes ?? notes,
+      sets: updates.sets ?? sets,
+    }
+    history.setState(newState, true)
+    
+    if (updates.date !== undefined) setDate(updates.date)
+    if (updates.duration !== undefined) setDuration(updates.duration)
+    if (updates.notes !== undefined) setNotes(updates.notes)
+    if (updates.sets !== undefined) setSets(updates.sets)
+  }, [date, duration, notes, sets, history])
+
+  // Apply history state (only when undo/redo is triggered)
+  const prevHistoryStateRef = useRef(history.state)
+  useEffect(() => {
+    // Only apply if history state changed due to undo/redo (not from our own updates)
+    if (history.state && history.state !== prevHistoryStateRef.current) {
+      const stateChanged = 
+        history.state.date !== date ||
+        history.state.duration !== duration ||
+        history.state.notes !== notes ||
+        JSON.stringify(history.state.sets) !== JSON.stringify(sets)
+      
+      if (stateChanged) {
+        isUpdatingFromHistoryRef.current = true
+        setDate(history.state.date)
+        setDuration(history.state.duration)
+        setNotes(history.state.notes)
+        setSets(history.state.sets)
+        prevHistoryStateRef.current = history.state
+      }
+    }
+  }, [history.state])
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        history.undo()
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault()
+        history.redo()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [history])
+
   useEffect(() => {
     if (workoutId) {
       loadWorkoutData()
@@ -59,25 +138,34 @@ export default function EditWorkoutPage() {
 
   useEffect(() => {
     if (currentWorkout) {
-      setDate(currentWorkout.date)
-      setDuration(currentWorkout.duration)
-      setNotes(currentWorkout.notes || '')
-      setSets(currentWorkout.sets || [])
+      const initialState: WorkoutEditState = {
+        date: currentWorkout.date,
+        duration: currentWorkout.duration,
+        notes: currentWorkout.notes || '',
+        sets: currentWorkout.sets || [],
+      }
+      history.reset(initialState)
+      setDate(initialState.date)
+      setDuration(initialState.duration)
+      setNotes(initialState.notes)
+      setSets(initialState.sets)
     }
   }, [currentWorkout])
 
   const handleUpdateSet = (setId: string, field: 'reps' | 'weight' | 'rest_time', value: number) => {
-    setSets(prev => prev.map(set => 
+    const updatedSets = sets.map(set => 
       set.id === setId 
         ? { ...set, [field]: value, isModified: !set.isNew } 
         : set
-    ))
+    )
+    updateStateWithHistory({ sets: updatedSets })
   }
 
   const handleDeleteSet = (setId: string) => {
-    setSets(prev => prev.map(set => 
+    const updatedSets = sets.map(set => 
       set.id === setId ? { ...set, isDeleted: true } : set
-    ))
+    )
+    updateStateWithHistory({ sets: updatedSets })
   }
 
   const handleAddSet = () => {
@@ -99,15 +187,17 @@ export default function EditWorkoutPage() {
       },
       isNew: true,
     }
-    setSets(prev => [...prev, newSet])
+    const updatedSets = [...sets, newSet]
+    updateStateWithHistory({ sets: updatedSets })
   }
 
   const handleExerciseChange = (setId: string, exerciseId: string) => {
-    setSets(prev => prev.map(set => 
+    const updatedSets = sets.map(set => 
       set.id === setId 
         ? { ...set, exercise_id: exerciseId, isModified: !set.isNew } 
         : set
-    ))
+    )
+    updateStateWithHistory({ sets: updatedSets })
   }
 
   const handleSave = async () => {
@@ -197,10 +287,33 @@ export default function EditWorkoutPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {tCommon('back') || 'Back'}
         </Button>
-        <Button onClick={handleSave} disabled={isSaving}>
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? t('saving') || 'Saving...' : t('saveChanges') || 'Save Changes'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Undo/Redo buttons */}
+          <div className="flex items-center gap-1 border rounded-md">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={history.undo}
+              disabled={!history.canUndo}
+              title={`${tCommon('undo') || 'Undo'} (Ctrl+Z)`}
+            >
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={history.redo}
+              disabled={!history.canRedo}
+              title={`${tCommon('redo') || 'Redo'} (Ctrl+Y)`}
+            >
+              <Redo2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button onClick={handleSave} disabled={isSaving}>
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? t('saving') || 'Saving...' : t('saveChanges') || 'Save Changes'}
+          </Button>
+        </div>
       </div>
 
       {/* Title */}
@@ -222,7 +335,7 @@ export default function EditWorkoutPage() {
                 id="date"
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => updateStateWithHistory({ date: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -231,7 +344,7 @@ export default function EditWorkoutPage() {
                 id="duration"
                 type="number"
                 value={duration}
-                onChange={(e) => setDuration(parseInt(e.target.value))}
+                onChange={(e) => updateStateWithHistory({ duration: parseInt(e.target.value) || 0 })}
                 min="1"
               />
             </div>
@@ -241,7 +354,7 @@ export default function EditWorkoutPage() {
             <Input
               id="notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => updateStateWithHistory({ notes: e.target.value })}
               placeholder={t('howFeel') || 'How did it feel?'}
             />
           </div>

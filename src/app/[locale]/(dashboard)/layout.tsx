@@ -17,6 +17,7 @@ import { OfflineIndicator } from '@/components/offline/offline-indicator'
 import { ActiveRoutineButton } from '@/components/workouts/active-routine-button'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { KeyboardShortcuts } from '@/components/ui/keyboard-shortcuts'
+import { SearchDialogProvider } from '@/hooks/use-search-dialog'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES } from '@/lib/constants'
 
@@ -51,40 +52,42 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavigationInterceptor />
-      <NavigationProgress />
-      <NavigationLoader />
-      <NavBar />
-      <main className="container mx-auto px-4 py-8">
-        <Suspense
-          fallback={
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="space-y-2">
-                <div className="h-9 w-64 bg-muted rounded-md animate-pulse" />
-                <div className="h-5 w-96 bg-muted rounded-md animate-pulse" />
+    <SearchDialogProvider>
+      <div className="min-h-screen bg-background">
+        <NavigationInterceptor />
+        <NavigationProgress />
+        <NavigationLoader />
+        <NavBar />
+        <main className="container mx-auto px-4 py-8">
+          <Suspense
+            fallback={
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="space-y-2">
+                  <div className="h-9 w-64 bg-muted rounded-md animate-pulse" />
+                  <div className="h-5 w-96 bg-muted rounded-md animate-pulse" />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
+                  <CardSkeleton />
+                </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <CardSkeleton />
-                <CardSkeleton />
-                <CardSkeleton />
-                <CardSkeleton />
-              </div>
+            }
+          >
+            <div className="mb-4">
+              <Breadcrumbs />
             </div>
-          }
-        >
-          <div className="mb-4">
-            <Breadcrumbs />
-          </div>
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </Suspense>
-      </main>
-      <OfflineIndicator />
-      <ActiveRoutineButton />
-      <KeyboardShortcuts />
-    </div>
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </Suspense>
+        </main>
+        <OfflineIndicator />
+        <ActiveRoutineButton />
+        <KeyboardShortcuts />
+      </div>
+    </SearchDialogProvider>
   )
 }
 

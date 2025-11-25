@@ -48,10 +48,22 @@ export function WorkoutCalendarView({ workouts }: WorkoutCalendarViewProps) {
   const dateLocale = locale === 'es' ? es : enUS
 
   // Group workouts by date
+  // Parse date string directly to avoid timezone issues
   const workoutsByDate = useMemo(() => {
     const grouped: Record<string, Workout[]> = {}
     workouts.forEach(workout => {
-      const dateKey = format(new Date(workout.date), 'yyyy-MM-dd')
+      // Extract date part directly from string to avoid timezone conversion issues
+      // If date is in format "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm:ss", extract just the date part
+      let dateKey = workout.date
+      if (dateKey.includes('T')) {
+        dateKey = dateKey.split('T')[0]
+      }
+      // Ensure it's in YYYY-MM-DD format
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+        // If not in correct format, parse it carefully
+        const date = new Date(workout.date + 'T12:00:00') // Add noon to avoid timezone shifts
+        dateKey = format(date, 'yyyy-MM-dd')
+      }
       if (!grouped[dateKey]) {
         grouped[dateKey] = []
       }

@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, Menu, ChevronDown } from 'lucide-react'
+import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, Menu, ChevronDown, Search } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { LanguageSelector } from '@/components/language/language-selector'
@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useSearchDialog } from '@/hooks/use-search-dialog'
 
 export function NavBar() {
   const t = useTranslations('common')
@@ -32,6 +33,7 @@ export function NavBar() {
   const { theme, setTheme } = useTheme()
   const { isAdmin } = useAdmin()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { openSearch } = useSearchDialog()
 
   // Organize navigation items by sections
   const navSections: Array<{
@@ -146,8 +148,23 @@ export function NavBar() {
                     ))}
                   </nav>
                   
-                  {/* Footer with Language & Theme */}
+                  {/* Footer with Search, Language & Theme */}
                   <div className="p-4 border-t space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{t('search') || 'Search'}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          openSearch()
+                          setSidebarOpen(false)
+                        }}
+                        className="h-9 w-9"
+                      >
+                        <Search className="h-4 w-4" />
+                        <span className="sr-only">{t('search')}</span>
+                      </Button>
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">{t('language') || 'Language'}</span>
                       <LanguageSelector />
@@ -175,6 +192,29 @@ export function NavBar() {
               <Dumbbell className="h-5 w-5 sm:h-6 sm:w-6" />
               <span className="hidden sm:inline">{t('appName')}</span>
             </Link>
+          </div>
+
+          {/* Mobile Search Button */}
+          <div className="flex md:hidden items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={openSearch}
+                    className="h-9 w-9"
+                    aria-label={t('search')}
+                  >
+                    <Search className="h-5 w-5" />
+                    <span className="sr-only">{t('search')}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('search')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           {/* Navigation Links - Desktop */}
@@ -267,9 +307,26 @@ export function NavBar() {
             })}
           </div>
 
-          {/* Language Selector & Theme Toggle - Desktop */}
+          {/* Search, Language Selector & Theme Toggle - Desktop */}
           <div className="hidden md:flex items-center gap-1 sm:gap-2 shrink-0">
             <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={openSearch}
+                    className="h-8 w-8 sm:h-9 sm:w-9"
+                    aria-label={t('search')}
+                  >
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">{t('search')}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('search')} (Ctrl+K)</p>
+                </TooltipContent>
+              </Tooltip>
               <LanguageSelector />
               <Tooltip>
                 <TooltipTrigger asChild>

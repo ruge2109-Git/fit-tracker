@@ -101,12 +101,22 @@ export function DashboardCalendar({ workouts, routines }: DashboardCalendarProps
   }, [activeRoutines, currentMonth])
 
   // Group workouts by date
+  // Parse dates carefully to avoid timezone issues
   const completedEvents = useMemo(() => {
-    return workouts.map(workout => ({
-      type: 'completed' as const,
-      workout,
-      date: new Date(workout.date),
-    }))
+    return workouts.map(workout => {
+      // Extract date part directly to avoid timezone conversion
+      let dateStr = workout.date
+      if (dateStr.includes('T')) {
+        dateStr = dateStr.split('T')[0]
+      }
+      // Create date at noon to avoid timezone shifts
+      const date = new Date(dateStr + 'T12:00:00')
+      return {
+        type: 'completed' as const,
+        workout,
+        date,
+      }
+    })
   }, [workouts])
 
   // Combine all events

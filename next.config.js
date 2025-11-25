@@ -165,7 +165,7 @@ const nextConfig = {
   
   // Experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', 'recharts', '@radix-ui/react-dialog', '@radix-ui/react-select'],
+    optimizePackageImports: ['lucide-react', 'recharts', '@radix-ui/react-dialog', '@radix-ui/react-select', 'sonner', 'zod'],
   },
 }
 

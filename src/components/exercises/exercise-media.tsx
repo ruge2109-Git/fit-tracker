@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { Image, Video, Play, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
 import { Exercise } from '@/types'
 
 interface ExerciseMediaProps {
@@ -74,6 +74,9 @@ export function ExerciseMedia({ exercise }: ExerciseMediaProps) {
       {/* Image Modal */}
       <Dialog open={showImage} onOpenChange={setShowImage}>
         <DialogContent className="max-w-4xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] p-0 max-h-[90vh]">
+          <DialogDescription className="sr-only">
+            {exercise.name} image demonstration
+          </DialogDescription>
           <div className="relative">
             <img
               src={exercise.image_url}
@@ -87,6 +90,9 @@ export function ExerciseMedia({ exercise }: ExerciseMediaProps) {
       {/* Video Modal */}
       <Dialog open={showVideo} onOpenChange={setShowVideo}>
         <DialogContent className="max-w-4xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] p-0 max-h-[90vh]">
+          <DialogDescription className="sr-only">
+            {exercise.name} video demonstration
+          </DialogDescription>
           <div className="relative">
             <video
               src={exercise.video_url}

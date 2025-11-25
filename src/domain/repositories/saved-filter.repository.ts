@@ -68,15 +68,6 @@ export class SavedFilterRepository extends BaseRepository<SavedFilter> implement
     }
   }
 
-  async create(data: Partial<SavedFilter>): Promise<ApiResponse<SavedFilter>> {
-    // This method is not used, use create(userId, data) instead
-    throw new Error('Use create(userId, data) instead')
-  }
-
-  async update(id: string, data: Partial<SavedFilter>): Promise<ApiResponse<SavedFilter>> {
-    // This method is not used, use update(id, data) with SavedFilterFormData instead
-    throw new Error('Use update(id, data) with SavedFilterFormData instead')
-  }
 
   async findByUserId(userId: string): Promise<ApiResponse<SavedFilter[]>> {
     try {
@@ -111,16 +102,28 @@ export class SavedFilterRepository extends BaseRepository<SavedFilter> implement
     }
   }
 
-  async create(userId: string, data: SavedFilterFormData): Promise<ApiResponse<SavedFilter>> {
+  // Overload signatures
+  async create(data: Partial<SavedFilter>): Promise<ApiResponse<SavedFilter>>
+  async create(userId: string, data: SavedFilterFormData): Promise<ApiResponse<SavedFilter>>
+  // Implementation
+  async create(userIdOrData: string | Partial<SavedFilter>, data?: SavedFilterFormData): Promise<ApiResponse<SavedFilter>> {
+    // If called with BaseRepository signature (data only), throw error
+    if (typeof userIdOrData !== 'string') {
+      throw new Error('Use create(userId, data) instead')
+    }
+    
+    // Called with custom signature (userId, data)
+    const userId = userIdOrData
+    const formData = data!
     try {
       const { data: filter, error } = await supabase
         .from(this.tableName)
         .insert({
           user_id: userId,
-          name: data.name,
-          type: data.type,
-          filters: data.filters,
-          is_favorite: data.is_favorite || false,
+          name: formData.name,
+          type: formData.type,
+          filters: formData.filters,
+          is_favorite: formData.is_favorite || false,
         })
         .select()
         .single()
@@ -132,15 +135,24 @@ export class SavedFilterRepository extends BaseRepository<SavedFilter> implement
     }
   }
 
-  async update(id: string, data: Partial<SavedFilterFormData>): Promise<ApiResponse<SavedFilter>> {
+  // Overload signatures
+  async update(id: string, data: Partial<SavedFilter>): Promise<ApiResponse<SavedFilter>>
+  async update(id: string, data: Partial<SavedFilterFormData>): Promise<ApiResponse<SavedFilter>>
+  // Implementation
+  async update(id: string, data: Partial<SavedFilter> | Partial<SavedFilterFormData>): Promise<ApiResponse<SavedFilter>> {
     try {
+      // Check if this is the base repository signature (has user_id, created_at, etc.)
+      if ('user_id' in data || 'created_at' in data) {
+        throw new Error('Use update(id, data) with SavedFilterFormData instead')
+      }
+
       const updateData: any = {
         updated_at: new Date().toISOString(),
       }
 
       if (data.name !== undefined) updateData.name = data.name
       if (data.filters !== undefined) updateData.filters = data.filters
-      if (data.is_favorite !== undefined) updateData.is_favorite = data.is_favorite
+      if ('is_favorite' in data && data.is_favorite !== undefined) updateData.is_favorite = data.is_favorite
 
       const { data: filter, error } = await supabase
         .from(this.tableName)

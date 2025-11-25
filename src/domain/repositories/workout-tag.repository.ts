@@ -57,10 +57,6 @@ export class WorkoutTagRepository extends BaseRepository<WorkoutTag> implements 
     }
   }
 
-  async create(data: Partial<WorkoutTag>): Promise<ApiResponse<WorkoutTag>> {
-    // This method is not used, use create(workoutId, tagId) instead
-    throw new Error('Use create(workoutId, tagId) instead')
-  }
 
   async update(id: string, data: Partial<WorkoutTag>): Promise<ApiResponse<WorkoutTag>> {
     // WorkoutTag is a join table, updates are not supported
@@ -95,13 +91,25 @@ export class WorkoutTagRepository extends BaseRepository<WorkoutTag> implements 
     }
   }
 
-  async create(workoutId: string, tagId: string): Promise<ApiResponse<WorkoutTag>> {
+  // Overload signatures
+  async create(data: Partial<WorkoutTag>): Promise<ApiResponse<WorkoutTag>>
+  async create(workoutId: string, tagId: string): Promise<ApiResponse<WorkoutTag>>
+  // Implementation
+  async create(workoutIdOrData: string | Partial<WorkoutTag>, tagId?: string): Promise<ApiResponse<WorkoutTag>> {
+    // If called with BaseRepository signature (data only), throw error
+    if (typeof workoutIdOrData !== 'string') {
+      throw new Error('Use create(workoutId, tagId) instead')
+    }
+    
+    // Called with custom signature (workoutId, tagId)
+    const workoutId = workoutIdOrData
+    const tagIdValue = tagId!
     try {
       const { data, error } = await supabase
         .from(this.tableName)
         .insert({
           workout_id: workoutId,
-          tag_id: tagId,
+          tag_id: tagIdValue,
         })
         .select()
         .single()
@@ -113,7 +121,19 @@ export class WorkoutTagRepository extends BaseRepository<WorkoutTag> implements 
     }
   }
 
-  async delete(workoutId: string, tagId: string): Promise<ApiResponse<boolean>> {
+  // Overload signatures
+  async delete(id: string): Promise<ApiResponse<boolean>>
+  async delete(workoutId: string, tagId: string): Promise<ApiResponse<boolean>>
+  // Implementation
+  async delete(workoutIdOrId: string, tagId?: string): Promise<ApiResponse<boolean>> {
+    // If called with BaseRepository signature (id only)
+    if (tagId === undefined) {
+      // This is the base delete method, but we don't support it
+      throw new Error('Use delete(workoutId, tagId) instead')
+    }
+    
+    // Called with custom signature (workoutId, tagId)
+    const workoutId = workoutIdOrId
     try {
       const { error } = await supabase
         .from(this.tableName)

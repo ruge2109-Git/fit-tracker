@@ -62,15 +62,6 @@ export class TagRepository extends BaseRepository<Tag> implements ITagRepository
     }
   }
 
-  async create(data: Partial<Tag>): Promise<ApiResponse<Tag>> {
-    // This method is not used, use create(userId, data) instead
-    throw new Error('Use create(userId, data) instead')
-  }
-
-  async update(id: string, data: Partial<Tag>): Promise<ApiResponse<Tag>> {
-    // This method is not used, use update(id, data) with TagFormData instead
-    throw new Error('Use update(id, data) with TagFormData instead')
-  }
 
   async findByUserId(userId: string): Promise<ApiResponse<Tag[]>> {
     try {
@@ -87,14 +78,26 @@ export class TagRepository extends BaseRepository<Tag> implements ITagRepository
     }
   }
 
-  async create(userId: string, data: TagFormData): Promise<ApiResponse<Tag>> {
+  // Overload signatures
+  async create(data: Partial<Tag>): Promise<ApiResponse<Tag>>
+  async create(userId: string, data: TagFormData): Promise<ApiResponse<Tag>>
+  // Implementation
+  async create(userIdOrData: string | Partial<Tag>, data?: TagFormData): Promise<ApiResponse<Tag>> {
+    // If called with BaseRepository signature (data only), throw error
+    if (typeof userIdOrData !== 'string') {
+      throw new Error('Use create(userId, data) instead')
+    }
+    
+    // Called with custom signature (userId, data)
+    const userId = userIdOrData
+    const formData = data!
     try {
       const { data: tag, error } = await supabase
         .from(this.tableName)
         .insert({
           user_id: userId,
-          name: data.name,
-          color: data.color,
+          name: formData.name,
+          color: formData.color,
         })
         .select()
         .single()
@@ -106,8 +109,17 @@ export class TagRepository extends BaseRepository<Tag> implements ITagRepository
     }
   }
 
-  async update(id: string, data: Partial<TagFormData>): Promise<ApiResponse<Tag>> {
+  // Overload signatures
+  async update(id: string, data: Partial<Tag>): Promise<ApiResponse<Tag>>
+  async update(id: string, data: Partial<TagFormData>): Promise<ApiResponse<Tag>>
+  // Implementation
+  async update(id: string, data: Partial<Tag> | Partial<TagFormData>): Promise<ApiResponse<Tag>> {
     try {
+      // Check if this is the base repository signature (has user_id, created_at, etc.)
+      if ('user_id' in data || 'created_at' in data) {
+        throw new Error('Use update(id, data) with TagFormData instead')
+      }
+
       const { data: tag, error } = await supabase
         .from(this.tableName)
         .update({

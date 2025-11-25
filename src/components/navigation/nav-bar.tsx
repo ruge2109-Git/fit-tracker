@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 export function NavBar() {
   const t = useTranslations('common')
@@ -190,16 +191,26 @@ export function NavBar() {
                     {sectionIndex > 0 && (
                       <div className="h-6 w-px bg-border mx-2" aria-hidden="true" />
                     )}
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary px-2 py-1 rounded-md',
-                        isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {t(item.labelKey)}
-                    </Link>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary px-2 py-1 rounded-md',
+                              isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'
+                            )}
+                            aria-label={t(item.labelKey)}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {t(item.labelKey)}
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t(item.labelKey)}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 )
               }
@@ -258,17 +269,27 @@ export function NavBar() {
 
           {/* Language Selector & Theme Toggle - Desktop */}
           <div className="hidden md:flex items-center gap-1 sm:gap-2 shrink-0">
-            <LanguageSelector />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="h-8 w-8 sm:h-9 sm:w-9"
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">{t('toggleTheme')}</span>
-            </Button>
+            <TooltipProvider>
+              <LanguageSelector />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    className="h-8 w-8 sm:h-9 sm:w-9"
+                    aria-label={t('toggleTheme')}
+                  >
+                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">{t('toggleTheme')}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('toggleTheme')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>

@@ -36,22 +36,30 @@ const PersonalRecordsList = dynamic(() => import('@/components/charts/personal-r
 })
 
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
+import { useCompactMode } from '@/hooks/use-compact-mode'
 import { ROUTES } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
+import { LayoutGrid, LayoutList } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { DashboardCalendar } from '@/components/dashboard/dashboard-calendar'
+import { routineRepository } from '@/domain/repositories/routine.repository'
+import { Routine } from '@/types'
 
 export default function DashboardPage() {
   const router = useNavigationRouter()
   const { user } = useAuthStore()
   const { workouts, loadWorkouts } = useWorkoutStore()
+  const { isCompact, toggleCompact } = useCompactMode()
   const t = useTranslations('dashboard')
   const tWorkouts = useTranslations('workouts')
+  const tCommon = useTranslations('common')
   const [stats, setStats] = useState<WorkoutStats | null>(null)
   const [volumeData, setVolumeData] = useState<VolumeByWeek[]>([])
   const [muscleDistribution, setMuscleDistribution] = useState<Record<MuscleGroup, number>>({} as Record<MuscleGroup, number>)
   const [topExercises, setTopExercises] = useState<ExerciseFrequency[]>([])
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
   const [totalVolume, setTotalVolume] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
+  const [routines, setRoutines] = useState<Routine[]>([])
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -59,6 +67,12 @@ export default function DashboardPage() {
     // Don't set loading to true - show content immediately
     // Load workouts first (usually faster)
     loadWorkouts(user.id)
+    
+    // Load routines for calendar
+    const routinesResult = await routineRepository.findByUserId(user.id)
+    if (routinesResult.data) {
+      setRoutines(routinesResult.data)
+    }
     
     // Load all stats in parallel without blocking UI
     Promise.all([
@@ -99,13 +113,38 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold mb-2">{t('welcomeBack', { name: user?.name || '' })}</h1>
-        <p className="text-muted-foreground">{t('fitnessOverview')}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <h1 className={`${isCompact ? 'text-2xl' : 'text-4xl'} font-bold mb-2`}>
+            {t('welcomeBack', { name: user?.name || '' })}
+          </h1>
+          <p className="text-muted-foreground">{t('fitnessOverview')}</p>
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleCompact}
+                aria-label={isCompact ? 'Expand view' : 'Compact view'}
+              >
+                {isCompact ? (
+                  <LayoutGrid className="h-4 w-4" />
+                ) : (
+                  <LayoutList className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isCompact ? tCommon('expandView') || 'Expand view' : tCommon('compactView') || 'Compact view'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className={`grid gap-4 ${isCompact ? 'md:grid-cols-3 lg:grid-cols-5' : 'md:grid-cols-2 lg:grid-cols-5'}`}>
         {!stats && totalVolume === 0 ? (
           <>
             <StatsCardSkeleton />
@@ -116,67 +155,78 @@ export default function DashboardPage() {
           </>
         ) : (
           <>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('totalWorkouts')}</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
+            <Card className={isCompact ? 'p-3' : ''}>
+              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
+                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalWorkouts')}</CardTitle>
+                <Activity className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.total_workouts || 0}</div>
-                <p className="text-xs text-muted-foreground">{t('allTime')}</p>
+              <CardContent className={isCompact ? 'pt-1' : ''}>
+                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>{stats?.total_workouts || 0}</div>
+                {!isCompact && <p className="text-xs text-muted-foreground">{t('allTime')}</p>}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('totalVolume')}</CardTitle>
-                <Dumbbell className="h-4 w-4 text-muted-foreground" />
+            <Card className={isCompact ? 'p-3' : ''}>
+              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
+                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalVolume')}</CardTitle>
+                <Dumbbell className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalVolume.toLocaleString()} kg</div>
-                <p className="text-xs text-muted-foreground">{t('weightTimesReps')}</p>
+              <CardContent className={isCompact ? 'pt-1' : ''}>
+                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>{totalVolume.toLocaleString()} kg</div>
+                {!isCompact && <p className="text-xs text-muted-foreground">{t('weightTimesReps')}</p>}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('totalDuration')}</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Card className={isCompact ? 'p-3' : ''}>
+              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
+                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalDuration')}</CardTitle>
+                <Calendar className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className={isCompact ? 'pt-1' : ''}>
+                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>
                   {formatDuration(stats?.total_duration || 0)}
                 </div>
-                <p className="text-xs text-muted-foreground">{t('timeTraining')}</p>
+                {!isCompact && <p className="text-xs text-muted-foreground">{t('timeTraining')}</p>}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('totalSets')}</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <Card className={isCompact ? 'p-3' : ''}>
+              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
+                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalSets')}</CardTitle>
+                <TrendingUp className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.total_sets || 0}</div>
-                <p className="text-xs text-muted-foreground">{t('setsCompleted')}</p>
+              <CardContent className={isCompact ? 'pt-1' : ''}>
+                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>{stats?.total_sets || 0}</div>
+                {!isCompact && <p className="text-xs text-muted-foreground">{t('setsCompleted')}</p>}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('avgDuration')}</CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
+            <Card className={isCompact ? 'p-3' : ''}>
+              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
+                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('avgDuration')}</CardTitle>
+                <Target className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
+              <CardContent className={isCompact ? 'pt-1' : ''}>
+                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>
                   {formatDuration(stats?.average_duration || 0)}
                 </div>
-                <p className="text-xs text-muted-foreground">{t('perWorkout')}</p>
+                {!isCompact && <p className="text-xs text-muted-foreground">{t('perWorkout')}</p>}
               </CardContent>
             </Card>
           </>
         )}
       </div>
+
+      {/* Calendar Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('trainingCalendar') || 'Training Calendar'}</CardTitle>
+          <CardDescription>{t('calendarDescription') || 'View your completed workouts and scheduled routines'}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DashboardCalendar workouts={workouts} routines={routines} />
+        </CardContent>
+      </Card>
 
       {/* Charts Section */}
       <div className="grid gap-4 md:grid-cols-2">

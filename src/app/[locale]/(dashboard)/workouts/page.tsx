@@ -7,19 +7,21 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
-import { Plus, Search, Filter, X, Calendar, Sparkles, Clock } from 'lucide-react'
+import { Plus, Search, Filter, X, Calendar, Sparkles, Clock, List, CalendarDays, ArrowUpDown } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { WorkoutCard } from '@/components/workouts/workout-card'
 import { WorkoutCardSkeleton } from '@/components/ui/loading-skeleton'
+import { WorkoutCalendarView } from '@/components/workouts/workout-calendar-view'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
 import { ROUTES } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { Routine } from '@/types'
 import { toast } from 'sonner'
@@ -45,6 +47,8 @@ export default function WorkoutsPage() {
   const [routineSearch, setRoutineSearch] = useState('')
   const [availableRoutines, setAvailableRoutines] = useState<Routine[]>([])
   const [isLoadingRoutines, setIsLoadingRoutines] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar')
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'duration-desc' | 'duration-asc'>('date-desc')
 
   useEffect(() => {
     if (user) {
@@ -71,7 +75,7 @@ export default function WorkoutsPage() {
     }
   }, [startDialogOpen, user, availableRoutines.length, isLoadingRoutines, loadAvailableRoutines])
 
-  // Filter workouts based on criteria
+  // Filter and sort workouts based on criteria
   const filteredWorkouts = useMemo(() => {
     let filtered = [...workouts]
 
@@ -98,8 +102,24 @@ export default function WorkoutsPage() {
       filtered = filtered.filter(workout => workout.duration <= parseInt(maxDuration))
     }
 
+    // Sort workouts
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-desc':
+          return new Date(b.date).getTime() - new Date(a.date).getTime()
+        case 'date-asc':
+          return new Date(a.date).getTime() - new Date(b.date).getTime()
+        case 'duration-desc':
+          return b.duration - a.duration
+        case 'duration-asc':
+          return a.duration - b.duration
+        default:
+          return 0
+      }
+    })
+
     return filtered
-  }, [workouts, searchTerm, startDate, endDate, minDuration, maxDuration])
+  }, [workouts, searchTerm, startDate, endDate, minDuration, maxDuration, sortBy])
 
   const filteredRoutines = useMemo(() => {
     if (!routineSearch) return availableRoutines
@@ -347,37 +367,77 @@ export default function WorkoutsPage() {
         </CardContent>
       </Card>
 
-      {/* Workouts Grid */}
-      {workouts.length === 0 && isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-300">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <WorkoutCardSkeleton key={i} />
-          ))}
+      {/* View Mode Toggle and Sort */}
+      <div className="flex items-center justify-between gap-4">
+        {viewMode === 'list' && (
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+              <SelectTrigger className="w-[180px]" aria-label={t('sortBy') || 'Sort by'}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date-desc">{t('sortByDateDesc') || 'Date (Newest)'}</SelectItem>
+                <SelectItem value="date-asc">{t('sortByDateAsc') || 'Date (Oldest)'}</SelectItem>
+                <SelectItem value="duration-desc">{t('sortByDurationDesc') || 'Duration (Longest)'}</SelectItem>
+                <SelectItem value="duration-asc">{t('sortByDurationAsc') || 'Duration (Shortest)'}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="flex items-center gap-2 ml-auto">
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'list' | 'calendar')}>
+            <TabsList>
+              <TabsTrigger value="list" aria-label={t('listView') || 'List view'}>
+                <List className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">{t('list') || 'List'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="calendar" aria-label={t('calendarView') || 'Calendar view'}>
+                <CalendarDays className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">{t('calendar') || 'Calendar'}</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-      ) : workouts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">{t('noWorkouts') || 'No workouts yet'}</p>
-          <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('createFirst') || 'Create Your First Workout'}
-          </Button>
-        </div>
-      ) : filteredWorkouts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">
-            {t('noWorkoutsMatchFilters') || 'No workouts match your filters'}
-          </p>
-          <Button variant="outline" onClick={clearFilters}>
-            <X className="h-4 w-4 mr-2" />
-            {t('clearFilters') || 'Clear Filters'}
-          </Button>
-        </div>
+      </div>
+
+      {/* Workouts Content */}
+      {viewMode === 'calendar' ? (
+        <WorkoutCalendarView workouts={filteredWorkouts} />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          {filteredWorkouts.map((workout) => (
-            <WorkoutCard key={workout.id} workout={workout} />
-          ))}
-        </div>
+        <>
+          {workouts.length === 0 && isLoading ? (
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-300">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <WorkoutCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : workouts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">{t('noWorkouts') || 'No workouts yet'}</p>
+              <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('createFirst') || 'Create Your First Workout'}
+              </Button>
+            </div>
+          ) : filteredWorkouts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                {t('noWorkoutsMatchFilters') || 'No workouts match your filters'}
+              </p>
+              <Button variant="outline" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-2" />
+                {t('clearFilters') || 'Clear Filters'}
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {filteredWorkouts.map((workout) => (
+                <WorkoutCard key={workout.id} workout={workout} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

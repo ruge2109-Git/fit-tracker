@@ -92,8 +92,10 @@ export function SortableExerciseItem({
               variant="ghost"
               size="icon"
               onClick={() => onRemove(routineExercise.id)}
+              aria-label={t('removeExercise') || 'Remove exercise'}
             >
               <Trash2 className="h-4 w-4" />
+              <span className="sr-only">{t('removeExercise') || 'Remove exercise'}</span>
             </Button>
           </div>
         </CardHeader>

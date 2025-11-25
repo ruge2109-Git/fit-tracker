@@ -25,8 +25,11 @@ export const WorkoutCard = memo(function WorkoutCard({ workout, setsCount = 0 }:
   const tWorkouts = useTranslations('workouts')
   
   return (
-    <Link href={ROUTES.WORKOUT_DETAIL(workout.id)}>
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+    <Link 
+      href={ROUTES.WORKOUT_DETAIL(workout.id)}
+      aria-label={`${t('viewDetails') || 'View details'} - ${workout.routine_name || t('workout')} - ${formatDate(workout.date, 'PP')}`}
+    >
+      <Card className="hover:shadow-lg transition-shadow cursor-pointer" role="article">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Dumbbell className="h-5 w-5" />

@@ -15,6 +15,8 @@ import { PageTransition } from '@/components/ui/page-transition'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { OfflineIndicator } from '@/components/offline/offline-indicator'
 import { ActiveRoutineButton } from '@/components/workouts/active-routine-button'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
+import { KeyboardShortcuts } from '@/components/ui/keyboard-shortcuts'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES } from '@/lib/constants'
 
@@ -71,6 +73,9 @@ export default function DashboardLayout({
             </div>
           }
         >
+          <div className="mb-4">
+            <Breadcrumbs />
+          </div>
           <PageTransition>
             {children}
           </PageTransition>
@@ -78,6 +83,7 @@ export default function DashboardLayout({
       </main>
       <OfflineIndicator />
       <ActiveRoutineButton />
+      <KeyboardShortcuts />
     </div>
   )
 }

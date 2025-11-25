@@ -468,6 +468,7 @@ export default function RoutineDetailPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl p-0 overflow-hidden">
+              <DialogTitle className="sr-only">{t('addExercise') || 'Add Exercise'}</DialogTitle>
               <DialogDescription className="sr-only">
                 {t('addExerciseDescription') ||
                   'Select an exercise and set your target sets, reps, and weight'}
@@ -674,6 +675,7 @@ export default function RoutineDetailPage() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl p-0 overflow-hidden">
+                  <DialogTitle className="sr-only">{t('addExercise') || 'Add Exercise'}</DialogTitle>
                   <DialogDescription className="sr-only">
                     {t('addExerciseDescription') ||
                       'Select an exercise and set your target sets, reps, and weight'}

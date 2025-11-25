@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { isAdminClient } from '@/lib/auth/admin-client'
+import { logger } from '@/lib/logger'
 
 export function useAdmin() {
   const { user } = useAuthStore()
@@ -26,7 +27,7 @@ export function useAdmin() {
         const adminStatus = await isAdminClient()
         setIsAdmin(adminStatus)
       } catch (error) {
-        console.error('Error checking admin status:', error)
+        logger.error(`Error checking admin status: ${error}`)
         setIsAdmin(false)
       } finally {
         setIsLoading(false)

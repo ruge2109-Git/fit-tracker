@@ -50,7 +50,6 @@ export const ROUTES = {
   TOOLS: '/tools',
   PROFILE: '/profile',
   FEEDBACK: '/feedback',
-  MY_FEEDBACKS: '/feedback/my',
   ADMIN_FEEDBACK: '/admin/feedback',
 } as const
 

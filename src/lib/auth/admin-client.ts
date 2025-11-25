@@ -8,6 +8,7 @@
 'use client'
 
 import { supabase } from '@/lib/supabase/client'
+import { logger } from '@/lib/logger'
 
 /**
  * Check if the current user is an admin (client-side)
@@ -34,7 +35,7 @@ export async function isAdminClient(): Promise<boolean> {
 
     return data.is_admin === true
   } catch (error) {
-    console.error('Error checking admin status:', error)
+    logger.error(`Error checking admin status: ${error}`)
     return false
   }
 }

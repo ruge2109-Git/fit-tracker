@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
 
 /**
  * Check if the current user is an admin (server-side)
@@ -32,7 +33,7 @@ export async function isAdmin(supabaseClient?: Awaited<ReturnType<typeof createC
 
     return data.is_admin === true
   } catch (error) {
-    console.error('Error checking admin status:', error)
+    logger.error(`Error checking admin status: ${error}`)
     return false
   }
 }
@@ -62,7 +63,7 @@ export async function isUserAdmin(
 
     return data.is_admin === true
   } catch (error) {
-    console.error('Error checking admin status:', error)
+    logger.error(`Error checking admin status: ${error}`)
     return false
   }
 }

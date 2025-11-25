@@ -26,6 +26,14 @@ const feedbackSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate environment variables before creating client
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return NextResponse.json(
+        { error: 'Server configuration error: Missing Supabase credentials' },
+        { status: 500 }
+      )
+    }
+    
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -111,6 +119,14 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // Validate environment variables before creating client
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return NextResponse.json(
+        { error: 'Server configuration error: Missing Supabase credentials' },
+        { status: 500 }
+      )
+    }
+    
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 interface QuickNotesProps {
   notes: string | null | undefined
@@ -42,7 +43,7 @@ export function QuickNotes({ notes, onSave, className, maxLength = 500 }: QuickN
       await onSave(editedNotes)
       setIsEditing(false)
     } catch (error) {
-      console.error('Error saving notes:', error)
+      logger.error('Error saving notes', error as Error, 'QuickNotes')
     } finally {
       setIsSaving(false)
     }

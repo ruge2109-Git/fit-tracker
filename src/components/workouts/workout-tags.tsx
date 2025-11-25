@@ -30,6 +30,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 interface WorkoutTagsProps {
   workoutId: string
@@ -56,10 +57,10 @@ export function WorkoutTags({ workoutId, selectedTagIds, onTagsChange, className
         const tagIds = result.data.map(wt => wt.tag_id)
         onTagsChange(tagIds)
       } else if (result.error) {
-        console.error('Error loading workout tags:', result.error)
+        logger.error('Error loading workout tags', new Error(result.error), 'WorkoutTags')
       }
     } catch (error) {
-      console.error('Error loading workout tags:', error)
+      logger.error('Error loading workout tags', error as Error, 'WorkoutTags')
     }
   }
 
@@ -80,7 +81,7 @@ export function WorkoutTags({ workoutId, selectedTagIds, onTagsChange, className
         toast.error('Error al guardar etiquetas')
       }
     } catch (error) {
-      console.error('Error saving workout tags:', error)
+      logger.error('Error saving workout tags', error as Error, 'WorkoutTags')
       toast.error('Error al guardar etiquetas')
     } finally {
       setIsSaving(false)

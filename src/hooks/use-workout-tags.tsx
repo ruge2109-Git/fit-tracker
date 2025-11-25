@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { tagRepository, Tag as DBTag } from '@/domain/repositories/tag.repository'
 import { useAuthStore } from '@/store/auth.store'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 export interface WorkoutTag {
   id: string
@@ -51,11 +52,11 @@ export function useWorkoutTags() {
       if (result.data) {
         setTags(result.data.map(convertFromDB))
       } else if (result.error) {
-        console.error('Error loading tags:', result.error)
+        logger.error('Error loading tags', new Error(result.error), 'useWorkoutTags')
         toast.error('Error al cargar etiquetas')
       }
     } catch (error) {
-      console.error('Error loading tags:', error)
+      logger.error('Error loading tags', error as Error, 'useWorkoutTags')
     } finally {
       setIsLoading(false)
     }
@@ -93,7 +94,7 @@ export function useWorkoutTags() {
       }
       return null
     } catch (error) {
-      console.error('Error creating tag:', error)
+      logger.error('Error creating tag', error as Error, 'useWorkoutTags')
       toast.error('Error al crear la etiqueta')
       return null
     }
@@ -117,7 +118,7 @@ export function useWorkoutTags() {
         toast.error(result.error)
       }
     } catch (error) {
-      console.error('Error updating tag:', error)
+      logger.error('Error updating tag', error as Error, 'useWorkoutTags')
       toast.error('Error al actualizar la etiqueta')
     }
   }, [user])
@@ -135,7 +136,7 @@ export function useWorkoutTags() {
         toast.error(result.error)
       }
     } catch (error) {
-      console.error('Error deleting tag:', error)
+      logger.error('Error deleting tag', error as Error, 'useWorkoutTags')
       toast.error('Error al eliminar la etiqueta')
     }
   }, [user])

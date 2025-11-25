@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { savedFilterRepository, SavedFilter as DBSavedFilter } from '@/domain/repositories/saved-filter.repository'
 import { useAuthStore } from '@/store/auth.store'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 export interface SavedFilter {
   id: string
@@ -42,11 +43,11 @@ export function useSavedFilters() {
       if (result.data) {
         setSavedFilters(result.data.map(convertFromDB))
       } else if (result.error) {
-        console.error('Error loading saved filters:', result.error)
+        logger.error('Error loading saved filters', new Error(result.error), 'useSavedFilters')
         toast.error('Error al cargar filtros guardados')
       }
     } catch (error) {
-      console.error('Error loading saved filters:', error)
+      logger.error('Error loading saved filters', error as Error, 'useSavedFilters')
     } finally {
       setIsLoading(false)
     }
@@ -88,7 +89,7 @@ export function useSavedFilters() {
       }
       return null
     } catch (error) {
-      console.error('Error saving filter:', error)
+      logger.error('Error saving filter', error as Error, 'useSavedFilters')
       toast.error('Error al guardar el filtro')
       return null
     }
@@ -112,7 +113,7 @@ export function useSavedFilters() {
         toast.error(result.error)
       }
     } catch (error) {
-      console.error('Error updating filter:', error)
+      logger.error('Error updating filter', error as Error, 'useSavedFilters')
       toast.error('Error al actualizar el filtro')
     }
   }, [user])
@@ -130,7 +131,7 @@ export function useSavedFilters() {
         toast.error(result.error)
       }
     } catch (error) {
-      console.error('Error deleting filter:', error)
+      logger.error('Error deleting filter', error as Error, 'useSavedFilters')
       toast.error('Error al eliminar el filtro')
     }
   }, [user])

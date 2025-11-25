@@ -62,9 +62,17 @@ if ($LASTEXITCODE -ne 0) {
 }
 Print-Status "Linting passed"
 
-# 3. Check for console.log/error/warn
+# 3. Check for console.log/error/warn (excluding logger.ts and comments)
 Print-Status "Checking for console statements..."
-$consoleMatches = Select-String -Path "src\**\*.ts","src\**\*.tsx" -Pattern "console\.(log|error|warn|debug)" -Exclude @("logger.ts", "**/node_modules/**") -ErrorAction SilentlyContinue
+$consoleMatches = Get-ChildItem -Path "src" -Include "*.ts","*.tsx" -Recurse -Exclude "logger.ts" | 
+    Select-String -Pattern "console\.(log|error|warn|debug)" -ErrorAction SilentlyContinue |
+    Where-Object { 
+        $line = $_.Line.Trim()
+        # Exclude lines that are comments or inside logger.ts
+        -not $line.StartsWith("//") -and 
+        -not $line.StartsWith("*") -and
+        -not $_.Path -like "*logger.ts"
+    }
 if ($consoleMatches) {
     Print-Warning "Found console statements. Consider using logger service instead."
     $consoleMatches | ForEach-Object { Write-Host "  $($_.Path):$($_.LineNumber)" -ForegroundColor Yellow }

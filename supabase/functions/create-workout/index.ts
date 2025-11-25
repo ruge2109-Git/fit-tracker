@@ -1,12 +1,21 @@
-/**
- * Supabase Edge Function: Create Workout
- * Validates and creates a workout with sets
- * Example of using Edge Functions for business logic
- */
-
+// @ts-ignore - Deno imports
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+// @ts-ignore - Deno imports
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// Simple logger for Deno environment
+// Note: Cannot import from src/lib/logger in Deno runtime
+const logger = {
+  error: (message: string, error?: unknown) => {
+    console.error(`[ERROR] ${message}`, error || '')
+  },
+  info: (message: string) => {
+    console.log(`[INFO] ${message}`)
+  },
+  warn: (message: string) => {
+    console.warn(`[WARN] ${message}`)
+  }
+}
 interface WorkoutData {
   date: string
   duration: number
@@ -31,9 +40,13 @@ serve(async (req) => {
     }
 
     // Create Supabase client
+    // @ts-ignore - Deno global
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    // @ts-ignore - Deno global
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      supabaseUrl,
+      supabaseAnonKey,
       { global: { headers: { Authorization: authHeader } } }
     )
 
@@ -121,7 +134,7 @@ serve(async (req) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error creating workout:', error)
+    logger.error(`Error creating workout: ${error}`)
     return new Response(
       JSON.stringify({ error: error.message || 'Internal server error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

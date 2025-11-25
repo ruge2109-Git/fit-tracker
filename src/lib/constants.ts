@@ -49,6 +49,9 @@ export const ROUTES = {
   ROUTINE_EDIT: (id: string) => `/routines/${id}/edit`,
   TOOLS: '/tools',
   PROFILE: '/profile',
+  FEEDBACK: '/feedback',
+  MY_FEEDBACKS: '/feedback/my',
+  ADMIN_FEEDBACK: '/admin/feedback',
 } as const
 
 // Exercise type options

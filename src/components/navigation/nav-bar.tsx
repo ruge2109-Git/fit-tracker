@@ -7,17 +7,19 @@
 
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench } from 'lucide-react'
+import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { LanguageSelector } from '@/components/language/language-selector'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
+import { useAdmin } from '@/hooks/use-admin'
 
 export function NavBar() {
   const t = useTranslations('common')
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
+  const { isAdmin } = useAdmin()
 
   const navItems = [
     { href: ROUTES.DASHBOARD, labelKey: 'dashboard', icon: Home },
@@ -25,8 +27,14 @@ export function NavBar() {
     { href: ROUTES.EXERCISES, labelKey: 'exercises', icon: BookOpen },
     { href: ROUTES.ROUTINES, labelKey: 'routines', icon: ListTodo },
     { href: ROUTES.TOOLS, labelKey: 'tools', icon: Wrench },
+    { href: ROUTES.FEEDBACK, labelKey: 'feedback', icon: MessageSquare },
     { href: ROUTES.PROFILE, labelKey: 'profile', icon: User },
   ]
+
+  // Add admin link if user is admin
+  const allNavItems = isAdmin
+    ? [...navItems, { href: ROUTES.ADMIN_FEEDBACK, labelKey: 'admin', icon: Shield }]
+    : navItems
 
   return (
     <nav className="border-b bg-background sticky top-0 z-40">
@@ -40,7 +48,7 @@ export function NavBar() {
 
           {/* Navigation Links - Desktop */}
           <div className="hidden md:flex items-center gap-4 lg:gap-6">
-            {navItems.map((item) => {
+            {allNavItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               
@@ -79,7 +87,7 @@ export function NavBar() {
         {/* Mobile Navigation */}
         <div className="md:hidden border-t">
           <div className="flex items-center justify-between gap-1 px-1 py-2 overflow-x-auto scrollbar-hide">
-            {navItems.map((item) => {
+            {allNavItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               

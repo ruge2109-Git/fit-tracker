@@ -13,6 +13,7 @@ export interface BaseEntity {
 export interface User extends BaseEntity {
   email: string;
   name: string;
+  is_admin?: boolean;
 }
 
 export interface UserProfile extends User {
@@ -209,5 +210,40 @@ export interface PushSubscriptionData {
     p256dh: string;
     auth: string;
   };
+}
+
+// Feedback types
+export enum FeedbackType {
+  BUG = 'bug',
+  FEATURE = 'feature',
+  IMPROVEMENT = 'improvement',
+  OTHER = 'other',
+}
+
+export enum FeedbackStatus {
+  PENDING = 'pending',
+  REVIEWED = 'reviewed',
+  RESOLVED = 'resolved',
+  DISMISSED = 'dismissed',
+}
+
+export interface Feedback extends BaseEntity {
+  user_id: string;
+  type: FeedbackType;
+  subject: string;
+  message: string;
+  rating?: number; // 1-5
+  status: FeedbackStatus;
+  response?: string; // Admin response
+  responded_at?: string;
+  responded_by?: string; // Admin user ID
+  updated_at?: string;
+}
+
+export interface FeedbackFormData {
+  type: FeedbackType;
+  subject: string;
+  message: string;
+  rating?: number;
 }
 

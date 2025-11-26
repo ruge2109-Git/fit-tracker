@@ -10,6 +10,9 @@ import { LogOut, User as UserIcon, TrendingUp, Calendar, Award } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { NotificationSettings } from '@/components/notifications/notification-settings'
+import { DataManagement } from '@/components/data/data-management'
+import { BackupManager } from '@/components/data/backup-manager'
+import { UsageStatsComponent } from '@/components/data/usage-stats'
 import { StatsCardSkeleton, CardSkeleton } from '@/components/ui/loading-skeleton'
 import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
@@ -52,16 +55,22 @@ export default function ProfilePage() {
     // Don't block - show page immediately
     setIsLoading(true)
     
-    // Load in parallel without blocking UI
-    Promise.all([
-      loadWorkouts(user.id),
-      statsService.getUserStats(user.id)
-    ]).then(([, statsResult]) => {
+    try {
+      // Load in parallel without blocking UI
+      const [, statsResult] = await Promise.all([
+        loadWorkouts(user.id),
+        statsService.getUserStats(user.id)
+      ])
+      
       if (statsResult.data) {
         setStats(statsResult.data)
       }
+    } catch (error) {
+      // Error already handled by services, just ensure loading is reset
+      console.error('Error loading profile data:', error)
+    } finally {
       setIsLoading(false)
-    })
+    }
   }
 
   const handleSignOut = async () => {
@@ -255,6 +264,15 @@ export default function ProfilePage() {
 
       {/* Notification Settings */}
       <NotificationSettings />
+
+      {/* Data Management */}
+      <DataManagement />
+
+      {/* Backup Manager */}
+      <BackupManager />
+
+      {/* Usage Statistics */}
+      <UsageStatsComponent />
     </div>
   )
 }

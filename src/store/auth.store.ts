@@ -7,6 +7,7 @@
 import { create } from 'zustand'
 import { User } from '@/types'
 import { authService } from '@/domain/services/auth.service'
+import { logAuditEvent } from '@/lib/audit/audit-helper'
 
 interface AuthState {
   user: User | null
@@ -23,7 +24,7 @@ interface AuthState {
   clearError: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
   error: null,
@@ -40,6 +41,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     
     set({ user: result.data!, isLoading: false })
+    
+    // Log login event
+    if (result.data) {
+      logAuditEvent({
+        action: 'login',
+        entityType: 'auth',
+        details: { email, method: 'password' },
+      })
+    }
+    
     return true
   },
 
@@ -53,6 +64,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     
     set({ user: result.data!, isLoading: false })
+    
+    // Log signup event
+    if (result.data) {
+      logAuditEvent({
+        action: 'signup',
+        entityType: 'auth',
+        details: { email, name },
+      })
+    }
+    
     return true
   },
 
@@ -71,9 +92,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
+    const userId = get().user?.id
+    
     set({ isLoading: true })
     await authService.signOut()
     set({ user: null, isLoading: false })
+    
+    // Log logout event
+    if (userId) {
+      logAuditEvent({
+        action: 'logout',
+        entityType: 'auth',
+        details: { userId },
+      })
+    }
   },
 
   loadUser: async () => {

@@ -22,6 +22,7 @@ import { routineRepository } from '@/domain/repositories/routine.repository'
 import { RoutineWithExercises, DayOfWeek, RoutineFrequency } from '@/types'
 import { ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS, ROUTES } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
+import { logAuditEvent } from '@/lib/audit/audit-helper'
 
 const routineSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -101,6 +102,14 @@ export default function EditRoutinePage() {
     if (result.error) {
       toast.error(t('failedToUpdateRoutine') || 'Failed to update routine')
     } else {
+      // Log update routine event
+      logAuditEvent({
+        action: 'update_routine',
+        entityType: 'routine',
+        entityId: routineId,
+        details: { changes: Object.keys(data) },
+      })
+      
       toast.success(t('routineUpdatedSuccessfully') || 'Routine updated successfully!')
       router.push(ROUTES.ROUTINE_DETAIL(routineId))
     }

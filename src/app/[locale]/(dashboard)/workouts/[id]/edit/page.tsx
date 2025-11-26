@@ -19,7 +19,6 @@ import { Label } from '@/components/ui/label'
 import { ExerciseSelect } from '@/components/exercises/exercise-select'
 import { WorkoutRestTimer } from '@/components/workouts/workout-rest-timer'
 import { useWorkoutStore } from '@/store/workout.store'
-import { workoutRepository } from '@/domain/repositories/workout.repository'
 import { setRepository } from '@/domain/repositories/set.repository'
 import { SetWithExercise } from '@/types'
 import { ROUTES } from '@/lib/constants'
@@ -34,7 +33,7 @@ interface WorkoutSet extends SetWithExercise {
 export default function EditWorkoutPage() {
   const params = useParams()
   const router = useNavigationRouter()
-  const { currentWorkout, loadWorkout } = useWorkoutStore()
+  const { currentWorkout, loadWorkout, updateWorkout } = useWorkoutStore()
   const t = useTranslations('workouts')
   const tCommon = useTranslations('common')
   const workoutId = params.id as string
@@ -132,8 +131,14 @@ export default function EditWorkoutPage() {
 
   const loadWorkoutData = async () => {
     setIsLoading(true)
-    await loadWorkout(workoutId)
-    setIsLoading(false)
+    try {
+      await loadWorkout(workoutId)
+    } catch (error) {
+      console.error('Error loading workout:', error)
+      toast.error(t('failedToLoad') || 'Failed to load workout')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -204,14 +209,14 @@ export default function EditWorkoutPage() {
     setIsSaving(true)
 
     try {
-      // Update workout basic info
-      const workoutResult = await workoutRepository.update(workoutId, {
+      // Update workout basic info using store (which logs audit event)
+      const success = await updateWorkout(workoutId, {
         date,
         duration,
         notes,
       })
 
-      if (workoutResult.error) {
+      if (!success) {
         throw new Error('Failed to update workout')
       }
 

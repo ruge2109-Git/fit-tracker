@@ -42,7 +42,10 @@ export default function WorkoutDetailPage() {
 
   useEffect(() => {
     if (workoutId) {
-      loadWorkout(workoutId)
+      loadWorkout(workoutId).catch((error) => {
+        console.error('Error loading workout:', error)
+        // Error is already handled by the store, but ensure we don't get stuck
+      })
     }
   }, [workoutId, loadWorkout])
 

@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, Menu, ChevronDown, Search } from 'lucide-react'
+import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, Menu, ChevronDown, Search, FileText } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { LanguageSelector } from '@/components/language/language-selector'
@@ -80,10 +80,11 @@ export function NavBar() {
 
   // Add admin section if user is admin
   if (isAdmin) {
-    navSections.push({
+    navSections.push(    {
       title: 'administration',
       items: [
         { href: ROUTES.ADMIN_FEEDBACK, labelKey: 'admin', icon: Shield },
+        { href: ROUTES.ADMIN_AUDIT, labelKey: 'auditLog', icon: FileText },
       ],
     })
   }

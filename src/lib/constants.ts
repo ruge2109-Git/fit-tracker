@@ -51,6 +51,7 @@ export const ROUTES = {
   PROFILE: '/profile',
   FEEDBACK: '/feedback',
   ADMIN_FEEDBACK: '/admin/feedback',
+  ADMIN_AUDIT: '/admin/audit',
 } as const
 
 // Exercise type options

@@ -6,6 +6,7 @@
 import { create } from 'zustand'
 import { Exercise, ExerciseType, MuscleGroup, ExerciseFormData } from '@/types'
 import { exerciseRepository } from '@/domain/repositories/exercise.repository'
+import { logAuditEvent } from '@/lib/audit/audit-helper'
 
 interface ExerciseState {
   exercises: Exercise[]
@@ -114,6 +115,17 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
 
     // Reload exercises
     await get().loadExercises()
+    
+    // Log create exercise event
+    if (result.data) {
+      logAuditEvent({
+        action: 'create_exercise',
+        entityType: 'exercise',
+        entityId: result.data.id,
+        details: { name: data.name, type: data.type, muscleGroup: data.muscle_group },
+      })
+    }
+    
     return result.data!.id
   },
 

@@ -38,6 +38,7 @@ import { Label } from '@/components/ui/label'
 import { ExerciseSelect } from '@/components/exercises/exercise-select'
 import { SortableExerciseItem } from '@/components/routines/sortable-exercise-item'
 import { routineRepository } from '@/domain/repositories/routine.repository'
+import { logAuditEvent } from '@/lib/audit/audit-helper'
 import { RoutineWithExercises, ExerciseFormData } from '@/types'
 import { ROUTES, ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS, getExerciseTypeOptions, getMuscleGroupOptions } from '@/lib/constants'
 import { useExerciseStore } from '@/store/exercise.store'
@@ -137,13 +138,19 @@ export default function RoutineDetailPage() {
 
   const loadRoutine = async () => {
     setIsLoading(true)
-    const result = await routineRepository.findById(routineId)
-    if (result.data) {
-      setRoutine(result.data)
-    } else {
+    try {
+      const result = await routineRepository.findById(routineId)
+      if (result.data) {
+        setRoutine(result.data)
+      } else {
+        toast.error(t('failedToLoad') || 'Failed to load routine')
+      }
+    } catch (error) {
+      console.error('Error loading routine:', error)
       toast.error(t('failedToLoad') || 'Failed to load routine')
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   const handleDelete = async () => {
@@ -151,6 +158,13 @@ export default function RoutineDetailPage() {
 
     const result = await routineRepository.delete(routineId)
     if (result.data) {
+      // Log delete routine event
+      logAuditEvent({
+        action: 'delete_routine',
+        entityType: 'routine',
+        entityId: routineId,
+      })
+      
       toast.success(t('routineDeleted') || 'Routine deleted')
       router.push(ROUTES.ROUTINES)
     } else {
@@ -166,6 +180,13 @@ export default function RoutineDetailPage() {
     })
 
     if (result.data) {
+      // Log update routine event
+      logAuditEvent({
+        action: 'update_routine',
+        entityType: 'routine',
+        entityId: routineId,
+        details: { is_active: !routine.is_active },
+      })
       toast.success(routine.is_active ? t('routineDeactivated') || 'Routine deactivated' : t('routineActivated') || 'Routine activated')
       loadRoutine()
     } else {

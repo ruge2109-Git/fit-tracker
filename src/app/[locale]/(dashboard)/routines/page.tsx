@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuthStore } from '@/store/auth.store'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { useNotifications } from '@/hooks/use-notifications'
+import { logAuditEvent } from '@/lib/audit/audit-helper'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { Routine, DayOfWeek, RoutineFrequency } from '@/types'
 import { ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS } from '@/lib/constants'
@@ -77,11 +78,17 @@ export default function RoutinesPage() {
     
     // Don't block - show page immediately
     setIsLoading(true)
-    const result = await routineRepository.findByUserId(user.id)
-    if (result.data) {
-      setRoutines(result.data)
+    try {
+      const result = await routineRepository.findByUserId(user.id)
+      if (result.data) {
+        setRoutines(result.data)
+      }
+    } catch (error) {
+      console.error('Error loading routines:', error)
+      toast.error(t('failedToLoad') || 'Failed to load routines')
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   const handleCreateRoutine = async (data: RoutineFormData) => {
@@ -101,6 +108,19 @@ export default function RoutinesPage() {
       toast.error(t('failedToCreate') || 'Failed to create routine')
     } else {
       toast.success(t('routineCreated') || 'Routine created successfully!')
+      
+      // Log create routine event
+      if (result.data) {
+        // Get exercises count from the routine data if available
+        const exercisesCount = (result.data as any).exercises?.length || 0
+        logAuditEvent({
+          action: 'create_routine',
+          entityType: 'routine',
+          entityId: result.data.id,
+          details: { name: data.name, exercisesCount },
+        })
+      }
+      
       reset()
       setSelectedDays([])
       setDialogOpen(false)

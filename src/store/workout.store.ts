@@ -6,6 +6,7 @@
 import { create } from 'zustand'
 import { Workout, WorkoutWithSets, SetFormData, WorkoutFormData } from '@/types'
 import { workoutService } from '@/domain/services/workout.service'
+import { logAuditEvent } from '@/lib/audit/audit-helper'
 
 interface WorkoutState {
   workouts: Workout[]
@@ -64,6 +65,17 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     // Refresh workouts list
     await get().loadWorkouts(userId)
     set({ isLoading: false })
+    
+    // Log create workout event
+    if (result.data) {
+      logAuditEvent({
+        action: 'create_workout',
+        entityType: 'workout',
+        entityId: result.data.id,
+        details: { date: data.date, duration: data.duration, setsCount: sets.length },
+      })
+    }
+    
     return result.data!.id
   },
 
@@ -84,6 +96,15 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         : state.currentWorkout,
       isLoading: false,
     }))
+    
+    // Log update workout event
+    logAuditEvent({
+      action: 'update_workout',
+      entityType: 'workout',
+      entityId: id,
+      details: { changes: Object.keys(data) },
+    })
+    
     return true
   },
 
@@ -101,6 +122,14 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       workouts: state.workouts.filter(w => w.id !== id),
       isLoading: false,
     }))
+    
+    // Log delete workout event
+    logAuditEvent({
+      action: 'delete_workout',
+      entityType: 'workout',
+      entityId: id,
+    })
+    
     return true
   },
 

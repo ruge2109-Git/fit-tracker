@@ -7,6 +7,7 @@
 import { progressPhotoRepository } from '../repositories/progress-photo.repository'
 import { ProgressPhoto, ProgressPhotoFormData, ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
+import { logger } from '@/lib/logger'
 
 export interface IProgressPhotoService {
   getPhoto(id: string): Promise<ApiResponse<ProgressPhoto>>
@@ -49,12 +50,9 @@ class ProgressPhotoService implements IProgressPhotoService {
       })
 
     if (error) {
+      logger.error('Failed to upload photo:', error as Error)
       throw new Error(`Failed to upload photo: ${error.message}`)
     }
-
-    // Store the path in the database
-    // We'll generate signed URLs in the frontend when displaying images
-    // This allows us to refresh URLs when they expire
     return data.path
   }
 
@@ -80,12 +78,10 @@ class ProgressPhotoService implements IProgressPhotoService {
         .remove([filePath])
 
       if (error) {
-        console.warn(`Failed to delete photo from storage: ${error.message}`)
-        // Don't throw - we still want to delete the database record
+        logger.warn('Failed to delete photo from storage:', error.message)
       }
     } catch (error) {
-      console.warn(`Error deleting photo from storage:`, error)
-      // Don't throw - we still want to delete the database record
+      logger.warn('Error deleting photo from storage:', error instanceof Error ? error.message : 'Unknown error')
     }
   }
 

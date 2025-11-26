@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
+import { logger } from '@/lib/logger'
 
 const STORAGE_BUCKET = 'progress-photos'
 const SIGNED_URL_EXPIRATION = 3600 // 1 hour
@@ -20,13 +21,13 @@ export async function getSignedUrl(path: string): Promise<string | null> {
       .createSignedUrl(path, SIGNED_URL_EXPIRATION)
 
     if (error) {
-      console.error('Error creating signed URL:', error)
+      logger.error('Error creating signed URL:', error as Error)
       return null
     }
 
     return data.signedUrl
   } catch (error) {
-    console.error('Error creating signed URL:', error)
+    logger.error('Error creating signed URL:', error as Error)
     return null
   }
 }

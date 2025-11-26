@@ -25,6 +25,7 @@ import { QuickNotes } from '@/components/workouts/quick-notes'
 import { workoutService } from '@/domain/services/workout.service'
 import { WorkoutTags } from '@/components/workouts/workout-tags'
 import { InlineEdit } from '@/components/ui/inline-edit'
+import { logger } from '@/lib/logger'
 
 export default function WorkoutDetailPage() {
   const params = useParams()
@@ -43,8 +44,7 @@ export default function WorkoutDetailPage() {
   useEffect(() => {
     if (workoutId) {
       loadWorkout(workoutId).catch((error) => {
-        console.error('Error loading workout:', error)
-        // Error is already handled by the store, but ensure we don't get stuck
+        logger.error('Error loading workout', error as Error, 'WorkoutDetailPage')
       })
     }
   }, [workoutId, loadWorkout])

@@ -8,6 +8,7 @@ import { Workout, WorkoutWithSets, SetFormData, WorkoutFormData } from '@/types'
 import { workoutService } from '@/domain/services/workout.service'
 import { goalTrackingService } from '@/domain/services/goal-tracking.service'
 import { logAuditEvent } from '@/lib/audit/audit-helper'
+import { logger } from '@/lib/logger'
 
 interface WorkoutState {
   workouts: Workout[]
@@ -80,7 +81,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       // This runs asynchronously and won't block workout creation
       goalTrackingService.updateGoalsFromWorkout(userId, result.data).catch((error) => {
         // Silently fail - goal tracking shouldn't break workout creation
-        console.error('Error updating goals from workout:', error)
+        logger.error('Error updating goals from workout', error as Error, 'WorkoutStore')
       })
     }
     

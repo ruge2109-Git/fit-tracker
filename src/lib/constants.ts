@@ -55,6 +55,7 @@ export const ROUTES = {
   GOALS: '/goals',
   GOAL_DETAIL: (id: string) => `/goals/${id}`,
   GOAL_EDIT: (id: string) => `/goals/${id}/edit`,
+  BODY_MEASUREMENTS: '/body-measurements',
 } as const
 
 // Exercise type options

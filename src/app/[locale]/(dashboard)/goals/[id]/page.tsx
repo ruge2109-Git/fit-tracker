@@ -25,6 +25,7 @@ import { useTranslations } from 'next-intl'
 import { GoalFormData, GoalProgressFormData } from '@/types'
 import { goalService } from '@/domain/services/goal.service'
 import { useSafeLoading } from '@/hooks/use-safe-async'
+import { logger } from '@/lib/logger'
 
 export default function GoalDetailPage() {
   const params = useParams()
@@ -42,7 +43,7 @@ export default function GoalDetailPage() {
   useEffect(() => {
     if (goalId) {
       loadGoal(goalId).catch((error) => {
-        console.error('Error loading goal:', error)
+        logger.error('Error loading goal', error as Error, 'GoalDetailPage')
       })
     }
   }, [goalId, loadGoal])

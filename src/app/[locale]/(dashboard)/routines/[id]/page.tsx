@@ -43,6 +43,7 @@ import { RoutineWithExercises, ExerciseFormData } from '@/types'
 import { ROUTES, ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS, getExerciseTypeOptions, getMuscleGroupOptions } from '@/lib/constants'
 import { useExerciseStore } from '@/store/exercise.store'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { logger } from '@/lib/logger'
 
 const addExerciseSchema = z.object({
   exercise_id: z.string().min(1, 'Please select an exercise'),
@@ -146,7 +147,7 @@ export default function RoutineDetailPage() {
         toast.error(t('failedToLoad') || 'Failed to load routine')
       }
     } catch (error) {
-      console.error('Error loading routine:', error)
+      logger.error('Error loading routine', error as Error, 'RoutineDetailPage')
       toast.error(t('failedToLoad') || 'Failed to load routine')
     } finally {
       setIsLoading(false)

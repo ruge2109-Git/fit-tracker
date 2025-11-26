@@ -297,3 +297,36 @@ export interface GoalProgressFormData {
   notes?: string;
 }
 
+// Body Measurements types
+export enum MeasurementType {
+  WEIGHT = 'weight',
+  BODY_FAT = 'body_fat',
+  CHEST = 'chest',
+  WAIST = 'waist',
+  HIPS = 'hips',
+  BICEPS = 'biceps',
+  THIGHS = 'thighs',
+  NECK = 'neck',
+  SHOULDERS = 'shoulders',
+  FOREARMS = 'forearms',
+  CALVES = 'calves',
+  CUSTOM = 'custom',
+}
+
+export interface BodyMeasurement extends BaseEntity {
+  user_id: string;
+  measurement_type: MeasurementType;
+  value: number;
+  unit: string; // 'kg', 'lbs', 'cm', 'inches', '%'
+  notes?: string;
+  measurement_date: string; // DATE format YYYY-MM-DD
+}
+
+export interface BodyMeasurementFormData {
+  measurement_type: MeasurementType;
+  value: number;
+  unit: string;
+  notes?: string;
+  measurement_date: string;
+}
+

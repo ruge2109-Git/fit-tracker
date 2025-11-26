@@ -23,6 +23,7 @@ import { statsService } from '@/domain/services/stats.service'
 import { WorkoutStats } from '@/types'
 import { formatDate, formatDuration } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
+import { logger } from '@/lib/logger'
 
 export default function ProfilePage() {
   const router = useNavigationRouter()
@@ -66,8 +67,7 @@ export default function ProfilePage() {
         setStats(statsResult.data)
       }
     } catch (error) {
-      // Error already handled by services, just ensure loading is reset
-      console.error('Error loading profile data:', error)
+      logger.error('Error loading profile data', error as Error, 'ProfilePage')
     } finally {
       setIsLoading(false)
     }

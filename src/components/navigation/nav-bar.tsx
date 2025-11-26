@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, Menu, ChevronDown, Search, FileText, Target } from 'lucide-react'
+import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, Menu, ChevronDown, Search, FileText, Target, Scale } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { LanguageSelector } from '@/components/language/language-selector'
@@ -57,6 +57,7 @@ export function NavBar() {
         { href: ROUTES.EXERCISES, labelKey: 'exercises', icon: BookOpen },
         { href: ROUTES.ROUTINES, labelKey: 'routines', icon: ListTodo },
         { href: ROUTES.GOALS, labelKey: 'goals', icon: Target },
+        { href: ROUTES.BODY_MEASUREMENTS, labelKey: 'bodyMeasurements', icon: Scale },
       ],
     },
     {

@@ -26,6 +26,7 @@ import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { Routine, DayOfWeek, RoutineFrequency } from '@/types'
 import { ROUTINE_FREQUENCY_OPTIONS, DAYS_OF_WEEK_OPTIONS } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
+import { logger } from '@/lib/logger'
 
 const routineSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -84,7 +85,7 @@ export default function RoutinesPage() {
         setRoutines(result.data)
       }
     } catch (error) {
-      console.error('Error loading routines:', error)
+      logger.error('Error loading routines', error as Error, 'RoutinesPage')
       toast.error(t('failedToLoad') || 'Failed to load routines')
     } finally {
       setIsLoading(false)

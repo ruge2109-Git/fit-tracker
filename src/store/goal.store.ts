@@ -9,6 +9,7 @@ import { goalService } from '@/domain/services/goal.service'
 import { goalNotificationService } from '@/lib/notifications/goal-notification.service'
 import { logAuditEvent } from '@/lib/audit/audit-helper'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 interface GoalState {
   goals: Goal[]
@@ -207,7 +208,7 @@ export const useGoalStore = create<GoalState>((set, get) => ({
         // Show browser notification if permission is granted (toast already shown above)
         goalNotificationService.showGoalCompletedNotification(result.data, false).catch((error) => {
           // Silently fail - notification shouldn't break progress addition
-          console.error('Error showing goal completion notification:', error)
+          logger.error('Error showing goal completion notification', error as Error, 'GoalStore')
         })
       }
     } else {

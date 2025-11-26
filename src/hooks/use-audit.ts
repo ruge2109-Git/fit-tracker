@@ -7,6 +7,7 @@
 
 import { useCallback } from 'react'
 import { useAuthStore } from '@/store/auth.store'
+import { logger } from '@/lib/logger'
 
 export interface AuditLogAction {
   action: string
@@ -33,7 +34,7 @@ export function useAudit() {
         })
       } catch (error) {
         // Silently fail - don't block user actions if audit logging fails
-        console.error('Failed to log audit action:', error)
+        logger.error('Failed to log audit action', error as Error, 'useAudit')
       }
     },
     [user]

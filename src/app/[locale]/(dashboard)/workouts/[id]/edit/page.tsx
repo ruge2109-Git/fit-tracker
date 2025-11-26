@@ -134,7 +134,7 @@ export default function EditWorkoutPage() {
     try {
       await loadWorkout(workoutId)
     } catch (error) {
-      console.error('Error loading workout:', error)
+      logger.error('Error loading workout', error as Error, 'EditWorkoutPage')
       toast.error(t('failedToLoad') || 'Failed to load workout')
     } finally {
       setIsLoading(false)

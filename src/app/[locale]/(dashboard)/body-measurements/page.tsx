@@ -24,17 +24,19 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { useSafeLoading } from '@/hooks/use-safe-async'
 import { formatDate } from '@/lib/utils'
+import { useNavigationRouter } from '@/hooks/use-navigation-router'
+import { ROUTES } from '@/lib/constants'
 
 export default function BodyMeasurementsPage() {
+  const router = useNavigationRouter()
   const { user } = useAuthStore()
-  const { measurements, loadMeasurements, createMeasurement, updateMeasurement, deleteMeasurement, isLoading } = useBodyMeasurementStore()
+  const { measurements, loadMeasurements, createMeasurement, deleteMeasurement, isLoading } = useBodyMeasurementStore()
   const { activeGoals, loadActiveGoals } = useGoalStore()
   const t = useTranslations('bodyMeasurements')
   const tCommon = useTranslations('common')
   const { isLoading: isSafeLoading, setLoading } = useSafeLoading()
   
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [editingMeasurement, setEditingMeasurement] = useState<BodyMeasurement | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -63,27 +65,6 @@ export default function BodyMeasurementsPage() {
     }
   }
 
-  const handleUpdateMeasurement = async (data: BodyMeasurementFormData) => {
-    if (!editingMeasurement) return
-
-    setLoading(true)
-    try {
-      const success = await updateMeasurement(editingMeasurement.id, data)
-      if (success) {
-        toast.success(t('measurementUpdated') || 'Measurement updated successfully!')
-        setEditingMeasurement(null)
-        if (user) {
-          await loadMeasurements(user.id)
-        }
-      } else {
-        toast.error(t('errorUpdatingMeasurement') || 'Failed to update measurement')
-      }
-    } catch (error) {
-      toast.error(t('errorUpdatingMeasurement') || 'Failed to update measurement')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleDeleteMeasurement = async (id: string) => {
     const confirmMessage = t('confirmDelete') || 'Are you sure you want to delete this measurement?'
@@ -332,7 +313,7 @@ export default function BodyMeasurementsPage() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-8 w-8"
-                                      onClick={() => setEditingMeasurement(measurement)}
+                                      onClick={() => router.push(ROUTES.BODY_MEASUREMENT_EDIT(measurement.id))}
                                     >
                                       <Edit className="h-4 w-4" />
                                     </Button>
@@ -360,22 +341,6 @@ export default function BodyMeasurementsPage() {
         </Accordion>
       )}
 
-      {/* Edit Dialog */}
-      {editingMeasurement && (
-        <Dialog open={!!editingMeasurement} onOpenChange={(open) => !open && setEditingMeasurement(null)}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{t('editMeasurement')}</DialogTitle>
-              <DialogDescription>{t('editMeasurementDescription')}</DialogDescription>
-            </DialogHeader>
-            <MeasurementForm
-              onSubmit={handleUpdateMeasurement}
-              defaultValues={editingMeasurement}
-              isLoading={isLoading || isSafeLoading}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   )
 }

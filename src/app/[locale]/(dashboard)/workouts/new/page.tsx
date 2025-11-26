@@ -1,247 +1,191 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { toast } from 'sonner'
-import { Plus, Trash2 } from 'lucide-react'
+import { Sparkles, List, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { WorkoutForm } from '@/components/workouts/workout-form'
-import { ExerciseSelect } from '@/components/exercises/exercise-select'
-import { WorkoutRestTimer } from '@/components/workouts/workout-rest-timer'
 import { useAuthStore } from '@/store/auth.store'
-import { useWorkoutStore } from '@/store/workout.store'
-import { WorkoutFormData, SetFormData } from '@/types'
+import { routineRepository } from '@/domain/repositories/routine.repository'
+import { Routine } from '@/types'
 import { ROUTES } from '@/lib/constants'
-import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress, WorkoutProgress } from '@/hooks/use-workout-persistence'
 import { useTranslations } from 'next-intl'
-import { logger } from '@/lib/logger'
 
 export default function NewWorkoutPage() {
   const router = useNavigationRouter()
   const { user } = useAuthStore()
-  const { createWorkout, isLoading } = useWorkoutStore()
   const t = useTranslations('workouts')
-  const [workoutData, setWorkoutData] = useState<WorkoutFormData | null>(null)
-  const [sets, setSets] = useState<SetFormData[]>([])
-  const [currentSet, setCurrentSet] = useState<Partial<SetFormData>>({
-    exercise_id: '',
-    reps: 10,
-    weight: 0,
-    rest_time: 90,
-  })
-
-  useEffect(() => {
-    const savedProgress = loadWorkoutProgress()
-    if (savedProgress) {
-      if (savedProgress.workoutData) {
-        setWorkoutData(savedProgress.workoutData)
-      }
-      if (savedProgress.sets && savedProgress.sets.length > 0) {
-        setSets(savedProgress.sets as SetFormData[])
-        toast.success(t('progressRestored') || 'Your workout progress has been restored!')
-      }
-      if (savedProgress.currentSet) {
-        setCurrentSet(savedProgress.currentSet)
-      }
-    }
-  }, [t])
-
-  useEffect(() => {
-    if (workoutData || sets.length > 0) {
-      const progress: WorkoutProgress = {
-        date: workoutData?.date || new Date().toISOString().split('T')[0],
-        duration: workoutData?.duration || 60,
-        notes: workoutData?.notes || '',
-        sets: sets.map(set => ({
-          exercise_id: set.exercise_id,
-          reps: set.reps,
-          weight: set.weight,
-          rest_time: set.rest_time || 90,
-        })),
-        workoutData: workoutData ? {
-          date: workoutData.date,
-          duration: workoutData.duration,
-          notes: workoutData.notes || '',
-        } : undefined,
-        currentSet: currentSet.exercise_id ? {
-          exercise_id: currentSet.exercise_id,
-          reps: currentSet.reps || 10,
-          weight: currentSet.weight || 0,
-          rest_time: currentSet.rest_time || 90,
-        } : undefined,
-      }
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('workout_progress_new', JSON.stringify({
-            ...progress,
-            savedAt: new Date().toISOString(),
-          }))
-        } catch (error) {
-          logger.error('Failed to save workout progress', error instanceof Error ? error : new Error(String(error)), 'NewWorkoutPage')
-        }
-      }
-    }
-  }, [workoutData, sets, currentSet])
-
-  const handleWorkoutSubmit = (data: WorkoutFormData) => {
-    setWorkoutData(data)
-    toast.success(t('workoutInfoSaved') || 'Workout info saved. Now add exercises!')
-  }
-
-  const handleAddSet = () => {
-    if (!currentSet.exercise_id) {
-      toast.error(t('pleaseSelectExercise') || 'Please select an exercise')
-      return
-    }
-
-    setSets([...sets, currentSet as SetFormData])
-    setCurrentSet({
-      exercise_id: '',
-      reps: 10,
-      weight: 0,
-      rest_time: 90,
-    })
-    toast.success(t('setAdded') || 'Set added!')
-  }
-
-  const handleRemoveSet = (index: number) => {
-    setSets(sets.filter((_, i) => i !== index))
-  }
-
-  const handleFinalSubmit = async () => {
-    if (!user || !workoutData) return
-
-    if (sets.length === 0) {
-      toast.error(t('addAtLeastOneSet') || 'Add at least one set')
-      return
-    }
-
-    const workoutId = await createWorkout(user.id, workoutData, sets)
-
-    if (workoutId) {
-      clearWorkoutProgress()
-      toast.success(t('workoutCreatedSuccessfully') || 'Workout created successfully!')
-      router.push(ROUTES.WORKOUT_DETAIL(workoutId))
-    } else {
-      toast.error(t('failedToCreateWorkout') || 'Failed to create workout')
-    }
-  }
-
+  const tRoutines = useTranslations('routines')
   const tCommon = useTranslations('common')
-  
+  const [workoutMode, setWorkoutMode] = useState<'routine' | 'free'>('free')
+  const [selectedRoutineId, setSelectedRoutineId] = useState<string>('')
+  const [availableRoutines, setAvailableRoutines] = useState<Routine[]>([])
+  const [isLoadingRoutines, setIsLoadingRoutines] = useState(false)
+  const [routineSearch, setRoutineSearch] = useState('')
+
+  const loadAvailableRoutines = useCallback(async () => {
+    if (!user) return
+    setIsLoadingRoutines(true)
+    const result = await routineRepository.findByUserId(user.id)
+    if (result.data) {
+      setAvailableRoutines(result.data)
+    } else if (result.error) {
+      toast.error(tRoutines('failedToLoad') || 'Failed to load routines')
+    }
+    setIsLoadingRoutines(false)
+  }, [user, tRoutines])
+
+  useEffect(() => {
+    if (user && workoutMode === 'routine' && availableRoutines.length === 0 && !isLoadingRoutines) {
+      loadAvailableRoutines()
+    }
+  }, [user, workoutMode, availableRoutines.length, isLoadingRoutines, loadAvailableRoutines])
+
+  const filteredRoutines = useMemo(() => {
+    if (!routineSearch) return availableRoutines
+    return availableRoutines.filter((routine) =>
+      `${routine.name} ${routine.description || ''}`.toLowerCase().includes(routineSearch.toLowerCase()),
+    )
+  }, [availableRoutines, routineSearch])
+
+  const handleStartFreeWorkout = () => {
+    router.push(ROUTES.NEW_WORKOUT_FREE)
+  }
+
+  const handleSelectRoutine = (routineId: string) => {
+    router.push(ROUTES.WORKOUT_FROM_ROUTINE(routineId))
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 px-4 pb-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">{t('newWorkout') || 'New Workout'}</h1>
-        <p className="text-muted-foreground">{t('recordSession') || 'Record your training session'}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">{t('newWorkout') || 'New Workout'}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">{t('recordSession') || 'Record your training session'}</p>
       </div>
 
+      {/* Workout Mode Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('workoutInformation') || 'Workout Information'}</CardTitle>
+          <CardTitle>{t('workoutType') || 'Workout Type'}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <WorkoutForm
-            onSubmit={handleWorkoutSubmit}
-            isLoading={isLoading}
-          />
-        </CardContent>
-      </Card>
-
-      {workoutData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add Exercises</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label>Exercise</Label>
-                <ExerciseSelect
-                  value={currentSet.exercise_id || ''}
-                  onChange={(value) => setCurrentSet({ ...currentSet, exercise_id: value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reps">Reps</Label>
-                <Input
-                  id="reps"
-                  type="number"
-                  min="1"
-                  value={currentSet.reps}
-                  onChange={(e) => setCurrentSet({ ...currentSet, reps: parseInt(e.target.value) })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={currentSet.weight}
-                  onChange={(e) => setCurrentSet({ ...currentSet, weight: parseFloat(e.target.value) })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="rest">Rest (sec)</Label>
-                <Input
-                  id="rest"
-                  type="number"
-                  min="0"
-                  value={currentSet.rest_time}
-                  onChange={(e) => setCurrentSet({ ...currentSet, rest_time: parseInt(e.target.value) })}
-                />
-              </div>
-            </div>
-
-            <Button onClick={handleAddSet} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              {t('addSet') || 'Add Set'}
-            </Button>
-
-            {sets.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold">Sets ({sets.length})</h3>
-                <div className="space-y-2">
-                  {sets.map((set, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <span className="text-sm">
-                        {t('set') || 'Set'} {index + 1}: {set.reps} {t('reps') || 'reps'} × {set.weight} {t('kg') || 'kg'}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveSet(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Button
+              type="button"
+              variant={workoutMode === 'free' ? 'default' : 'outline'}
+              className="h-auto py-4 sm:py-6 flex flex-col items-center gap-2 w-full"
+              onClick={() => {
+                setWorkoutMode('free')
+                setSelectedRoutineId('')
+                setRoutineSearch('')
+              }}
+            >
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
+              <div className="text-center px-2">
+                <div className="font-semibold text-sm sm:text-base">{t('freeWorkout') || 'Free Workout'}</div>
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2" style={{ textWrap: 'wrap' }}>
+                  {t('freeWorkoutDescription') || 'Start from scratch and add exercises manually'}
                 </div>
               </div>
-            )}
+            </Button>
 
-            {sets.length > 0 && (
-              <Button onClick={handleFinalSubmit} className="w-full" disabled={isLoading}>
-                {isLoading ? t('creating') || 'Creating...' : t('completeWorkout') || 'Complete Workout'}
+            <Button
+              type="button"
+              variant={workoutMode === 'routine' ? 'default' : 'outline'}
+              className="h-auto py-4 sm:py-6 flex flex-col items-center gap-2 w-full"
+              onClick={() => {
+                setWorkoutMode('routine')
+              }}
+            >
+              <List className="h-5 w-5 sm:h-6 sm:w-6" />
+              <div className="text-center px-2">
+                <div className="font-semibold text-sm sm:text-base">{t('startFromRoutine') || 'From Routine'}</div>
+                <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {t('startFromRoutineDescription') || 'Use a routine template'}
+                </div>
+              </div>
+            </Button>
+          </div>
+
+          {workoutMode === 'free' && (
+            <div className="pt-4 border-t">
+              <Button onClick={handleStartFreeWorkout} className="w-full" size="lg">
+                {t('startFreeWorkout') || 'Start Free Workout'}
               </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </div>
+          )}
 
-      <WorkoutRestTimer />
+          {workoutMode === 'routine' && (
+            <div className="space-y-2 pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <Label>{tRoutines('selectRoutine') || 'Select Routine'}</Label>
+                {availableRoutines.length > 3 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRoutineSearch(routineSearch ? '' : ' ')}
+                    className="h-8"
+                  >
+                    {routineSearch ? (
+                      <>
+                        <X className="h-4 w-4 mr-1" />
+                        {tCommon('clear') || 'Clear'}
+                      </>
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4 mr-1" />
+                        {tCommon('search') || 'Search'}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+              {routineSearch && (
+                <Input
+                  placeholder={t('searchRoutinePlaceholder') || 'Search routine by name'}
+                  value={routineSearch}
+                  onChange={(e) => setRoutineSearch(e.target.value)}
+                  className="mb-2"
+                  autoFocus
+                />
+              )}
+              {isLoadingRoutines ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  {t('loading') || 'Loading...'}
+                </div>
+              ) : filteredRoutines.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  {availableRoutines.length === 0
+                    ? tRoutines('noRoutines') || 'No routines yet'
+                    : t('noRoutinesMatchSearch') || 'No routines match your search'}
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredRoutines.map((routine) => (
+                    <Card
+                      key={routine.id}
+                      className={`cursor-pointer transition-colors hover:bg-accent ${
+                        selectedRoutineId === routine.id ? 'ring-2 ring-primary' : ''
+                      }`}
+                      onClick={() => handleSelectRoutine(routine.id)}
+                    >
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base break-words">{routine.name}</CardTitle>
+                        {routine.description && (
+                          <CardDescription className="break-words">{routine.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
-

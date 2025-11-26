@@ -11,9 +11,7 @@ import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { ArrowLeft, Trash2, Edit, Target, Calendar, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { GoalProgress } from '@/components/goals/goal-progress'
-import { GoalForm } from '@/components/goals/goal-form'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { useGoalStore } from '@/store/goal.store'
@@ -22,7 +20,7 @@ import { formatDate } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
-import { GoalFormData, GoalProgressFormData } from '@/types'
+import { GoalProgressFormData } from '@/types'
 import { goalService } from '@/domain/services/goal.service'
 import { useSafeLoading } from '@/hooks/use-safe-async'
 import { logger } from '@/lib/logger'
@@ -37,8 +35,6 @@ export default function GoalDetailPage() {
   const { isLoading: isSafeLoading, setLoading } = useSafeLoading()
   
   const goalId = params.id as string
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     if (goalId) {
@@ -49,6 +45,9 @@ export default function GoalDetailPage() {
   }, [goalId, loadGoal])
 
   const handleDelete = async () => {
+    const confirmMessage = t('deleteGoalConfirmation') || 'Are you sure you want to delete this goal?'
+    if (!window.confirm(confirmMessage)) return
+
     const success = await deleteGoal(goalId)
     if (success) {
       toast.success(t('goalDeleted') || 'Goal deleted')
@@ -58,23 +57,6 @@ export default function GoalDetailPage() {
     }
   }
 
-  const handleUpdate = async (data: GoalFormData) => {
-    setLoading(true)
-    try {
-      const success = await updateGoal(goalId, data)
-      if (success) {
-        toast.success(t('goalUpdated') || 'Goal updated successfully!')
-        setEditDialogOpen(false)
-        await loadGoal(goalId)
-      } else {
-        toast.error(t('errorUpdatingGoal') || 'Failed to update goal')
-      }
-    } catch (error) {
-      toast.error(t('errorUpdatingGoal') || 'Failed to update goal')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleAddProgress = async (progress: GoalProgressFormData) => {
     setLoading(true)
@@ -145,7 +127,7 @@ export default function GoalDetailPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => setEditDialogOpen(true)}
+            onClick={() => router.push(ROUTES.GOAL_EDIT(goalId))}
             disabled={isLoading || isSafeLoading}
           >
             <Edit className="h-4 w-4 mr-2" />
@@ -153,7 +135,7 @@ export default function GoalDetailPage() {
           </Button>
           <Button
             variant="destructive"
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={handleDelete}
             disabled={isLoading || isSafeLoading}
           >
             <Trash2 className="h-4 w-4 mr-2" />
@@ -235,46 +217,6 @@ export default function GoalDetailPage() {
         />
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t('editGoal')}</DialogTitle>
-            <DialogDescription>{t('editGoalDescription')}</DialogDescription>
-          </DialogHeader>
-          <GoalForm
-            onSubmit={handleUpdate}
-            defaultValues={{
-              title: currentGoal.title,
-              description: currentGoal.description,
-              type: currentGoal.type,
-              target_value: currentGoal.target_value,
-              unit: currentGoal.unit,
-              start_date: currentGoal.start_date,
-              target_date: currentGoal.target_date,
-            }}
-            isLoading={isLoading || isSafeLoading}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('deleteGoal')}</DialogTitle>
-            <DialogDescription>{t('deleteGoalConfirmation')}</DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              {tCommon('cancel')}
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isLoading || isSafeLoading}>
-              {tCommon('delete')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

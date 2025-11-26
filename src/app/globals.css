@@ -138,3 +138,8 @@
   }
 }
 
+/* Fix for Radix UI portal scroll */
+[data-radix-popper-content-wrapper] {
+  pointer-events: auto !important;
+}
+

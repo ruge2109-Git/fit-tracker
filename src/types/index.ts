@@ -297,6 +297,30 @@ export interface GoalProgressFormData {
   notes?: string;
 }
 
+// Progress Photo types
+export enum PhotoType {
+  FRONT = 'front',
+  SIDE = 'side',
+  BACK = 'back',
+  CUSTOM = 'custom',
+}
+
+export interface ProgressPhoto extends BaseEntity {
+  user_id: string;
+  photo_url: string;
+  photo_type: PhotoType;
+  notes?: string;
+  photo_date: string;
+  updated_at?: string;
+}
+
+export interface ProgressPhotoFormData {
+  photo: File;
+  photo_type: PhotoType;
+  notes?: string;
+  photo_date: string;
+}
+
 // Body Measurements types
 export enum MeasurementType {
   WEIGHT = 'weight',

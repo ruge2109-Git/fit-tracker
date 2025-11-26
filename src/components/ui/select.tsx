@@ -17,7 +17,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+      'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 text-left',
       className
     )}
     {...props}
@@ -80,6 +80,7 @@ const SelectContent = React.forwardRef<
       )}
       position={position}
       style={{
+        textWrap: 'wrap',
         WebkitOverflowScrolling: 'touch',
         ...props.style,
       }}
@@ -88,11 +89,12 @@ const SelectContent = React.forwardRef<
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
         className={cn(
-          'p-1 overflow-y-auto touch-pan-y',
+          'p-1 overflow-y-auto touch-pan-y [&>button:not(:last-child)]:border-b [&>button:not(:last-child)]:border-border',
           position === 'popper' &&
             'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]'
         )}
         style={{
+          width: 'min-content',
           WebkitOverflowScrolling: 'touch',
         }}
       >
@@ -134,7 +136,9 @@ const SelectItem = React.forwardRef<
       </SelectPrimitive.ItemIndicator>
     </span>
 
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    <SelectPrimitive.ItemText className="truncate min-w-0" style={{ textWrap: 'wrap' }}>
+      {children}
+    </SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ))
 SelectItem.displayName = SelectPrimitive.Item.displayName

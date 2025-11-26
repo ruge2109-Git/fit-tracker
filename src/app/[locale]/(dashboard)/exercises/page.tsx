@@ -14,14 +14,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ExerciseMedia } from '@/components/exercises/exercise-media'
 import { ExerciseCardSkeleton } from '@/components/ui/loading-skeleton'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -31,20 +23,8 @@ import {
 import { Label } from '@/components/ui/label'
 import { useExerciseStore } from '@/store/exercise.store'
 import { debounce } from '@/lib/utils'
-import { getExerciseTypeOptions, getMuscleGroupOptions } from '@/lib/constants'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { ExerciseFormData } from '@/types'
-import { toast } from 'sonner'
+import { getExerciseTypeOptions, getMuscleGroupOptions, ROUTES } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
-
-const exerciseSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  type: z.string(),
-  muscle_group: z.string(),
-  description: z.string().optional(),
-})
 
 export default function ExercisesPage() {
   const router = useNavigationRouter()
@@ -61,22 +41,10 @@ export default function ExercisesPage() {
     searchExercises,
     filterByType,
     filterByMuscleGroup,
-    createExercise,
     resetFilters,
     isLoading,
   } = useExerciseStore()
   const [searchQuery, setSearchQuery] = useState('')
-  const [dialogOpen, setDialogOpen] = useState(false)
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-    reset,
-  } = useForm<ExerciseFormData>({
-    resolver: zodResolver(exerciseSchema),
-  })
 
   useEffect(() => {
     // Load immediately without blocking
@@ -100,16 +68,6 @@ export default function ExercisesPage() {
     debouncedSearch(query)
   }, [debouncedSearch])
 
-  const handleCreateExercise = useCallback(async (data: ExerciseFormData) => {
-    const id = await createExercise(data)
-    if (id) {
-      toast.success(t('exerciseCreated') || 'Exercise created!')
-      setDialogOpen(false)
-      reset()
-    } else {
-      toast.error(t('failedToCreateExercise') || 'Failed to create exercise')
-    }
-  }, [createExercise, t, reset])
 
   return (
     <div className="space-y-6">
@@ -120,73 +78,10 @@ export default function ExercisesPage() {
           <p className="text-muted-foreground">{t('subtitle') || 'Browse and manage your exercise library'}</p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('newExercise') || 'New Exercise'}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('createExercise') || 'Create Exercise'}</DialogTitle>
-              <DialogDescription>{t('createExerciseDescription') || 'Add a new exercise to your library'}</DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit(handleCreateExercise)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">{tCommon('name') || 'Name'}</Label>
-                <Input id="name" {...register('name')} placeholder="Bench Press" />
-                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="type">{tCommon('type') || 'Type'}</Label>
-                <Select onValueChange={(value) => setValue('type', value as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('selectType') || 'Select type'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {exerciseTypeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="muscle_group">{t('muscleGroup') || 'Muscle Group'}</Label>
-                <Select onValueChange={(value) => setValue('muscle_group', value as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('selectMuscleGroup') || 'Select muscle group'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {muscleGroupOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">{tCommon('description') || 'Description'} ({t('optional') || 'optional'})</Label>
-                <Input
-                  id="description"
-                  {...register('description')}
-                  placeholder={t('exerciseDescriptionPlaceholder') || 'Exercise description'}
-                />
-              </div>
-
-              <Button type="submit" className="w-full">
-                {t('createExercise') || 'Create Exercise'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => router.push(ROUTES.NEW_EXERCISE)}>
+          <Plus className="h-4 w-4 mr-2" />
+          {t('newExercise') || 'New Exercise'}
+        </Button>
       </div>
 
       {/* Search and Filters */}

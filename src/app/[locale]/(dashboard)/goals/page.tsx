@@ -10,28 +10,20 @@ import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { Plus, Target, CheckCircle2, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GoalCard } from '@/components/goals/goal-card'
-import { GoalForm } from '@/components/goals/goal-form'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { useAuthStore } from '@/store/auth.store'
 import { useGoalStore } from '@/store/goal.store'
-import { GoalFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
 import { useTranslations } from 'next-intl'
-import { toast } from 'sonner'
-import { useSafeLoading } from '@/hooks/use-safe-async'
 
 export default function GoalsPage() {
   const router = useNavigationRouter()
   const { user } = useAuthStore()
-  const { goals, activeGoals, completedGoals, loadGoals, loadActiveGoals, loadCompletedGoals, createGoal, isLoading } = useGoalStore()
+  const { goals, activeGoals, completedGoals, loadGoals, loadActiveGoals, loadCompletedGoals, isLoading } = useGoalStore()
   const t = useTranslations('goals')
-  const tCommon = useTranslations('common')
-  const { isLoading: isSafeLoading, setLoading } = useSafeLoading()
   
-  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed'>('active')
 
   useEffect(() => {
@@ -41,28 +33,6 @@ export default function GoalsPage() {
       loadCompletedGoals(user.id)
     }
   }, [user, loadGoals, loadActiveGoals, loadCompletedGoals])
-
-  const handleCreateGoal = async (data: GoalFormData) => {
-    if (!user) return
-
-    setLoading(true)
-    try {
-      const goalId = await createGoal(user.id, data)
-      if (goalId) {
-        toast.success(t('goalCreated') || 'Goal created successfully!')
-        setCreateDialogOpen(false)
-        // Reload goals
-        await loadGoals(user.id)
-        await loadActiveGoals(user.id)
-      } else {
-        toast.error(t('errorCreatingGoal') || 'Failed to create goal')
-      }
-    } catch (error) {
-      toast.error(t('errorCreatingGoal') || 'Failed to create goal')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const displayGoals = activeTab === 'all' ? goals : activeTab === 'active' ? activeGoals : completedGoals
 
@@ -77,21 +47,10 @@ export default function GoalsPage() {
           </h1>
           <p className="text-muted-foreground mt-1">{t('description')}</p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('createGoal')}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{t('createGoal')}</DialogTitle>
-              <DialogDescription>{t('createGoalDescription')}</DialogDescription>
-            </DialogHeader>
-            <GoalForm onSubmit={handleCreateGoal} isLoading={isLoading || isSafeLoading} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => router.push(ROUTES.NEW_GOAL)}>
+          <Plus className="h-4 w-4 mr-2" />
+          {t('createGoal')}
+        </Button>
       </div>
 
       {/* Tabs */}
@@ -126,7 +85,7 @@ export default function GoalsPage() {
                 <Button
                   variant="outline"
                   className="mt-4"
-                  onClick={() => setCreateDialogOpen(true)}
+                  onClick={() => router.push(ROUTES.NEW_GOAL)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {t('createFirstGoal')}
@@ -180,7 +139,7 @@ export default function GoalsPage() {
                 <Button
                   variant="outline"
                   className="mt-4"
-                  onClick={() => setCreateDialogOpen(true)}
+                  onClick={() => router.push(ROUTES.NEW_GOAL)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {t('createFirstGoal')}

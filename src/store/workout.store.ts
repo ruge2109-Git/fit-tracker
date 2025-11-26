@@ -6,6 +6,7 @@
 import { create } from 'zustand'
 import { Workout, WorkoutWithSets, SetFormData, WorkoutFormData } from '@/types'
 import { workoutService } from '@/domain/services/workout.service'
+import { goalTrackingService } from '@/domain/services/goal-tracking.service'
 import { logAuditEvent } from '@/lib/audit/audit-helper'
 
 interface WorkoutState {
@@ -73,6 +74,13 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         entityType: 'workout',
         entityId: result.data.id,
         details: { date: data.date, duration: data.duration, setsCount: sets.length },
+      })
+
+      // Update goals automatically based on workout
+      // This runs asynchronously and won't block workout creation
+      goalTrackingService.updateGoalsFromWorkout(userId, result.data).catch((error) => {
+        // Silently fail - goal tracking shouldn't break workout creation
+        console.error('Error updating goals from workout:', error)
       })
     }
     

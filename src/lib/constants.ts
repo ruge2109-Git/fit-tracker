@@ -52,6 +52,9 @@ export const ROUTES = {
   FEEDBACK: '/feedback',
   ADMIN_FEEDBACK: '/admin/feedback',
   ADMIN_AUDIT: '/admin/audit',
+  GOALS: '/goals',
+  GOAL_DETAIL: (id: string) => `/goals/${id}`,
+  GOAL_EDIT: (id: string) => `/goals/${id}/edit`,
 } as const
 
 // Exercise type options

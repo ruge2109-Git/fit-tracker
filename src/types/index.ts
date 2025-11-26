@@ -247,3 +247,53 @@ export interface FeedbackFormData {
   rating?: number;
 }
 
+// Goal types
+export enum GoalType {
+  WEIGHT = 'weight',
+  VOLUME = 'volume',
+  FREQUENCY = 'frequency',
+  STRENGTH = 'strength',
+  ENDURANCE = 'endurance',
+  CUSTOM = 'custom',
+}
+
+export interface Goal extends BaseEntity {
+  user_id: string;
+  title: string;
+  description?: string;
+  type: GoalType;
+  target_value: number;
+  current_value: number;
+  unit: string; // 'kg', 'lbs', 'times', 'days', etc.
+  start_date: string;
+  target_date?: string;
+  is_completed: boolean;
+  completed_at?: string;
+  updated_at?: string;
+}
+
+export interface GoalWithProgress extends Goal {
+  progress?: GoalProgress[];
+}
+
+export interface GoalProgress extends BaseEntity {
+  goal_id: string;
+  value: number;
+  notes?: string;
+}
+
+export interface GoalFormData {
+  title: string;
+  description?: string;
+  type: GoalType;
+  target_value: number;
+  unit: string;
+  start_date: string;
+  target_date?: string;
+}
+
+export interface GoalProgressFormData {
+  value: number;
+  notes?: string;
+}
+

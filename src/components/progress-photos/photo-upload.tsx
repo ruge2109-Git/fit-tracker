@@ -25,11 +25,13 @@ interface PhotoUploadProps {
   isLoading?: boolean
 }
 
+// Use a more flexible validation that works in both SSR and client
 const photoUploadSchema = z.object({
-  photo: z.instanceof(File, { message: 'Photo is required' })
-    .refine((file) => file.size <= 5 * 1024 * 1024, 'File size must be less than 5MB')
+  photo: z.any()
+    .refine((file) => file instanceof File, 'Photo is required')
+    .refine((file) => file instanceof File && file.size <= 5 * 1024 * 1024, 'File size must be less than 5MB')
     .refine(
-      (file) => ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type),
+      (file) => file instanceof File && ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type),
       'Only JPEG, PNG, and WebP images are allowed'
     ),
   photo_type: z.nativeEnum(PhotoType),

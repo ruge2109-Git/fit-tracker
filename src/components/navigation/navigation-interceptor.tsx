@@ -88,6 +88,18 @@ export function NavigationInterceptor() {
         clearTimeout(navigationTimeout)
       }
     }
+  }, [])
+
+  // Reset loading state when pathname changes (navigation complete)
+  useEffect(() => {
+    // Small delay to ensure page has rendered, then clear loading
+    const timer = setTimeout(() => {
+      setNavigationLoading(false)
+    }, 150)
+
+    return () => {
+      clearTimeout(timer)
+    }
   }, [pathname])
 
   return null

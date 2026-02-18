@@ -26,14 +26,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Accordion } from '@/components/ui/accordion'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { SortableExerciseGroup } from '@/components/workouts/sortable-exercise-group'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer'
+import { ExerciseSelect } from '@/components/exercises/exercise-select'
+import { SortableExerciseCard } from '@/components/workouts/sortable-exercise-card'
 import { ExerciseProgressDialog } from '@/components/workouts/exercise-progress-dialog'
 import { routineRepository } from '@/domain/repositories/routine.repository'
+import { workoutRepository } from '@/domain/repositories/workout.repository'
 import { WorkoutRestTimer } from '@/components/workouts/workout-rest-timer'
 import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
+import { useExerciseStore } from '@/store/exercise.store'
 import { RoutineWithExercises, SetFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
 import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress, WorkoutProgress } from '@/hooks/use-workout-persistence'
@@ -163,7 +166,7 @@ export default function NewWorkoutFromRoutinePage() {
               exerciseName: routineExercise.exercise.name,
               reps: routineExercise.target_reps,
               weight: routineExercise.target_weight || 0,
-              rest_time: 90,
+              rest_time: routineExercise.target_rest_time || 90,
               completed: false,
             })
           }
@@ -237,13 +240,62 @@ export default function NewWorkoutFromRoutinePage() {
     })
   }
 
+  const { exercises: availableExercises } = useExerciseStore()
+  const [addExerciseOpen, setAddExerciseOpen] = useState(false)
+
+  const handleRemoveExercise = (exerciseId: string) => {
+      // Remove all sets for this exercise
+      setSets(prev => prev.filter(set => set.exercise_id !== exerciseId))
+      // Remove from order
+      setExerciseOrder(prev => prev.filter(id => id !== exerciseId))
+      
+      // Cleanup inputs
+      setLastLbsInput(prev => {
+          const newInput = { ...prev }
+          Object.keys(newInput).forEach(key => {
+              if (key.startsWith(exerciseId)) {
+                  delete newInput[key]
+              }
+          })
+          return newInput
+      })
+      
+      toast.success(t('exerciseRemoved') || 'Exercise removed')
+  }
+
+  const handleAddExerciseFromSelect = (exerciseId: string) => {
+    const exercise = availableExercises.find(e => e.id === exerciseId)
+    if (!exercise) return
+
+    if (exerciseOrder.includes(exerciseId)) {
+        toast.error(t('exerciseAlreadyAdded') || 'Exercise already added')
+        return
+    }
+
+    // Add initial set
+    const newSet: WorkoutSet = {
+        tempId: `${exerciseId}-${Date.now()}`,
+        exercise_id: exerciseId,
+        exerciseName: exercise.name,
+        reps: 0,
+        weight: 0,
+        rest_time: 90,
+        completed: false
+    }
+
+    setSets(prev => [...prev, newSet])
+    setExerciseOrder(prev => [...prev, exerciseId])
+    setAddExerciseOpen(false)
+    toast.success(t('exerciseAdded') || 'Exercise added')
+  }
+
   const handleAddSet = (exerciseId: string, exerciseName: string) => {
     const lastSet = sets.filter(s => s.exercise_id === exerciseId).pop()
     setSets(prev => [...prev, {
       tempId: `${exerciseId}-${Date.now()}`,
       exercise_id: exerciseId,
       exerciseName,
-      reps: lastSet?.reps || 10,
+      reps: lastSet?.reps || 0,
       weight: lastSet?.weight || 0,
       rest_time: 90,
       completed: false,
@@ -316,218 +368,322 @@ export default function NewWorkoutFromRoutinePage() {
     : Object.keys(exerciseGroups)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('back') || 'Back'}
-        </Button>
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? t('saving') || 'Saving...' : t('saveWorkout') || 'Save Workout'}
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('fromRoutine') || 'Starting from'}: {routine.name}</CardTitle>
-          <CardDescription>
-            {routine.description || t('adjustSets') || 'Adjust the sets as needed for today\'s workout'}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('workoutDetails') || 'Workout Details'}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="date">{t('date') || 'Date'}</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
+    <div className="max-w-7xl mx-auto sm:p-6 lg:p-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Left Column - Info & Controls */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="sticky top-24 space-y-6">
+            
+            {/* Header / Navigation */}
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => router.back()}
+                className="rounded-full hover:bg-accent/10"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-xs font-medium text-muted-foreground mb-1">
+                  {t('startWorkout') || 'Start Workout'}
+                </h1>
+                <h2 className="text-2xl font-bold text-foreground">
+                   {routine.name}
+                </h2>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="duration">{t('durationMinutes') || 'Duration (minutes)'}</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(parseInt(e.target.value))}
-                min="1"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">{t('notesOptional') || 'Notes (optional)'}</Label>
-            <Input
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t('howFeeling') || 'How are you feeling today?'}
-            />
-          </div>
-        </CardContent>
-      </Card>
 
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">{t('exercises') || 'Exercises'}</h2>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={orderedExerciseIds}
-            strategy={verticalListSortingStrategy}
-          >
-            <Accordion type="multiple" className="space-y-2">
-              {orderedExerciseIds.map((exerciseId) => {
-                const group = exerciseGroups[exerciseId]
-                if (!group) return null
-
-                return (
-                  <SortableExerciseGroup
-                    key={exerciseId}
-                    id={exerciseId}
-                    exerciseName={group.name}
-                    value={exerciseId}
-                  >
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="flex items-center gap-2">
-                          <ExerciseProgressDialog
-                            exerciseId={exerciseId}
-                            exerciseName={group.name}
-                          >
-                            <Button variant="outline" size="sm">
-                              <TrendingUp className="h-4 w-4 mr-2" />
-                              {t('viewProgress') || 'View Progress'}
-                            </Button>
-                          </ExerciseProgressDialog>
-                          {group.sets.length > 0 && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {t('restTime') || 'Rest'}: {group.sets[0]?.rest_time || 90}s
+            {/* Workout Details Card */}
+            <Card className="rounded-[2rem] border-none shadow-sm bg-accent/5 overflow-hidden">
+                <CardHeader className="pb-2">
+                     <CardTitle className="text-lg font-bold flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary" />
+                        {t('sessionDetails') || 'Session Details'}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-2">
+                     <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label htmlFor="date" className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground ml-1">
+                                {t('date') || 'Date'}
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="date"
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    className="h-12 rounded-2xl bg-background/50 border-input/10 focus:border-primary/30 focus:ring-primary/20 font-medium"
+                                />
                             </div>
-                          )}
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddSet(exerciseId, group.name)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          {t('addSet') || 'Add Set'}
-                        </Button>
-                      </div>
-                      <div className="rounded-md border overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="border-b">
-                              <TableHead className="w-8 sm:w-12 px-1 sm:px-4 py-2 text-xs sm:text-sm"></TableHead>
-                              <TableHead className="w-10 sm:w-16 text-center px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('set') || 'Set'}</TableHead>
-                              <TableHead className="min-w-[60px] sm:min-w-[80px] px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('reps') || 'Reps'}</TableHead>
-                              <TableHead className="min-w-[70px] sm:min-w-[100px] px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('weightKg') || 'Weight (kg)'}</TableHead>
-                              <TableHead className="min-w-[70px] sm:min-w-[100px] px-1 sm:px-4 py-2 text-xs sm:text-sm">{t('weightLbs') || 'Weight (lbs)'}</TableHead>
-                              <TableHead className="w-8 sm:w-12 px-1 sm:px-4 py-2 text-xs sm:text-sm"></TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {group.sets.map((set, index) => (
-                              <TableRow 
-                                key={set.tempId} 
-                                className={`border-b ${set.completed ? 'bg-muted/50' : ''}`}
-                              >
-                                <TableCell className="w-8 sm:w-12 px-1 sm:px-4 py-1.5 sm:py-2">
-                                  <Checkbox
-                                    checked={set.completed || false}
-                                    onCheckedChange={() => handleToggleSetCompleted(set.tempId)}
-                                    id={`set-${set.tempId}`}
-                                    className="h-4 w-4 sm:h-5 sm:w-5"
-                                  />
-                                </TableCell>
-                                <TableCell className="w-10 sm:w-16 text-center px-1 sm:px-4 py-1.5 sm:py-2 font-medium text-xs sm:text-sm">
-                                  {index + 1}
-                                </TableCell>
-                                <TableCell className="px-1 sm:px-4 py-1.5 sm:py-2">
-                                  <Input
-                                    id={`reps-${set.tempId}`}
+                        <div className="space-y-2">
+                            <Label htmlFor="duration" className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground ml-1">
+                                {t('durationMinutes') || 'Duration'}
+                            </Label>
+                             <div className="relative">
+                                <Input
+                                    id="duration"
                                     type="number"
-                                    value={set.reps}
-                                    onChange={(e) => handleUpdateSet(set.tempId, 'reps', parseInt(e.target.value))}
-                                    className="w-full h-8 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
+                                    value={duration}
+                                    onChange={(e) => setDuration(parseInt(e.target.value))}
                                     min="1"
-                                  />
-                                </TableCell>
-                                <TableCell className="px-1 sm:px-4 py-1.5 sm:py-2">
-                                  <Input
-                                    id={`weight-kg-${set.tempId}`}
-                                    type="number"
-                                    value={set.weight ? formatWeightForInput(set.weight) : ''}
-                                    onChange={(e) => {
-                                      const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                                      if (!isNaN(value)) {
-                                        handleWeightChange(set.tempId, value, 'kg')
-                                      }
-                                    }}
-                                    className="w-full h-8 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
-                                    min="0"
-                                    step="0.01"
-                                  />
-                                </TableCell>
-                                <TableCell className="px-1 sm:px-4 py-1.5 sm:py-2">
-                                  <Input
-                                    id={`weight-lbs-${set.tempId}`}
-                                    type="number"
-                                    value={lastLbsInput[set.tempId] !== undefined 
-                                      ? formatWeightForInput(lastLbsInput[set.tempId])
-                                      : (set.weight && set.weight > 0 ? formatWeightForInput(getWeightInLbs(set.weight)) : '')
-                                    }
-                                    onChange={(e) => {
-                                      const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                                      if (!isNaN(value)) {
-                                        handleWeightChange(set.tempId, value, 'lbs')
-                                      }
-                                    }}
-                                    className="w-full h-8 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
-                                    min="0"
-                                    step="0.01"
-                                  />
-                                </TableCell>
-                                <TableCell className="w-8 sm:w-12 px-1 sm:px-4 py-1.5 sm:py-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleRemoveSet(set.tempId)}
-                                    className="h-7 w-7 sm:h-8 sm:w-8"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                                    className="h-12 rounded-2xl bg-background/50 border-input/10 focus:border-primary/30 focus:ring-primary/20 font-medium"
+                                />
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground/50 pointer-events-none">
+                                    min
+                                </span>
+                            </div>
+                        </div>
+                     </div>
+
+                     <div className="space-y-2">
+                        <Label htmlFor="notes" className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground ml-1">
+                            {t('notesOptional') || 'Notes'}
+                        </Label>
+                        <Input
+                            id="notes"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder={t('howFeeling') || 'How are you feeling?'}
+                            className="h-12 rounded-2xl bg-background/50 border-input/10 focus:border-primary/30 focus:ring-primary/20"
+                        />
+                     </div>
+                </CardContent>
+            </Card>
+
+             {/* Action Button (Desktop) */}
+             <div className="hidden lg:block">
+                <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving} 
+                    className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                    {isSaving ? t('saving') || 'Saving...' : t('finishWorkout') || 'Finish Workout'}
+                </Button>
+             </div>
+             
+             <WorkoutRestTimer className="bottom-24 lg:bottom-8 right-6 lg:right-8" />
+          </div>
+        </div>
+
+        {/* Right Column - Exercises */}
+        <div className="lg:col-span-7 space-y-6">
+             <div className="flex items-center justify-between lg:hidden mb-4">
+                 <h3 className="text-lg font-bold">
+                    {t('exercises') || 'Exercises'}
+                 </h3>
+             </div>
+
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={orderedExerciseIds}
+                    strategy={verticalListSortingStrategy}
+                >
+                    <div className="space-y-4">
+                        {orderedExerciseIds.map((exerciseId, index) => {
+                            const group = exerciseGroups[exerciseId]
+                            if (!group) return null
+
+                            // Routine target details
+                            const targetReps = routine?.exercises.find(ex => ex.exercise_id === exerciseId)?.target_reps
+                            const targetRepsMax = routine?.exercises.find(ex => ex.exercise_id === exerciseId)?.target_reps_max
+                            const targetRest = group.sets[0]?.rest_time || 90
+
+                            return (
+                                <SortableExerciseCard
+                                    key={exerciseId}
+                                    id={exerciseId}
+                                    exerciseName={group.name}
+                                    value={exerciseId}
+                                    className="bg-accent/5 rounded-[2rem] overflow-hidden"
+                                    onRemove={() => handleRemoveExercise(exerciseId)}
+                                    defaultOpen={index === 0}
+                                >
+                                    <div className="p-1">
+                                        {/* Exercise Header Info */}
+                                        <div className="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border/5 bg-background/20 rounded-t-[1.5rem]">
+                                             <div className="flex items-center gap-2 text-xs">
+                                                  <span className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Goal</span>
+                                                  <span className="font-black text-foreground">
+                                                    {targetReps}{targetRepsMax ? `-${targetRepsMax}` : ''} reps
+                                                  </span>
+                                             </div>
+                                             <div className="flex items-center gap-2 text-xs">
+                                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                                  <span className="font-black text-foreground">{targetRest}s</span>
+                                             </div>
+                                             
+                                             <div className="ml-auto flex items-center gap-2">
+                                                 <ExerciseProgressDialog
+                                                    exerciseId={exerciseId}
+                                                    exerciseName={group.name}
+                                                >
+                                                    <Button variant="ghost" size="sm" className="h-7 w-7 rounded-full p-0">
+                                                        <TrendingUp className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </ExerciseProgressDialog>
+                                                
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => handleAddSet(exerciseId, group.name)}
+                                                    className="h-7 rounded-lg text-[10px] font-bold uppercase tracking-wider px-3"
+                                                >
+                                                    <Plus className="h-3 w-3 mr-1.5" />
+                                                    {t('addSet') || 'Add Set'}
+                                                </Button>
+                                             </div>
+                                        </div>
+
+                                        {/* Sets Table */}
+                                        <div className="p-2 sm:p-4 overflow-x-auto">
+                                                <Table className="border-separate border-spacing-y-2">
+                                                    <TableHeader>
+                                                        <TableRow className="border-none hover:bg-transparent">
+                                                            <TableHead className="w-[40px] px-2 text-center text-[10px] uppercase font-bold text-muted-foreground bg-transparent">#</TableHead>
+                                                            <TableHead className="px-2 text-center text-[10px] uppercase font-bold text-muted-foreground bg-transparent">{t('reps') || 'Reps'}</TableHead>
+                                                            <TableHead className="px-2 text-center text-[10px] uppercase font-bold text-muted-foreground bg-transparent">{t('weightKg') || 'kg'}</TableHead>
+                                                            <TableHead className="px-2 text-center text-[10px] uppercase font-bold text-muted-foreground bg-transparent">{t('weightLbs') || 'lbs'}</TableHead>
+                                                            <TableHead className="w-[40px] px-2 text-right text-[10px] uppercase font-bold text-muted-foreground bg-transparent">Done</TableHead>
+                                                            <TableHead className="w-[40px] px-0 bg-transparent"></TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {group.sets.map((set, setIndex) => (
+                                                            <TableRow 
+                                                                key={set.tempId} 
+                                                                className={`border-none transition-all shadow-sm ${
+                                                                    set.completed 
+                                                                    ? 'bg-emerald-500/10 hover:bg-emerald-500/15' 
+                                                                    : 'bg-background/40 hover:bg-background/60'
+                                                                }`}
+                                                            >
+                                                                <TableCell className="px-2 py-3 text-center font-bold text-xs text-muted-foreground rounded-l-2xl">
+                                                                    {setIndex + 1}
+                                                                </TableCell>
+                                                                <TableCell className="px-1 py-1">
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={set.reps}
+                                                                        onChange={(e) => handleUpdateSet(set.tempId, 'reps', parseInt(e.target.value))}
+                                                                        className="h-10 text-center font-bold bg-background/50 border-transparent focus:border-primary/20 focus:bg-background transition-all p-0 rounded-xl"
+                                                                        min="1"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="px-1 py-1">
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={set.weight ? formatWeightForInput(set.weight) : ''}
+                                                                        onChange={(e) => {
+                                                                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                                                                            if (!isNaN(value)) {
+                                                                                handleWeightChange(set.tempId, value, 'kg')
+                                                                            }
+                                                                        }}
+                                                                        className="h-10 text-center font-bold bg-background/50 border-transparent focus:border-primary/20 focus:bg-background transition-all p-0 rounded-xl"
+                                                                        placeholder="0"
+                                                                        step="0.5"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="px-1 py-1">
+                                                                    <Input
+                                                                        type="number"
+                                                                         value={lastLbsInput[set.tempId] !== undefined 
+                                                                            ? formatWeightForInput(lastLbsInput[set.tempId])
+                                                                            : (set.weight && set.weight > 0 ? formatWeightForInput(getWeightInLbs(set.weight)) : '')
+                                                                          }
+                                                                        onChange={(e) => {
+                                                                            const value = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                                                                            if (!isNaN(value)) {
+                                                                                handleWeightChange(set.tempId, value, 'lbs')
+                                                                            }
+                                                                        }}
+                                                                        className="h-10 text-center font-bold bg-background/50 border-transparent focus:border-primary/20 focus:bg-background transition-all p-0 text-muted-foreground rounded-xl"
+                                                                        placeholder="0"
+                                                                        step="1"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="px-2 py-3 text-right">
+                                                                     <Checkbox
+                                                                        checked={set.completed || false}
+                                                                        onCheckedChange={() => handleToggleSetCompleted(set.tempId)}
+                                                                        className="h-6 w-6 rounded-lg data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 border-2"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="px-0 py-3 text-center rounded-r-2xl">
+                                                                     <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => handleRemoveSet(set.tempId)}
+                                                                        className="h-8 w-8 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 -ml-2 rounded-full"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                        </div>
+                                    </div>
+                                </SortableExerciseCard>
+                            )
+                        })}
                     </div>
-                  </SortableExerciseGroup>
-                )
-              })}
-            </Accordion>
-          </SortableContext>
-        </DndContext>
+                </SortableContext>
+            </DndContext>
+
+            {/* Add Exercise Button */}
+            <div className="pt-4">
+                <Drawer open={addExerciseOpen} onOpenChange={setAddExerciseOpen}>
+                    <DrawerTrigger asChild>
+                         <Button
+                            variant="outline"
+                            className="w-full h-12 rounded-2xl border-dashed border-2 hover:bg-accent/5 font-bold text-muted-foreground"
+                         >
+                            <Plus className="h-4 w-4 mr-2" />
+                            {t('addExercise') || 'Add Exercise'}
+                         </Button>
+                    </DrawerTrigger>
+                    <DrawerContent className="max-h-[85vh]">
+                         <div className="mx-auto mt-4 h-1.5 w-12 rounded-full bg-muted/20" />
+                         <DrawerHeader className="px-6 pb-2">
+                             <DrawerTitle className="text-xl font-bold text-left">
+                                 {t('addExercise') || 'Add Exercise'}
+                             </DrawerTitle>
+                             <DrawerDescription className="text-left font-medium">
+                                 {t('selectExercise') || 'Select an exercise to add to your workout'}
+                             </DrawerDescription>
+                         </DrawerHeader>
+                         <div className="px-6 pb-8 pt-2">
+                             <ExerciseSelect
+                                 value=""
+                                 onChange={handleAddExerciseFromSelect}
+                             />
+                         </div>
+                    </DrawerContent>
+                </Drawer>
+            </div>
+             
+             {/* Bottom Save Button (Mobile) - Fixed position to clear nav bar */}
+             <div className="lg:hidden fixed bottom-24 left-4 right-20 z-40">
+                 <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving} 
+                    className="w-full h-12 rounded-full text-base font-bold shadow-2xl shadow-primary/30 bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all border-none"
+                >
+                     {isSaving ? t('saving') || 'Saving...' : t('finishWorkout') || 'Finish Workout'}
+                </Button>
+             </div>
+        </div>
       </div>
-
-      <Button onClick={handleSave} disabled={isSaving} className="w-full" size="lg">
-        {isSaving ? t('saving') || 'Saving...' : t('saveWorkout') || 'Save Workout'}
-      </Button>
-
-      <WorkoutRestTimer />
     </div>
   )
 }

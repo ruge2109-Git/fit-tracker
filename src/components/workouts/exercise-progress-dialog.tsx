@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { TrendingUp, Calendar, Info } from 'lucide-react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
@@ -132,25 +132,23 @@ export function ExerciseProgressDialog({
 
   return (
     <TooltipProvider>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
+      <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground>
+        <DrawerTrigger asChild>
           {children}
-        </DialogTrigger>
-        <DialogContent className="max-w-4xl w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] md:w-[calc(100%-4rem)] max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <div className="p-4 sm:p-6 pb-4 border-b sticky top-0 bg-background z-10">
-          <DialogHeader className="pb-0">
-            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+        </DrawerTrigger>
+        <DrawerContent className="max-h-[90vh]">
+          <div className="mx-auto mt-4 h-1.5 w-12 rounded-full bg-muted/20" />
+          <DrawerHeader className="px-6 pb-2">
+            <DrawerTitle className="flex items-center gap-2 text-xl font-black uppercase italic tracking-tighter">
+              <TrendingUp className="h-5 w-5 text-primary" />
               <span className="truncate">{exerciseName}</span>
-              <span className="hidden sm:inline"> - {t('progress') || 'Progress'}</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">
+            </DrawerTitle>
+            <DrawerDescription className="text-sm font-medium opacity-60">
               {t('exerciseProgressDescription') || 'View your historical performance and progress'}
-            </DialogDescription>
-          </DialogHeader>
-        </div>
+            </DrawerDescription>
+          </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-8">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -162,49 +160,57 @@ export function ExerciseProgressDialog({
               </p>
             </div>
           ) : (
-            <div className="space-y-4 sm:space-y-6 py-4 sm:py-6">
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">{t('weightProgression') || 'Weight Progression'}</CardTitle>
+            <div className="space-y-6 py-4">
+            <Card className="rounded-[1.5rem] bg-accent/5 border-none shadow-sm">
+              <CardHeader className="p-4 sm:p-6 pb-2">
+                <CardTitle className="text-sm font-bold uppercase tracking-wider opacity-70">{t('weightProgression') || 'Weight Progression'}</CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
-                <div className="h-[250px] sm:h-[300px]">
+                <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/20" vertical={false} />
                     <XAxis 
                       dataKey="date" 
-                      className="text-xs"
+                      className="text-[10px] font-bold uppercase"
                       tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={false}
+                      axisLine={false}
+                      dy={10}
                     />
                     <YAxis 
-                      className="text-xs"
+                      className="text-[10px] font-bold"
                       tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                      label={{ value: t('weightKg') || 'Weight (kg)', angle: -90, position: 'insideLeft' }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={30}
                     />
                     <RechartsTooltip 
                       contentStyle={{
                         backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px',
+                        border: 'none',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
                       }}
+                      itemStyle={{ padding: 0 }}
                     />
-                    <Legend />
                     {maxWeight > 0 && (
                       <ReferenceLine 
                         y={maxWeight} 
-                        stroke="hsl(var(--destructive))" 
-                        strokeDasharray="5 5"
-                        label={{ value: `${t('maxWeight') || 'Max'}: ${maxWeight}kg`, position: 'insideTopRight' }}
+                        stroke="hsl(var(--primary))" 
+                        strokeDasharray="4 4"
+                        strokeOpacity={0.5}
                       />
                     )}
                     <Line 
                       type="monotone" 
                       dataKey="maxWeight" 
                       stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      name={t('maxWeightPerWorkout') || 'Max Weight (kg)'}
-                      dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--background))', stroke: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -212,81 +218,55 @@ export function ExerciseProgressDialog({
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Card className="rounded-[1.5rem] bg-accent/5 border-none shadow-sm">
+              <CardHeader className="p-4 sm:p-6 pb-2">
+                <CardTitle className="text-sm font-bold uppercase tracking-wider opacity-70 flex items-center gap-2">
                   {t('workoutHistory') || 'Workout History'}
                 </CardTitle>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                  {t('volumeExplanation') || 'Volume = Weight × Reps. It represents the total work done in each set.'}
-                </p>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0">
+              <CardContent className="p-4 pt-2">
                 <div 
                   ref={scrollContainerRef}
                   onScroll={handleScroll}
                   className="max-h-[400px] overflow-y-auto pr-2"
                 >
-                  <Accordion type="single" collapsible className="space-y-2">
+                  <Accordion type="single" collapsible className="space-y-3">
                     {displayedHistory.map((workout) => {
                       const date = new Date(workout.date)
                       const formattedDate = date.toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', {
                         year: 'numeric',
-                        month: 'long',
+                        month: 'short',
                         day: 'numeric',
                       })
                       
                       return (
-                        <AccordionItem key={workout.date} value={workout.date} className="border rounded-lg">
-                          <AccordionTrigger className="px-4">
-                            <span className="text-left">
-                              {formattedDate} ({workout.maxWeight.toFixed(1)} {t('kg') || 'kg'})
-                            </span>
+                        <AccordionItem key={workout.date} value={workout.date} className="border-none bg-background/50 rounded-xl px-0 overflow-hidden">
+                          <AccordionTrigger className="px-4 py-3 hover:no-underline group">
+                            <div className="flex items-center justify-between w-full pr-2">
+                                <span className="text-sm font-bold uppercase tracking-tight text-muted-foreground group-data-[state=open]:text-primary transition-colors">
+                                {formattedDate}
+                                </span>
+                                <span className="font-black text-sm">
+                                    {workout.maxWeight.toFixed(1)} <span className="text-[10px] text-muted-foreground font-bold uppercase">{t('kg') || 'kg'}</span>
+                                </span>
+                            </div>
                           </AccordionTrigger>
-                          <AccordionContent className="px-4 pb-4">
-                            <div className="rounded-md border">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>{t('set') || 'Set'}</TableHead>
-                                    <TableHead>{t('reps') || 'Reps'}</TableHead>
-                                    <TableHead>{t('weightKg') || 'Weight (kg)'}</TableHead>
-                                    <TableHead>
-                                      <div className="flex items-center gap-1">
-                                        {t('volume') || 'Volume (kg)'}
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p className="max-w-xs">
-                                                {t('volumeTooltip') || 'Volume = Weight × Reps. Total work done in this set.'}
-                                              </p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      </div>
-                                    </TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {workout.sets.map((set, index) => (
-                                    <TableRow key={index}>
-                                      <TableCell className="font-medium">{index + 1}</TableCell>
-                                      <TableCell>{set.reps}</TableCell>
-                                      <TableCell>{set.weight.toFixed(1)}</TableCell>
-                                      <TableCell>{set.volume.toFixed(1)}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                  <TableRow className="font-semibold bg-muted/50">
-                                    <TableCell colSpan={2}>{t('total') || 'Total'}</TableCell>
-                                    <TableCell>{workout.maxWeight.toFixed(1)}</TableCell>
-                                    <TableCell>{workout.totalVolume.toFixed(1)}</TableCell>
-                                  </TableRow>
-                                </TableBody>
-                              </Table>
+                          <AccordionContent className="px-4 pb-4 pt-0">
+                            <div className="mt-2 space-y-2">
+                                <div className="grid grid-cols-4 text-[10px] uppercase font-bold tracking-wider text-muted-foreground/60 mb-2 px-2">
+                                    <div className="text-center">#</div>
+                                    <div className="text-center">{t('reps') || 'Reps'}</div>
+                                    <div className="text-center">{t('kg') || 'Kg'}</div>
+                                    <div className="text-right">{t('volume') || 'Vol'}</div>
+                                </div>
+                                {workout.sets.map((set, index) => (
+                                    <div key={index} className="grid grid-cols-4 text-xs font-bold items-center bg-background/40 rounded-lg py-2 px-2">
+                                        <div className="text-center text-muted-foreground">{index + 1}</div>
+                                        <div className="text-center">{set.reps}</div>
+                                        <div className="text-center">{set.weight.toFixed(1)}</div>
+                                        <div className="text-right text-muted-foreground">{set.volume.toFixed(0)}</div>
+                                    </div>
+                                ))}
                             </div>
                           </AccordionContent>
                         </AccordionItem>
@@ -301,7 +281,7 @@ export function ExerciseProgressDialog({
                   )}
                   
                   {displayedHistory.length >= workoutHistory.length && workoutHistory.length > ITEMS_PER_PAGE && (
-                    <div className="text-center py-4 text-sm text-muted-foreground">
+                    <div className="text-center py-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
                       {t('allWorkoutsLoaded') || 'All workouts loaded'}
                     </div>
                   )}
@@ -311,8 +291,8 @@ export function ExerciseProgressDialog({
             </div>
           )}
         </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
     </TooltipProvider>
   )
 }

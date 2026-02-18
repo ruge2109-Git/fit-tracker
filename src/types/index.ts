@@ -117,7 +117,9 @@ export interface RoutineExercise extends BaseEntity {
   exercise: Exercise;
   target_sets: number;
   target_reps: number;
+  target_reps_max?: number;
   target_weight?: number;
+  target_rest_time?: number;
   order: number;
 }
 

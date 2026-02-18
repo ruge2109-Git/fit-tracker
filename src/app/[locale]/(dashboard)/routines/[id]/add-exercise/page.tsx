@@ -28,7 +28,9 @@ const addExerciseSchema = z.object({
   exercise_id: z.string().min(1, 'Please select an exercise'),
   target_sets: z.coerce.number().min(1, 'At least 1 set required').max(20, 'Maximum 20 sets'),
   target_reps: z.coerce.number().min(1, 'At least 1 rep required').max(100, 'Maximum 100 reps'),
+  target_reps_max: z.coerce.number().min(1, 'At least 1 rep required').max(100, 'Maximum 100 reps').optional(),
   target_weight: z.coerce.number().min(0, 'Weight cannot be negative').optional(),
+  target_rest_time: z.coerce.number().min(0, 'Rest time cannot be negative').optional(),
 })
 
 type AddExerciseFormData = z.infer<typeof addExerciseSchema>
@@ -88,7 +90,9 @@ export default function AddExerciseToRoutinePage() {
       exercise_id: data.exercise_id,
       target_sets: data.target_sets,
       target_reps: data.target_reps,
+      target_reps_max: data.target_reps_max,
       target_weight: data.target_weight || undefined,
+      target_rest_time: data.target_rest_time || undefined,
       order: nextOrder,
     })
 
@@ -153,39 +157,49 @@ export default function AddExerciseToRoutinePage() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
               <div className="space-y-2">
-                <Label htmlFor="target_sets">{t('targetSets') || 'Target Sets'} *</Label>
+                <Label htmlFor="target_sets" className="text-xs">{t('targetSets') || 'Sets'} *</Label>
                 <Input
                   id="target_sets"
                   type="number"
                   min="1"
-                  max="20"
                   {...register('target_sets')}
                   disabled={isSubmitting}
+                  className="rounded-xl border-accent/10 bg-background/40 h-11"
                 />
                 {errors.target_sets && (
-                  <p className="text-xs text-destructive">{errors.target_sets.message}</p>
+                  <p className="text-[10px] text-destructive">{errors.target_sets.message}</p>
                 )}
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="target_reps">{t('targetReps') || 'Target Reps'} *</Label>
+                <Label htmlFor="target_reps" className="text-xs">{t('targetReps') || 'Reps'} *</Label>
                 <Input
                   id="target_reps"
                   type="number"
                   min="1"
-                  max="100"
                   {...register('target_reps')}
                   disabled={isSubmitting}
+                  className="rounded-xl border-accent/10 bg-background/40 h-11"
                 />
                 {errors.target_reps && (
-                  <p className="text-xs text-destructive">{errors.target_reps.message}</p>
+                  <p className="text-[10px] text-destructive">{errors.target_reps.message}</p>
                 )}
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="target_weight">{t('targetWeight') || 'Weight (kg)'}</Label>
+                <Label htmlFor="target_reps_max" className="text-xs">Max Reps</Label>
+                <Input
+                  id="target_reps_max"
+                  type="number"
+                  min="1"
+                  {...register('target_reps_max')}
+                  disabled={isSubmitting}
+                  placeholder="Opt"
+                  className="rounded-xl border-accent/10 bg-background/40 h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="target_weight" className="text-xs">{tCommon('kg') || 'Weight'}</Label>
                 <Input
                   id="target_weight"
                   type="number"
@@ -193,11 +207,21 @@ export default function AddExerciseToRoutinePage() {
                   step="0.5"
                   {...register('target_weight')}
                   disabled={isSubmitting}
-                  placeholder={t('optional') || 'Optional'}
+                  placeholder="0"
+                  className="rounded-xl border-accent/10 bg-background/40 h-11"
                 />
-                {errors.target_weight && (
-                  <p className="text-xs text-destructive">{errors.target_weight.message}</p>
-                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="target_rest_time" className="text-xs">{t('restTime') || 'Rest Time'} (s)</Label>
+                <Input
+                  id="target_rest_time"
+                  type="number"
+                  min="0"
+                  placeholder="90"
+                  {...register('target_rest_time')}
+                  disabled={isSubmitting}
+                  className="rounded-xl border-accent/10 bg-background/40 h-11"
+                />
               </div>
             </div>
 

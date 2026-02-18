@@ -8,6 +8,7 @@
 import { Suspense, useEffect } from 'react'
 import { useRouter, usePathname } from '@/i18n/routing'
 import { NavBar } from '@/components/navigation/nav-bar'
+import { BottomNav } from '@/components/navigation/bottom-nav'
 import { NavigationProgress } from '@/components/navigation/navigation-progress'
 import { NavigationLoader } from '@/components/navigation/navigation-loader'
 import { NavigationInterceptor } from '@/components/navigation/navigation-interceptor'
@@ -15,6 +16,7 @@ import { PageTransition } from '@/components/ui/page-transition'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { OfflineIndicator } from '@/components/offline/offline-indicator'
 import { ActiveRoutineButton } from '@/components/workouts/active-routine-button'
+import { ActiveSessionBanner } from '@/components/workouts/active-session-banner'
 import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { KeyboardShortcuts } from '@/components/ui/keyboard-shortcuts'
 import { SearchDialogProvider } from '@/hooks/use-search-dialog'
@@ -34,11 +36,6 @@ export default function DashboardLayout({
     loadUser()
   }, [loadUser])
 
-  // Don't redirect here - let the middleware handle it
-  // The middleware already checks authentication on the server side
-  // This layout is only for authenticated users, so if we get here without a user,
-  // the middleware should have already redirected
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -53,12 +50,15 @@ export default function DashboardLayout({
 
   return (
     <SearchDialogProvider>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <NavigationInterceptor />
         <NavigationProgress />
         <NavigationLoader />
+        
+        {/* Top Navbar - hidden on very small mobile if preferred, but usually okay */}
         <NavBar />
-        <main className="container mx-auto px-4 py-8">
+        
+        <main className="flex-1 container mx-auto px-4 py-8 pb-32 md:pb-8">
           <Suspense
             fallback={
               <div className="space-y-6 animate-in fade-in duration-300">
@@ -75,7 +75,7 @@ export default function DashboardLayout({
               </div>
             }
           >
-            <div className="mb-4">
+            <div className="mb-4 hidden md:block">
               <Breadcrumbs />
             </div>
             <PageTransition>
@@ -83,8 +83,18 @@ export default function DashboardLayout({
             </PageTransition>
           </Suspense>
         </main>
+
         <OfflineIndicator />
-        <ActiveRoutineButton />
+        
+        {/* Desktop Active Button */}
+        <div className="hidden md:block">
+          <ActiveRoutineButton />
+        </div>
+
+        {/* Mobile Active Indicator */}
+        <ActiveSessionBanner />
+        
+        <BottomNav />
         <KeyboardShortcuts />
       </div>
     </SearchDialogProvider>

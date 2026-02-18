@@ -19,6 +19,7 @@ export interface IRoutineRepository {
   removeExercise(routineExerciseId: string): Promise<ApiResponse<boolean>>
   updateExerciseOrder(routineExerciseId: string, order: number): Promise<ApiResponse<boolean>>
   updateExercisesOrder(updates: { id: string; order: number }[]): Promise<ApiResponse<boolean>>
+  updateExercise(id: string, data: Partial<RoutineExercise>): Promise<ApiResponse<RoutineExercise>>
 }
 
 export class RoutineRepository extends BaseRepository<Routine> implements IRoutineRepository {
@@ -198,6 +199,22 @@ export class RoutineRepository extends BaseRepository<Routine> implements IRouti
       }
 
       return this.success(true)
+    } catch (error) {
+      return this.handleError(error)
+    }
+  }
+
+  async updateExercise(id: string, data: Partial<RoutineExercise>): Promise<ApiResponse<RoutineExercise>> {
+    try {
+      const { data: exercise, error } = await supabase
+        .from('routine_exercises')
+        .update(data)
+        .eq('id', id)
+        .select('*, exercise:exercises(*)')
+        .single()
+
+      if (error) return this.handleError(error)
+      return this.success(exercise as RoutineExercise)
     } catch (error) {
       return this.handleError(error)
     }

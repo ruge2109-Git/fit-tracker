@@ -111,199 +111,202 @@ export default function DashboardPage() {
   const hasData = useMemo(() => stats || volumeData.length > 0 || topExercises.length > 0, [stats, volumeData, topExercises])
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <h1 className={`${isCompact ? 'text-2xl' : 'text-4xl'} font-bold mb-2`}>
-            {t('welcomeBack', { name: user?.name || '' })}
+    <div className="space-y-6 pb-10">
+      {/* Header - More App-like */}
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight">
+            {t('welcomeBack', { name: user?.name?.split(' ')[0] || '' })}
           </h1>
-          <p className="text-muted-foreground">{t('fitnessOverview')}</p>
+          <p className="text-xs md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
+            {t('fitnessOverview')}
+          </p>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={toggleCompact}
-                aria-label={isCompact ? 'Expand view' : 'Compact view'}
-              >
-                {isCompact ? (
-                  <LayoutGrid className="h-4 w-4" />
-                ) : (
-                  <LayoutList className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isCompact ? tCommon('expandView') || 'Expand view' : tCommon('compactView') || 'Compact view'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-
-      {/* Stats Cards */}
-      <div className={`grid gap-4 ${isCompact ? 'md:grid-cols-3 lg:grid-cols-5' : 'md:grid-cols-2 lg:grid-cols-5'}`}>
-        {!stats && totalVolume === 0 ? (
-          <>
-            <StatsCardSkeleton />
-            <StatsCardSkeleton />
-            <StatsCardSkeleton />
-            <StatsCardSkeleton />
-            <StatsCardSkeleton />
-          </>
-        ) : (
-          <>
-            <Card className={isCompact ? 'p-3' : ''}>
-              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
-                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalWorkouts')}</CardTitle>
-                <Activity className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
-              </CardHeader>
-              <CardContent className={isCompact ? 'pt-1' : ''}>
-                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>{stats?.total_workouts || 0}</div>
-                {!isCompact && <p className="text-xs text-muted-foreground">{t('allTime')}</p>}
-              </CardContent>
-            </Card>
-
-            <Card className={isCompact ? 'p-3' : ''}>
-              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
-                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalVolume')}</CardTitle>
-                <Dumbbell className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
-              </CardHeader>
-              <CardContent className={isCompact ? 'pt-1' : ''}>
-                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>{totalVolume.toLocaleString()} kg</div>
-                {!isCompact && <p className="text-xs text-muted-foreground">{t('weightTimesReps')}</p>}
-              </CardContent>
-            </Card>
-
-            <Card className={isCompact ? 'p-3' : ''}>
-              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
-                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalDuration')}</CardTitle>
-                <Calendar className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
-              </CardHeader>
-              <CardContent className={isCompact ? 'pt-1' : ''}>
-                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>
-                  {formatDuration(stats?.total_duration || 0)}
-                </div>
-                {!isCompact && <p className="text-xs text-muted-foreground">{t('timeTraining')}</p>}
-              </CardContent>
-            </Card>
-
-            <Card className={isCompact ? 'p-3' : ''}>
-              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
-                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('totalSets')}</CardTitle>
-                <TrendingUp className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
-              </CardHeader>
-              <CardContent className={isCompact ? 'pt-1' : ''}>
-                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>{stats?.total_sets || 0}</div>
-                {!isCompact && <p className="text-xs text-muted-foreground">{t('setsCompleted')}</p>}
-              </CardContent>
-            </Card>
-
-            <Card className={isCompact ? 'p-3' : ''}>
-              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${isCompact ? 'pb-1' : 'pb-2'}`}>
-                <CardTitle className={`${isCompact ? 'text-xs' : 'text-sm'} font-medium`}>{t('avgDuration')}</CardTitle>
-                <Target className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
-              </CardHeader>
-              <CardContent className={isCompact ? 'pt-1' : ''}>
-                <div className={`${isCompact ? 'text-xl' : 'text-2xl'} font-bold`}>
-                  {formatDuration(stats?.average_duration || 0)}
-                </div>
-                {!isCompact && <p className="text-xs text-muted-foreground">{t('perWorkout')}</p>}
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
-
-      {/* Calendar Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('trainingCalendar') || 'Training Calendar'}</CardTitle>
-          <CardDescription>{t('calendarDescription') || 'View your completed workouts and scheduled routines'}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DashboardCalendar workouts={workouts} routines={routines} />
-        </CardContent>
-      </Card>
-
-      {/* Charts Section */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {volumeData.length === 0 ? (
-          <ChartSkeleton />
-        ) : (
-          <VolumeChart data={volumeData} />
-        )}
-        {Object.keys(muscleDistribution).length === 0 ? (
-          <ChartSkeleton />
-        ) : (
-          <MuscleGroupChart data={muscleDistribution} />
-        )}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {topExercises.length === 0 ? (
-          <ChartSkeleton />
-        ) : (
-          <TopExercisesChart data={topExercises} />
-        )}
-        {personalRecords.length === 0 ? (
-          <ChartSkeleton />
-        ) : (
-          <PersonalRecordsList data={personalRecords} />
-        )}
-      </div>
-
-      {/* Recent Workouts */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle>{t('recentWorkouts')}</CardTitle>
-              <CardDescription>{t('last5Sessions')}</CardDescription>
-            </div>
-            <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)} size="sm" className="w-full sm:w-auto shrink-0">
-              <Activity className="h-4 w-4 mr-2" />
-              {t('logWorkout')}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {recentWorkouts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                {t('noWorkoutsYet')}
-              </p>
-              <Button onClick={() => router.push(ROUTES.NEW_WORKOUT)}>
-                <Activity className="h-4 w-4 mr-2" />
-                {t('logFirstWorkout')}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentWorkouts.map((workout) => (
-                <div
-                  key={workout.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
-                  onClick={() => router.push(ROUTES.WORKOUT_DETAIL(workout.id))}
+        <div className="hidden md:block">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleCompact}
                 >
-                  <div>
-                    <p className="font-medium">{new Date(workout.date).toLocaleDateString()}</p>
-                    {workout.notes && (
-                      <p className="text-sm text-muted-foreground">{workout.notes}</p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">{formatDuration(workout.duration)}</p>
-                    <p className="text-xs text-muted-foreground">{t('clickToView')}</p>
-                  </div>
-                </div>
-              ))}
+                  {isCompact ? <LayoutGrid className="h-5 w-5" /> : <LayoutList className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isCompact ? tCommon('expandView') : tCommon('compactView')}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+
+      {/* Stats - Horizontal Scroll on Mobile (Flutter-like) */}
+      <div className="flex overflow-x-auto pb-4 gap-3 -mx-4 px-4 scrollbar-hide no-scrollbar md:grid md:grid-cols-5 md:pb-0 md:mx-0 md:px-0">
+        {!stats && totalVolume === 0 ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="min-w-[140px] md:min-w-0">
+              <StatsCardSkeleton />
             </div>
-          )}
-        </CardContent>
-      </Card>
+          ))
+        ) : (
+          <>
+            <StatCard 
+              title={t('totalWorkouts')} 
+              value={stats?.total_workouts || 0} 
+              icon={<Activity className="h-4 w-4" />}
+              color="text-blue-500"
+              bg="bg-blue-500/10"
+            />
+            <StatCard 
+              title={t('totalVolume')} 
+              value={`${(totalVolume / 1000).toFixed(1)}k`} 
+              unit="kg"
+              icon={<Dumbbell className="h-4 w-4" />}
+              color="text-purple-500"
+              bg="bg-purple-500/10"
+            />
+            <StatCard 
+              title={t('totalTime')} 
+              value={formatDuration(stats?.total_duration || 0)} 
+              icon={<Calendar className="h-4 w-4" />}
+              color="text-orange-500"
+              bg="bg-orange-500/10"
+            />
+            <StatCard 
+              title={t('totalSets')} 
+              value={stats?.total_sets || 0} 
+              icon={<TrendingUp className="h-4 w-4" />}
+              color="text-green-500"
+              bg="bg-green-500/10"
+            />
+            <StatCard 
+              title={t('avgDuration')} 
+              value={formatDuration(stats?.average_duration || 0)} 
+              icon={<Target className="h-4 w-4" />}
+              color="text-pink-500"
+              bg="bg-pink-500/10"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Quick Actions (Floating-like style) */}
+      <div className="grid grid-cols-2 gap-3 md:hidden">
+        <Button 
+          onClick={() => router.push(ROUTES.NEW_WORKOUT)} 
+          className="h-14 rounded-2xl bg-primary shadow-lg shadow-primary/20 flex flex-col items-center justify-center gap-0.5"
+        >
+          <Activity className="h-5 w-5" />
+          <span className="text-xs font-bold">{t('logWorkout')}</span>
+        </Button>
+        <Button 
+          variant="secondary"
+          onClick={() => router.push(ROUTES.NEW_ROUTINE)} 
+          className="h-14 rounded-2xl flex flex-col items-center justify-center gap-0.5"
+        >
+          <Dumbbell className="h-5 w-5" />
+          <span className="text-xs font-bold">{tCommon('create') || 'Create'}</span>
+        </Button>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6">
+        {/* Calendar Section */}
+        <Card className="rounded-3xl border-none bg-accent/30 shadow-none overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              {t('trainingCalendar')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DashboardCalendar workouts={workouts} routines={routines} />
+          </CardContent>
+        </Card>
+
+        {/* Charts - Two columns on desktop, single on mobile */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {volumeData.length === 0 ? <ChartSkeleton /> : <VolumeChart data={volumeData} />}
+          {Object.keys(muscleDistribution).length === 0 ? <ChartSkeleton /> : <MuscleGroupChart data={muscleDistribution} />}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {topExercises.length === 0 ? <ChartSkeleton /> : <TopExercisesChart data={topExercises} />}
+          {personalRecords.length === 0 ? <CardSkeleton /> : <PersonalRecordsList data={personalRecords} />}
+        </div>
+
+        {/* Recent Workouts Card */}
+        <Card className="rounded-3xl border-none shadow-md overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-lg">{t('recentWorkouts')}</CardTitle>
+              <CardDescription className="text-xs">{t('last5Sessions')}</CardDescription>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-primary font-bold hidden md:flex" 
+              onClick={() => router.push(ROUTES.WORKOUTS)}
+            >
+              {tCommon('viewAll') || 'View All'}
+            </Button>
+          </CardHeader>
+          <CardContent className="px-2 pb-2">
+            {recentWorkouts.length === 0 ? (
+              <div className="text-center py-10 bg-accent/10 rounded-2xl mx-4 mb-4">
+                <p className="text-sm text-muted-foreground">{t('noWorkoutsYet')}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentWorkouts.map((workout) => (
+                  <div
+                    key={workout.id}
+                    className="flex items-center justify-between p-4 bg-accent/20 rounded-2xl hover:bg-accent/40 transition-all active:scale-[0.98] cursor-pointer mx-2"
+                    onClick={() => router.push(ROUTES.WORKOUT_DETAIL(workout.id))}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center shadow-sm">
+                        <Activity className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm">
+                          {new Date(workout.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                        </p>
+                        {workout.notes ? (
+                          <p className="text-xs text-muted-foreground truncate max-w-[150px]">{workout.notes}</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">{tCommon('workout') || 'Workout'}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-sm">{formatDuration(workout.duration)}</p>
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tighter">
+                        {tCommon('view') || 'View'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ title, value, unit, icon, color, bg }: { title: string, value: string | number, unit?: string, icon: React.ReactNode, color: string, bg: string }) {
+  return (
+    <div className="min-w-[140px] flex-shrink-0 bg-background border border-accent/20 rounded-2xl p-4 shadow-sm md:min-w-0 md:flex-1">
+      <div className={`${bg} ${color} h-8 w-8 rounded-xl flex items-center justify-center mb-3`}>
+        {icon}
+      </div>
+      <p className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-tight mb-0.5">{title}</p>
+      <div className="flex items-baseline gap-0.5">
+        <span className="text-lg md:text-xl font-black">{value}</span>
+        {unit && <span className="text-[10px] font-bold text-muted-foreground">{unit}</span>}
+      </div>
     </div>
   )
 }

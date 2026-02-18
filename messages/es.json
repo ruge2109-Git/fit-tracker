@@ -78,7 +78,8 @@
       "utilities": "Utilidades",
       "support": "Soporte",
       "account": "Cuenta",
-      "administration": "Administración"
+      "administration": "Administración",
+      "more": "Más"
     },
     "auditLog": "Registro de Auditoría",
     "shortcuts": "Atajos de teclado",
@@ -104,7 +105,8 @@
     "filterApplied": "Filtro aplicado",
     "filterDeleted": "Filtro eliminado",
     "markAsFavorite": "Marcar como favorito",
-    "saveFilterDescription": "Guarda tu configuración de filtros actual para acceso rápido"
+    "saveFilterDescription": "Guarda tu configuración de filtros actual para acceso rápido",
+    "viewAll": "Ver todo"
   },
   "auth": {
     "title": "Bienvenido a FitTrackr",

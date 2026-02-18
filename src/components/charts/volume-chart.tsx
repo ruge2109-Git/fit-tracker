@@ -6,7 +6,8 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTranslations } from 'next-intl'
 
@@ -44,44 +45,60 @@ export const VolumeChart = memo(function VolumeChart({ data }: VolumeChartProps)
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('weeklyVolume')}</CardTitle>
-        <CardDescription>
-          Total volume (kg × reps) per week over the last {data.length} weeks
+    <Card className="rounded-[2.5rem] border-none shadow-lg overflow-hidden bg-accent/10">
+      <CardHeader className="pb-0">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          {t('weeklyVolume')}
+        </CardTitle>
+        <CardDescription className="text-xs font-medium">
+          {t('trackTotalVolume')}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={formattedData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+      <CardContent className="pt-6">
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart data={formattedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
             <XAxis 
               dataKey="week" 
-              className="text-xs"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 600 }}
+              dy={10}
             />
             <YAxis 
-              className="text-xs"
-              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 600 }}
             />
             <Tooltip 
               contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
+                border: 'none',
+                borderRadius: '1.5rem',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                padding: '12px 16px',
               }}
-              labelStyle={{ color: 'hsl(var(--foreground))' }}
+              itemStyle={{ fontSize: '12px', fontWeight: '800' }}
+              labelStyle={{ fontSize: '10px', color: 'hsl(var(--muted-foreground))', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}
+              cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 2, strokeDasharray: '5 5' }}
             />
-            <Legend />
-            <Line 
+            <Area 
               type="monotone" 
               dataKey="volume" 
               stroke="hsl(var(--primary))" 
-              strokeWidth={2}
-              name={tCharts('volume')}
-              dot={{ fill: 'hsl(var(--primary))' }}
+              strokeWidth={4}
+              fillOpacity={1} 
+              fill="url(#colorVolume)"
+              animationDuration={1500}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

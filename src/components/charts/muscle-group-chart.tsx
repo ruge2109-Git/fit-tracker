@@ -7,6 +7,7 @@
 
 import { memo, useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { PieChart as PieChartIcon } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTranslations } from 'next-intl'
 
@@ -62,36 +63,54 @@ export const MuscleGroupChart = memo(function MuscleGroupChart({ data }: MuscleG
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('muscleGroupDistribution')}</CardTitle>
-        <CardDescription>{t('distributionOfSets')}</CardDescription>
+    <Card className="rounded-[2.5rem] border-none shadow-lg overflow-hidden bg-accent/10">
+      <CardHeader className="pb-0">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <PieChartIcon className="h-5 w-5 text-primary" />
+          {t('muscleGroupDistribution')}
+        </CardTitle>
+        <CardDescription className="text-xs font-medium">
+          {t('distributionOfSets')}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+      <CardContent className="pt-6">
+        <ResponsiveContainer width="100%" height={260}>
           <PieChart>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              outerRadius={80}
-              fill="#8884d8"
+              innerRadius={60}
+              outerRadius={90}
+              paddingAngle={5}
               dataKey="value"
+              animationBegin={0}
+              animationDuration={1500}
             >
               {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={COLORS[index % COLORS.length]} 
+                  stroke="transparent"
+                  className="hover:opacity-80 transition-opacity outline-none"
+                />
               ))}
             </Pie>
             <Tooltip 
               contentStyle={{
                 backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px',
+                border: 'none',
+                borderRadius: '1.5rem',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                padding: '12px 16px',
               }}
             />
-            <Legend />
+            <Legend 
+              verticalAlign="bottom" 
+              align="center"
+              iconType="circle"
+              wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', paddingTop: '20px' }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>

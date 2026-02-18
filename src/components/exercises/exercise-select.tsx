@@ -106,22 +106,24 @@ export function ExerciseSelect({
 
   const Content = (
     <Command className="rounded-t-[2.5rem] border-none bg-background h-full">
-      <CommandInput 
-        placeholder={t('searchExercises') || 'Search exercises...'} 
-        className="h-12 text-base"
-      />
-      <div className="px-2 pt-2">
-        {(showCreateInline || onCreateExercise) && (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleCreateClick}
-            className="w-full justify-start rounded-xl h-10 px-3 text-primary font-bold text-xs bg-primary/5 hover:bg-primary/10 transition-colors border border-primary/10 mb-2"
-          >
-            <Plus className="mr-2 h-3.5 w-3.5" />
-            {t('createNewExercise') || 'Create New Exercise'}
-          </Button>
-        )}
+      <div data-vaul-no-drag>
+        <CommandInput 
+          placeholder={t('searchExercises') || 'Search exercises...'} 
+          className="h-12 text-base"
+        />
+        <div className="px-2 pt-2">
+          {(showCreateInline || onCreateExercise) && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleCreateClick}
+              className="w-full justify-start rounded-xl h-10 px-3 text-primary font-bold text-xs bg-primary/5 hover:bg-primary/10 transition-colors border border-primary/10 mb-2"
+            >
+              <Plus className="mr-2 h-3.5 w-3.5" />
+              {t('createNewExercise') || 'Create New Exercise'}
+            </Button>
+          )}
+        </div>
       </div>
 
       <CommandList

@@ -105,7 +105,7 @@ export function ExerciseSelect({
   )
 
   const Content = (
-    <Command className="rounded-t-[2.5rem] border-none bg-background h-full" data-vaul-no-drag>
+    <Command className="rounded-t-[2.5rem] border-none bg-background h-full">
       <CommandInput 
         placeholder={t('searchExercises') || 'Search exercises...'} 
         className="h-12 text-base"
@@ -126,6 +126,7 @@ export function ExerciseSelect({
 
       <CommandList
         className="max-h-[60vh] md:max-h-[400px] p-2 pt-0"
+        data-vaul-no-drag
       >
         <CommandEmpty className="py-8 text-xs text-center text-muted-foreground/60 italic">
           {t('noExercises') || 'No exercises found'}

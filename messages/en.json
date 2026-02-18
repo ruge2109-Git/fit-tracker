@@ -213,6 +213,7 @@
     "workoutDetails": "Workout Details",
     "workoutInformation": "Workout Information",
     "addExercises": "Add Exercises",
+    "addExercise": "Add Exercise",
     "addSet": "Add Set",
     "sets": "Sets",
     "set": "Set",
@@ -222,6 +223,9 @@
     "rest": "Rest (sec)",
     "completeWorkout": "Complete Workout",
     "saveWorkout": "Save Workout",
+    "startWorkout": "Start Workout",
+    "sessionDetails": "Session Details",
+    "finishWorkout": "Finish Workout",
     "saving": "Saving...",
     "creating": "Creating...",
     "loading": "Loading...",
@@ -356,7 +360,8 @@
     "routineNotFound": "Routine not found",
     "failedToUpdateRoutine": "Failed to update routine",
     "routineUpdatedSuccessfully": "Routine updated successfully!",
-    "saveRoutine": "Save Routine"
+    "saveRoutine": "Save Routine",
+    "exerciseRemoved":"Exercise removed"
   },
   "exercises": {
     "title": "Exercises",

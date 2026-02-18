@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useTranslations } from 'next-intl'
+import { createPortal } from 'react-dom'
+import { cn } from '@/lib/utils'
 
 const STORAGE_KEY = 'workout-rest-timer'
 
@@ -58,11 +60,16 @@ const getInitialState = (): { duration: number; timeLeft: number; isRunning: boo
   }
 }
 
-export function WorkoutRestTimer() {
+export function WorkoutRestTimer({ className }: { className?: string }) {
   const t = useTranslations('restTimer')
   const initialState = getInitialState()
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const [duration, setDuration] = useState(initialState.duration)
   const [timeLeft, setTimeLeft] = useState(initialState.timeLeft)
   const [isRunning, setIsRunning] = useState(initialState.isRunning)
@@ -393,10 +400,12 @@ export function WorkoutRestTimer() {
 
   const presets = [30, 60, 90, 120, 180]
 
+  if (!mounted) return null
+
   // Minimized view (just timer)
   if (isOpen && isMinimized) {
-    return (
-      <div className="fixed bottom-4 right-4 z-50">
+    return createPortal(
+      <div className={cn("fixed bottom-4 right-4 z-[9999]", className)}>
         <Card className="shadow-lg border-2 border-primary">
           <CardContent className="p-3">
             <div className="flex items-center gap-3">
@@ -428,14 +437,15 @@ export function WorkoutRestTimer() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>,
+      document.body
     )
   }
 
   // Full view
   if (isOpen) {
-    return (
-      <div className="fixed bottom-4 right-4 z-50 w-80">
+    return createPortal(
+      <div className={cn("fixed bottom-4 right-4 z-[9999] w-80", className)}>
         <Card className="shadow-lg border-2 border-primary">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -514,20 +524,22 @@ export function WorkoutRestTimer() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>,
+      document.body
     )
   }
 
-  return (
-    <div className="fixed bottom-4 right-4 z-50">
+  return createPortal(
+    <div className={cn("fixed bottom-4 right-4 z-[9999]", className)}>
       <Button
         onClick={() => setIsOpen(true)}
         size="lg"
-        className="rounded-full shadow-lg h-14 w-14 p-0"
+        className="rounded-full shadow-lg h-12 w-12 p-0"
       >
         <Clock className="h-6 w-6 text-primary-foreground" />
       </Button>
-    </div>
+    </div>,
+    document.body
   )
 }
 

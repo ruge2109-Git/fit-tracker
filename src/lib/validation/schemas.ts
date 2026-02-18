@@ -135,10 +135,22 @@ export const routineExerciseSchema = z.object({
     .int('Target reps must be an integer')
     .min(1, 'Target reps must be at least 1')
     .max(1000, 'Target reps cannot exceed 1000'),
+  target_reps_max: z.coerce
+    .number()
+    .int('Target reps max must be an integer')
+    .min(1, 'Target reps max must be at least 1')
+    .max(1000, 'Target reps max cannot exceed 1000')
+    .optional(),
   target_weight: z.coerce
     .number()
     .min(0, 'Target weight cannot be negative')
     .max(1000, 'Target weight cannot exceed 1000 kg')
+    .optional(),
+  target_rest_time: z.coerce
+    .number()
+    .int('Rest time must be an integer')
+    .min(0, 'Rest time cannot be negative')
+    .max(3600, 'Rest time cannot exceed 1 hour')
     .optional(),
 })
 

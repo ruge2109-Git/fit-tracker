@@ -163,7 +163,7 @@ export default function NewWorkoutFromRoutinePage() {
               exerciseName: routineExercise.exercise.name,
               reps: routineExercise.target_reps,
               weight: routineExercise.target_weight || 0,
-              rest_time: 90,
+              rest_time: routineExercise.target_rest_time || 90,
               completed: false,
             })
           }
@@ -410,9 +410,20 @@ export default function NewWorkoutFromRoutinePage() {
                             </Button>
                           </ExerciseProgressDialog>
                           {group.sets.length > 0 && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {t('restTime') || 'Rest'}: {group.sets[0]?.rest_time || 90}s
+                            <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <div className="flex items-center gap-1">
+                                <span className="font-bold text-primary/60">Goal:</span>
+                                <span>
+                                  {routine?.exercises.find(ex => ex.exercise_id === exerciseId)?.target_reps}
+                                  {routine?.exercises.find(ex => ex.exercise_id === exerciseId)?.target_reps_max 
+                                    ? `-${routine?.exercises.find(ex => ex.exercise_id === exerciseId)?.target_reps_max}` 
+                                    : ''} reps
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {t('restTime') || 'Rest'}: {group.sets[0]?.rest_time || 90}s
+                              </div>
                             </div>
                           )}
                         </div>

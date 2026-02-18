@@ -126,7 +126,7 @@ function routinesToCSV(routines: RoutineWithExercises[]): string {
           routine.is_active ? 'Yes' : 'No',
           exercise.exercise?.name || '',
           exercise.target_sets.toString(),
-          exercise.target_reps.toString(),
+          exercise.target_reps.toString() + (exercise.target_reps_max ? `-${exercise.target_reps_max}` : ''),
           exercise.target_weight?.toString() || '',
         ])
       })

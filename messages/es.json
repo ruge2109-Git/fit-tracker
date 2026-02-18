@@ -370,7 +370,10 @@
     "failedToUpdateRoutine": "Error al actualizar rutina",
     "routineUpdatedSuccessfully": "¡Rutina actualizada exitosamente!",
     "saveRoutine": "Guardar Rutina",
-    "exerciseRemoved":"Ejercicio eliminado"
+    "exerciseRemoved": "Ejercicio eliminado",
+    "exerciseAdded": "Ejercicio agregado",
+    "activeSession": "Sesión activa",
+    "continueWorkout": "Continuar Entrenamiento"
   },
   "exercises": {
     "title": "Ejercicios",

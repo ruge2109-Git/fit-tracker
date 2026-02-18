@@ -405,7 +405,7 @@ export function WorkoutRestTimer({ className }: { className?: string }) {
   // Minimized view (just timer)
   if (isOpen && isMinimized) {
     return createPortal(
-      <div className={cn("fixed bottom-4 right-4 z-[9999]", className)}>
+      <div className={cn("fixed bottom-4 right-4 z-[50]", className)}>
         <Card className="shadow-lg border-2 border-primary">
           <CardContent className="p-3">
             <div className="flex items-center gap-3">
@@ -445,7 +445,7 @@ export function WorkoutRestTimer({ className }: { className?: string }) {
   // Full view
   if (isOpen) {
     return createPortal(
-      <div className={cn("fixed bottom-4 right-4 z-[9999] w-80", className)}>
+      <div className={cn("fixed bottom-4 right-4 z-[50] w-80", className)}>
         <Card className="shadow-lg border-2 border-primary">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -530,7 +530,7 @@ export function WorkoutRestTimer({ className }: { className?: string }) {
   }
 
   return createPortal(
-    <div className={cn("fixed bottom-4 right-4 z-[9999]", className)}>
+    <div className={cn("fixed bottom-4 right-4 z-[50]", className)}>
       <Button
         onClick={() => setIsOpen(true)}
         size="lg"

@@ -105,7 +105,7 @@ export function ExerciseSelect({
   )
 
   const Content = (
-    <Command className="rounded-t-[2.5rem] border-none bg-background">
+    <Command className="rounded-t-[2.5rem] border-none bg-background h-full" data-vaul-no-drag>
       <CommandInput 
         placeholder={t('searchExercises') || 'Search exercises...'} 
         className="h-12 text-base"

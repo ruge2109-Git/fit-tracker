@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Camera, Grid3x3, GitCompare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PhotoUpload } from '@/components/progress-photos/photo-upload'
 import { PhotoGallery } from '@/components/progress-photos/photo-gallery'
@@ -113,74 +113,85 @@ export default function ProgressPhotosPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
         <div>
-          <h1 className="text-3xl font-bold">{t('title') || 'Progress Photos'}</h1>
-          <p className="text-muted-foreground">{t('subtitle') || 'Track your progress with photos'}</p>
+          <h1 className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary/60 italic mb-1">
+            {t('title') || 'Progress Photos'}
+          </h1>
+          <h2 className="text-2xl font-black uppercase italic tracking-tighter text-foreground/90">
+             {t('subtitle') || 'Gallery'}
+          </h2>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
+        <Drawer open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DrawerTrigger asChild>
+            <Button 
+                size="sm"
+                className="h-10 rounded-xl font-bold uppercase tracking-wider text-[10px] bg-primary text-white shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all pt-6 pb-6 w-full sm:w-auto"
+            >
+              <Plus className="h-3.5 w-3.5 mr-2" />
               {t('uploadPhoto') || 'Upload Photo'}
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{t('uploadPhoto') || 'Upload Photo'}</DialogTitle>
-              <DialogDescription>
-                {t('uploadPhotoDescription') || 'Upload a progress photo to track your transformation'}
-              </DialogDescription>
-            </DialogHeader>
-            <PhotoUpload
-              onSubmit={handleCreatePhoto}
-              isLoading={isLoading || isSafeLoading}
-            />
-          </DialogContent>
-        </Dialog>
+          </DrawerTrigger>
+          <DrawerContent>
+             <div className="mx-auto w-full max-w-sm">
+                <DrawerHeader>
+                <DrawerTitle>{t('uploadPhoto') || 'Upload Photo'}</DrawerTitle>
+                <DrawerDescription>
+                    {t('uploadPhotoDescription') || 'Upload a progress photo to track your transformation'}
+                </DrawerDescription>
+                </DrawerHeader>
+                <div className="p-4 pb-0">
+                    <PhotoUpload
+                    onSubmit={handleCreatePhoto}
+                    isLoading={isLoading || isSafeLoading}
+                    />
+                </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3">
-        <Card>
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3">
+        <Card className="rounded-[2rem] border-border/50 bg-card shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">{t('totalPhotos') || 'Total Photos'}</CardTitle>
-            <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('totalPhotos') || 'Total Photos'}</CardTitle>
+            <Camera className="h-4 w-4 text-primary/40" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{photos.length}</div>
-            <p className="text-xs text-muted-foreground">{t('photosUploaded') || 'Photos uploaded'}</p>
+            <div className="text-3xl font-black italic tracking-tighter text-foreground">{photos.length}</div>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-1">{t('photosUploaded') || 'Photos uploaded'}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="rounded-[2rem] border-border/50 bg-card shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">{t('thisMonth') || 'This Month'}</CardTitle>
-            <Grid3x3 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('thisMonth') || 'This Month'}</CardTitle>
+            <Grid3x3 className="h-4 w-4 text-primary/40" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
+            <div className="text-3xl font-black italic tracking-tighter text-foreground">
               {photos.filter(p => {
                 const photoDate = new Date(p.photo_date)
                 const now = new Date()
                 return photoDate.getMonth() === now.getMonth() && photoDate.getFullYear() === now.getFullYear()
               }).length}
             </div>
-            <p className="text-xs text-muted-foreground">{t('photosThisMonth') || 'Photos this month'}</p>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-1">{t('photosThisMonth') || 'Photos this month'}</p>
           </CardContent>
         </Card>
-        <Card className="col-span-2 md:col-span-1">
+        <Card className="col-span-2 md:col-span-1 rounded-[2rem] border-border/50 bg-card shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">{t('lastPhoto') || 'Last Photo'}</CardTitle>
-            <GitCompare className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('lastPhoto') || 'Last Photo'}</CardTitle>
+            <GitCompare className="h-4 w-4 text-primary/40" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
+            <div className="text-lg font-black italic tracking-tighter text-foreground mt-1">
               {photos.length > 0
                 ? new Date(Math.max(...photos.map(p => new Date(p.photo_date).getTime())))
                     .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : '-'}
             </div>
-            <p className="text-xs text-muted-foreground">{t('mostRecent') || 'Most recent'}</p>
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-1">{t('mostRecent') || 'Most recent'}</p>
           </CardContent>
         </Card>
       </div>

@@ -109,7 +109,8 @@
     "viewAll": "Ver todo",
     "copy": "Copiar",
     "saveChanges": "Guardar cambios",
-    "linkCopied": "¡Enlace copiado!"
+    "linkCopied": "¡Enlace copiado!",
+    "readyToTrain": "¿Listo para entrenar?"
   },
   "auth": {
     "title": "Bienvenido a FitTrackr",
@@ -256,6 +257,12 @@
     "week": "Semana",
     "day": "Día",
     "legend": "Leyenda del calendario",
+    "completed": "Completado",
+    "scheduled": "Programado",
+    "noEvents": "No hay eventos para este día",
+    "searchPlaceholder": "Buscar en notas...",
+    "noRoutines": "No hay rutinas disponibles",
+    "chooseTemplate": "Elige una plantilla",
     "sortBy": "Ordenar por",
     "sortByDateDesc": "Fecha (Más reciente)",
     "sortByDateAsc": "Fecha (Más antiguo)",

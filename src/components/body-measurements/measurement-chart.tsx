@@ -6,8 +6,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { BodyMeasurement, Goal } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { CHART_COLORS } from '@/lib/constants'
@@ -21,8 +20,7 @@ interface MeasurementChartProps {
 
 export function MeasurementChart({ measurements, goal, title }: MeasurementChartProps) {
   const t = useTranslations('bodyMeasurements')
-  const tCharts = useTranslations('charts')
-
+  
   const chartData = useMemo(() => {
     return measurements
       .sort((a, b) => new Date(a.measurement_date).getTime() - new Date(b.measurement_date).getTime())
@@ -36,70 +34,71 @@ export function MeasurementChart({ measurements, goal, title }: MeasurementChart
 
   if (measurements.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title || t('evolution')}</CardTitle>
-          <CardDescription>{t('noMeasurementsYet')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            {t('noData')}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+        {t('noData')}
+      </div>
     )
   }
 
   const unit = measurements[0]?.unit || ''
-  const measurementType = measurements[0]?.measurement_type || ''
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title || t('evolution')}</CardTitle>
-        <CardDescription>
-          {t('evolutionDescription')} {goal && `(${t('goal')}: ${goal.target_value} ${goal.unit})`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
+    <div className="w-full h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12 }}
-              angle={-45}
-              textAnchor="end"
-              height={60}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 600 }}
+              dy={10}
             />
             <YAxis
-              tick={{ fontSize: 12 }}
-              label={{ value: unit, angle: -90, position: 'insideLeft' }}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 600 }}
+              label={{ value: unit, angle: -90, position: 'insideLeft', style: { fill: 'hsl(var(--muted-foreground))', fontSize: 10 } }}
             />
             <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(var(--background))',
+                border: 'none',
+                borderRadius: '1.5rem',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                padding: '12px 16px',
+              }}
+              itemStyle={{ fontSize: '12px', fontWeight: '800' }}
+              labelStyle={{ fontSize: '10px', color: 'hsl(var(--muted-foreground))', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}
+              cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 2, strokeDasharray: '5 5' }}
               formatter={(value: number) => [`${value} ${unit}`, t('value')]}
-              labelFormatter={(label) => `Fecha: ${label}`}
+              labelFormatter={(label) => `${label}`}
             />
             {goal && (
               <ReferenceLine
                 y={goal.target_value}
                 stroke={CHART_COLORS.secondary}
                 strokeDasharray="5 5"
-                label={{ value: `${t('goal')}: ${goal.target_value} ${goal.unit}`, position: 'top' }}
+                label={{ value: `${t('goal')}: ${goal.target_value}`, position: 'top', fill: CHART_COLORS.secondary, fontSize: 10 }}
               />
             )}
-            <Line
+            <Area
               type="monotone"
               dataKey="value"
-              stroke={CHART_COLORS.primary}
-              strokeWidth={2}
-              dot={{ fill: CHART_COLORS.primary, r: 4 }}
-              name={t('value')}
+              stroke="hsl(var(--primary))"
+              strokeWidth={4}
+              fillOpacity={1}
+              fill="url(#colorValue)"
+              animationDuration={1500}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    </div>
   )
 }
-

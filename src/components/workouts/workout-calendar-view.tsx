@@ -5,29 +5,36 @@
 
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay, startOfWeek, endOfWeek, addWeeks, subWeeks, addDays, subDays } from 'date-fns'
 import { es, enUS } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CalendarDays, CalendarRange } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Clock } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Workout } from '@/types'
-import { formatDuration } from '@/lib/utils'
+import { CardContent } from '@/components/ui/card'
+import { Workout, Routine } from '@/types'
+import { formatDuration, cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
-import { useTranslations } from 'next-intl'
-import { useLocale } from 'next-intl'
-import { cn } from '@/lib/utils'
+import { useTranslations, useLocale } from 'next-intl'
 import { useIsMobile } from '@/hooks/use-media-query'
 
 interface WorkoutCalendarViewProps {
   workouts: Workout[]
+  routines?: Routine[]
 }
 
-export function WorkoutCalendarView({ workouts }: WorkoutCalendarViewProps) {
+interface CalendarEvent {
+  type: 'completed' | 'scheduled'
+  workout?: Workout
+  routine?: Routine
+  date: Date
+}
+
+export function WorkoutCalendarView({ workouts, routines = [] }: WorkoutCalendarViewProps) {
   const router = useNavigationRouter()
   const t = useTranslations('workouts')
+  const tDashboard = useTranslations('dashboard')
   const tCommon = useTranslations('common')
   const locale = useLocale()
   const isMobile = useIsMobile()
@@ -47,30 +54,97 @@ export function WorkoutCalendarView({ workouts }: WorkoutCalendarViewProps) {
 
   const dateLocale = locale === 'es' ? es : enUS
 
-  // Group workouts by date
-  // Parse date string directly to avoid timezone issues
-  const workoutsByDate = useMemo(() => {
-    const grouped: Record<string, Workout[]> = {}
-    workouts.forEach(workout => {
-      // Extract date part directly from string to avoid timezone conversion issues
-      // If date is in format "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm:ss", extract just the date part
-      let dateKey = workout.date
-      if (dateKey.includes('T')) {
-        dateKey = dateKey.split('T')[0]
-      }
-      // Ensure it's in YYYY-MM-DD format
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
-        // If not in correct format, parse it carefully
-        const date = new Date(workout.date + 'T12:00:00') // Add noon to avoid timezone shifts
-        dateKey = format(date, 'yyyy-MM-dd')
-      }
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = []
-      }
-      grouped[dateKey].push(workout)
+  // Get active routines with scheduled days
+  const activeRoutines = useMemo(() => {
+    return routines.filter(r => r.is_active && r.scheduled_days && r.scheduled_days.length > 0)
+  }, [routines])
+
+  // Map day names to day indices (0 = Sunday, 1 = Monday, etc.)
+  const dayNameToIndex: Record<string, number> = {
+    'sunday': 0,
+    'monday': 1,
+    'tuesday': 2,
+    'wednesday': 3,
+    'thursday': 4,
+    'friday': 5,
+    'saturday': 6,
+  }
+
+  // Generate scheduled events for the current month
+  const scheduledEvents = useMemo(() => {
+    const events: CalendarEvent[] = []
+    const monthStart = startOfMonth(currentMonth)
+    const monthEnd = endOfMonth(currentMonth)
+    const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+
+    activeRoutines.forEach(routine => {
+      if (!routine.scheduled_days) return
+
+      routine.scheduled_days.forEach(dayName => {
+        const dayIndex = dayNameToIndex[dayName.toLowerCase()]
+        
+        monthDays.forEach(date => {
+          const dateDayIndex = getDay(date) // 0 = Sunday, 1 = Monday, etc.
+          if (dateDayIndex === dayIndex) {
+            events.push({
+              type: 'scheduled',
+              routine,
+              date,
+            })
+          }
+        })
+      })
     })
-    return grouped
+
+    return events
+  }, [activeRoutines, currentMonth])
+
+  // Group workouts by date
+  // Parse dates carefully to avoid timezone issues
+  const completedEvents = useMemo(() => {
+    return workouts.map(workout => {
+      // Extract date part directly to avoid timezone conversion
+      let dateStr = workout.date
+      if (dateStr.includes('T')) {
+        dateStr = dateStr.split('T')[0]
+      }
+      // Create date at noon to avoid timezone shifts
+      const date = new Date(dateStr + 'T12:00:00')
+      return {
+        type: 'completed' as const,
+        workout,
+        date,
+      }
+    })
   }, [workouts])
+
+  // Combine all events
+  const allEvents = useMemo(() => {
+    const eventsMap: Record<string, CalendarEvent[]> = {}
+    
+    // Add completed workouts
+    completedEvents.forEach(event => {
+      const dateKey = format(event.date, 'yyyy-MM-dd')
+      if (!eventsMap[dateKey]) {
+        eventsMap[dateKey] = []
+      }
+      eventsMap[dateKey].push(event)
+    })
+
+    // Add scheduled routines
+    scheduledEvents.forEach(event => {
+      const dateKey = format(event.date, 'yyyy-MM-dd')
+      if (!eventsMap[dateKey]) {
+        eventsMap[dateKey] = []
+      }
+      // Only add if there's no completed workout for that day
+      if (!eventsMap[dateKey].some(e => e.type === 'completed')) {
+        eventsMap[dateKey].push(event)
+      }
+    })
+
+    return eventsMap
+  }, [completedEvents, scheduledEvents])
 
   // Get calendar days - monthly, weekly or daily view
   const calendarDays = useMemo(() => {
@@ -151,9 +225,9 @@ export function WorkoutCalendarView({ workouts }: WorkoutCalendarViewProps) {
     setCurrentDay(today)
   }
 
-  const getWorkoutsForDate = (date: Date): Workout[] => {
+  const getEventsForDate = (date: Date): CalendarEvent[] => {
     const dateKey = format(date, 'yyyy-MM-dd')
-    return workoutsByDate[dateKey] || []
+    return allEvents[dateKey] || []
   }
 
   const weekDays = locale === 'es' 
@@ -162,74 +236,52 @@ export function WorkoutCalendarView({ workouts }: WorkoutCalendarViewProps) {
 
   return (
     <div className="space-y-4">
-      {/* Calendar Header */}
-      <div className="space-y-4">
-        {/* View Mode Selector */}
-        <div className="flex items-center justify-between">
-          <Tabs value={viewMode} onValueChange={handleViewChange} className="w-full sm:w-auto">
-            <TabsList>
-              <TabsTrigger value="month" className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('month') || 'Month'}</span>
+      {/* Calendar Header - Refined & Minimal */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <Tabs value={viewMode} onValueChange={handleViewChange} className="bg-accent/20 p-1 rounded-full">
+            <TabsList className="bg-transparent h-8 gap-1">
+              <TabsTrigger value="month" className="rounded-full h-7 text-[10px] uppercase font-bold px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                {t('month') || 'Month'}
               </TabsTrigger>
-              <TabsTrigger value="week" className="flex items-center gap-2">
-                <CalendarRange className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('week') || 'Week'}</span>
+              <TabsTrigger value="week" className="rounded-full h-7 text-[10px] uppercase font-bold px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                {t('week') || 'Week'}
               </TabsTrigger>
-              <TabsTrigger value="day" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('day') || 'Day'}</span>
+              <TabsTrigger value="day" className="rounded-full h-7 text-[10px] uppercase font-bold px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                {t('day') || 'Day'}
               </TabsTrigger>
             </TabsList>
           </Tabs>
+          
+          <Button variant="ghost" size="sm" onClick={handleToday} className="text-[10px] uppercase font-bold text-primary hover:bg-primary/5 rounded-full px-4">
+            {t('today') || 'Today'}
+          </Button>
         </div>
 
-        {/* Date Header and Navigation */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-xl sm:text-2xl font-bold">
-              {viewMode === 'day'
-                ? format(currentDay, 'EEEE, d MMMM yyyy', { locale: dateLocale })
-                : viewMode === 'week'
-                ? `${format(startOfWeek(currentWeek, { weekStartsOn: 0 }), 'd MMM', { locale: dateLocale })} - ${format(endOfWeek(currentWeek, { weekStartsOn: 0 }), 'd MMM yyyy', { locale: dateLocale })}`
-                : format(currentMonth, 'MMMM yyyy', { locale: dateLocale })
-              }
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleToday} aria-label={t('today') || 'Go to today'}>
-              {t('today') || 'Today'}
-            </Button>
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-lg md:text-xl font-extrabold tracking-tight">
+            {viewMode === 'day'
+              ? format(currentDay, 'MMMM d, yyyy', { locale: dateLocale })
+              : viewMode === 'week'
+              ? `${format(startOfWeek(currentWeek, { weekStartsOn: 0 }), 'd MMM', { locale: dateLocale })} - ${format(endOfWeek(currentWeek, { weekStartsOn: 0 }), 'd MMM', { locale: dateLocale })}`
+              : format(currentMonth, 'MMMM yyyy', { locale: dateLocale })
+            }
+          </h2>
+          <div className="flex items-center bg-accent/20 rounded-full p-1 border border-accent/10">
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="icon" 
-              onClick={
-                viewMode === 'day' ? handlePreviousDay :
-                viewMode === 'week' ? handlePreviousWeek :
-                handlePreviousMonth
-              } 
-              aria-label={
-                viewMode === 'day' ? (t('previousDay') || 'Previous day') :
-                viewMode === 'week' ? (t('previousWeek') || 'Previous week') :
-                (t('previousMonth') || 'Previous month')
-              }
+              className="h-7 w-7 rounded-full hover:bg-background"
+              onClick={viewMode === 'day' ? handlePreviousDay : viewMode === 'week' ? handlePreviousWeek : handlePreviousMonth} 
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
+            <div className="w-[1px] h-3 bg-accent/30 mx-1" />
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="icon" 
-              onClick={
-                viewMode === 'day' ? handleNextDay :
-                viewMode === 'week' ? handleNextWeek :
-                handleNextMonth
-              } 
-              aria-label={
-                viewMode === 'day' ? (t('nextDay') || 'Next day') :
-                viewMode === 'week' ? (t('nextWeek') || 'Next week') :
-                (t('nextMonth') || 'Next month')
-              }
+              className="h-7 w-7 rounded-full hover:bg-background"
+              onClick={viewMode === 'day' ? handleNextDay : viewMode === 'week' ? handleNextWeek : handleNextMonth} 
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -237,65 +289,75 @@ export function WorkoutCalendarView({ workouts }: WorkoutCalendarViewProps) {
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <Card>
-        <CardContent className={cn("p-4", isMobile && "p-2")}>
+      {/* Calendar Grid - Modernized */}
+      <div className="bg-background rounded-[2.5rem] p-2 md:p-6 border border-accent/20 shadow-xl shadow-accent/5">
+        <CardContent className={cn("p-0", isMobile && "p-0")}>
           {viewMode === 'day' ? (
-            /* Day View - Single Day */
-            <div className="space-y-2">
-              <div className="text-center text-sm font-medium text-muted-foreground py-1">
-                {format(currentDay, 'EEEE', { locale: dateLocale })}
+            /* Day View - Mobile Focused Agenda */
+            <div className="space-y-4 px-2">
+              <div className="flex flex-col items-center py-4">
+                <div className="text-primary font-bold text-4xl mb-1">{format(currentDay, 'd')}</div>
+                <div className="text-muted-foreground font-semibold uppercase tracking-[0.2em] text-[9px]">
+                  {format(currentDay, 'EEEE', { locale: dateLocale })}
+                </div>
               </div>
+
               {(() => {
-                const dayWorkouts = getWorkoutsForDate(currentDay)
-                const isToday = isSameDay(currentDay, new Date())
-                const hasWorkouts = dayWorkouts.length > 0
+                const events = getEventsForDate(currentDay)
+                const hasEvents = events.length > 0
+                const completedWorkout = events.find(e => e.type === 'completed')?.workout
+                const scheduledRoutines = events.filter(e => e.type === 'scheduled').map(e => e.routine!)
 
                 return (
-                  <div
-                    className={cn(
-                      'border rounded-lg p-4 transition-colors min-h-[300px]',
-                      isToday && 'ring-2 ring-primary',
-                      hasWorkouts && 'bg-primary/5 hover:bg-primary/10 cursor-pointer',
-                      !hasWorkouts && 'hover:bg-muted/50'
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="text-2xl font-bold">
-                        {format(currentDay, 'd')}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {format(currentDay, 'MMMM yyyy', { locale: dateLocale })}
-                      </div>
-                    </div>
-                    {hasWorkouts && (
-                      <div className="flex-1 space-y-2 overflow-y-auto">
-                        {dayWorkouts.map((workout) => (
+                  <div className="space-y-3 min-h-[200px]">
+                    {hasEvents ? (
+                      <>
+                        {completedWorkout && (
                           <div
-                            key={workout.id}
-                            className={cn(
-                              "bg-primary text-primary-foreground rounded px-2 py-1.5 cursor-pointer hover:bg-primary/90 transition-colors text-base"
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(ROUTES.WORKOUT_DETAIL(workout.id))
-                            }}
+                            className="bg-green-500/10 border border-green-500/20 rounded-[2rem] p-5 flex items-center gap-4 active:scale-95 transition-transform"
+                            onClick={() => router.push(ROUTES.WORKOUT_DETAIL(completedWorkout.id))}
                           >
-                            <div className="font-medium truncate">{workout.routine_name || tCommon('workout')}</div>
-                            {workout.notes && (
-                              <div className="text-sm opacity-90 mt-1 line-clamp-2">{workout.notes}</div>
-                            )}
-                            <div className="text-sm opacity-90 mt-1 flex items-center gap-2">
-                              <Clock className="h-3 w-3" />
-                              {formatDuration(workout.duration)}
+                            <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg shadow-green-500/20">
+                              <CheckCircle2 className="h-6 w-6" />
                             </div>
+                            <div className="flex-1">
+                              <p className="text-[10px] font-bold text-green-600 uppercase tracking-tighter mb-0.5">
+                                {tDashboard('completed') || 'Completed'}
+                              </p>
+                              <h3 className="font-extrabold text-base leading-tight">
+                                {completedWorkout.routine_name || tCommon('workout')}
+                              </h3>
+                              <p className="text-xs font-medium text-muted-foreground">{formatDuration(completedWorkout.duration)}</p>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-green-500/50" />
+                          </div>
+                        )}
+                        {scheduledRoutines.map((routine) => (
+                          <div
+                            key={routine.id}
+                            className="bg-blue-500/10 border border-blue-500/20 rounded-[2rem] p-5 flex items-center gap-4 active:scale-95 transition-transform"
+                            onClick={() => router.push(ROUTES.WORKOUT_FROM_ROUTINE(routine.id))}
+                          >
+                            <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                              <Clock className="h-6 w-6" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter mb-0.5">
+                                {tDashboard('scheduled') || 'Scheduled'}
+                              </p>
+                              <h3 className="font-extrabold text-base leading-tight">{routine.name}</h3>
+                              <p className="text-xs font-medium text-muted-foreground">
+                                {routine.description || (tCommon('readyToTrain') || 'Ready?')}
+                              </p>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-blue-500/50" />
                           </div>
                         ))}
-                      </div>
-                    )}
-                    {!hasWorkouts && (
-                      <div className="text-center text-muted-foreground py-8">
-                        {t('noWorkouts') || 'No workouts for this day'}
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                        <CalendarIcon className="h-12 w-12 mb-2" />
+                        <p className="text-sm font-bold">{tDashboard('noEvents') || 'No events'}</p>
                       </div>
                     )}
                   </div>
@@ -304,113 +366,93 @@ export function WorkoutCalendarView({ workouts }: WorkoutCalendarViewProps) {
             </div>
           ) : (
             <>
-              {/* Week Days Header */}
-              <div className={cn("grid grid-cols-7 gap-1 mb-2", isMobile && "gap-0.5 mb-1")}>
+              {/* Week Days Header - Cleaner */}
+              <div className="grid grid-cols-7 gap-1 mb-4">
                 {weekDays.map((day, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "text-center font-medium text-muted-foreground",
-                      isMobile ? "text-xs py-1" : "text-sm py-2"
-                    )}
-                  >
+                  <div key={index} className="text-center font-black text-[10px] uppercase tracking-widest text-muted-foreground/60">
                     {day}
                   </div>
                 ))}
               </div>
 
-              {/* Calendar Days */}
-              <div className={cn("grid grid-cols-7 gap-1", isMobile && "gap-0.5")}>
+              {/* Grid Days - No border, just circles and spacing */}
+              <div className="grid grid-cols-7 gap-y-4 gap-x-1">
                 {calendarDays.map((date, index) => {
-                  const dayWorkouts = getWorkoutsForDate(date)
+                  const events = getEventsForDate(date)
                   const isCurrentMonth = viewMode === 'month' ? isSameMonth(date, currentMonth) : true
                   const isToday = isSameDay(date, new Date())
-                  const hasWorkouts = dayWorkouts.length > 0
+                  const hasEvents = events.length > 0
+                  const hasCompleted = events.some(e => e.type === 'completed')
+                  const hasScheduled = events.some(e => e.type === 'scheduled')
 
                   return (
                     <div
                       key={index}
                       className={cn(
-                        'border rounded-lg transition-colors',
-                        isMobile ? 'p-1 min-h-[60px]' : viewMode === 'week' ? 'p-2 min-h-[150px]' : 'p-2 min-h-[80px]',
-                        !isCurrentMonth && viewMode === 'month' && 'opacity-40',
-                        isToday && 'ring-2 ring-primary',
-                        hasWorkouts && 'bg-primary/5 hover:bg-primary/10 cursor-pointer',
-                        !hasWorkouts && 'hover:bg-muted/50'
+                        'flex flex-col items-center justify-start min-h-[60px] relative',
+                        !isCurrentMonth && 'opacity-20'
                       )}
-                  onClick={() => {
-                    if (hasWorkouts && dayWorkouts.length === 1) {
-                      router.push(ROUTES.WORKOUT_DETAIL(dayWorkouts[0].id))
-                    }
-                  }}
-                  role={hasWorkouts ? 'button' : undefined}
-                  tabIndex={hasWorkouts ? 0 : undefined}
-                  aria-label={
-                    hasWorkouts
-                      ? `${format(date, 'd MMMM')}: ${dayWorkouts.length} ${t('workout') || 'workout'}${dayWorkouts.length > 1 ? 's' : ''}`
-                      : format(date, 'd MMMM')
-                  }
-                  onKeyDown={(e) => {
-                    if (hasWorkouts && (e.key === 'Enter' || e.key === ' ')) {
-                      e.preventDefault()
-                      if (dayWorkouts.length === 1) {
-                        router.push(ROUTES.WORKOUT_DETAIL(dayWorkouts[0].id))
-                      }
-                    }
-                  }}
-                >
-                  <div className="flex flex-col h-full">
-                    <div
-                      className={cn(
-                        'text-sm font-medium mb-1',
-                        isToday && 'text-primary font-bold'
-                      )}
+                      onClick={() => {
+                        if (isMobile) {
+                          setCurrentDay(date)
+                          setViewMode('day')
+                        } else if (hasEvents) {
+                          // Desktop behavior
+                        }
+                      }}
                     >
-                      {format(date, 'd')}
-                    </div>
-                    {hasWorkouts && (
-                      <div className={cn("flex-1 space-y-1 overflow-hidden", isMobile && "space-y-0.5")}>
-                        {dayWorkouts.slice(0, isMobile ? 2 : viewMode === 'week' ? 3 : 2).map((workout) => (
-                          <div
-                            key={workout.id}
-                            className={cn(
-                              "bg-primary text-primary-foreground rounded px-1.5 py-0.5 cursor-pointer hover:bg-primary/90 transition-colors",
-                              isMobile ? "text-xs truncate" : viewMode === 'week' ? "text-sm" : "text-xs truncate"
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(ROUTES.WORKOUT_DETAIL(workout.id))
-                            }}
-                          >
-                            <span className="truncate block">{workout.routine_name || tCommon('workout')}</span>
-                          </div>
-                        ))}
-                        {dayWorkouts.length > (isMobile ? 2 : viewMode === 'week' ? 3 : 2) && (
-                          <div className={cn("text-center text-muted-foreground", isMobile ? "text-xs" : "text-xs")}>
-                            +{dayWorkouts.length - (isMobile ? 2 : viewMode === 'week' ? 3 : 2)} {t('more') || 'more'}
-                          </div>
+                      <div className={cn(
+                        'h-9 w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center text-sm font-bold transition-all relative z-10',
+                        isToday ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' : 'hover:bg-accent',
+                        !isToday && hasEvents && 'text-foreground'
+                      )}>
+                        {format(date, 'd')}
+                      </div>
+                      
+                      {/* Event Dot Indicators (Native Flutter Style) */}
+                      <div className="flex gap-0.5 mt-1.5 h-1.5 justify-center">
+                        {hasCompleted && (
+                          <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                        )}
+                        {hasScheduled && !hasCompleted && (
+                          <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+
+                      {/* View detail pill on wider screens (Desktop) */}
+                      {!isMobile && viewMode !== 'month' && hasEvents && (
+                         <div className="mt-2 w-full space-y-1 px-1">
+                            {events.map((e, i) => (
+                              <div 
+                                key={i} 
+                                className={cn(
+                                  "text-[10px] font-bold px-2 py-1 rounded-lg truncate",
+                                  e.type === 'completed' ? "bg-green-500/10 text-green-600" : "bg-blue-500/10 text-blue-600"
+                                )}
+                              >
+                                {e.type === 'completed' ? (e.workout?.routine_name || 'Workout') : (e.routine?.name)}
+                              </div>
+                            ))}
+                         </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </>
           )}
         </CardContent>
-      </Card>
+      </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 text-sm text-muted-foreground" role="list" aria-label={t('legend') || 'Calendar legend'}>
-        <div className="flex items-center gap-2" role="listitem">
-          <div className="w-4 h-4 rounded border-2 border-primary" aria-hidden="true" />
-          <span>{t('today') || 'Today'}</span>
+      {/* Legend - Floating Style */}
+      <div className="flex items-center justify-center gap-6 py-2">
+        <div className="flex items-center gap-1.5 bg-accent/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tighter">
+          <div className="h-2 w-2 rounded-full bg-green-500" />
+          <span>{tDashboard('completed') || 'Completed'}</span>
         </div>
-        <div className="flex items-center gap-2" role="listitem">
-          <div className="w-4 h-4 rounded bg-primary/5" aria-hidden="true" />
-          <span>{t('hasWorkouts') || 'Has workouts'}</span>
+        <div className="flex items-center gap-1.5 bg-accent/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tighter">
+          <div className="h-2 w-2 rounded-full bg-blue-500" />
+          <span>{tDashboard('scheduled') || 'Scheduled'}</span>
         </div>
       </div>
     </div>

@@ -133,7 +133,7 @@ export function MeasurementForm({ onSubmit, defaultValues, isLoading }: Measurem
                 <SelectTrigger>
                   <SelectValue placeholder={t('selectType')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[9999]">
                   {measurementTypeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -158,7 +158,7 @@ export function MeasurementForm({ onSubmit, defaultValues, isLoading }: Measurem
                 <SelectTrigger>
                   <SelectValue placeholder={t('selectUnit')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[9999]">
                   {getUnitOptions(selectedType).map((unit) => (
                     <SelectItem key={unit} value={unit}>
                       {unit}

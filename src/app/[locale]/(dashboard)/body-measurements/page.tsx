@@ -6,16 +6,15 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { Plus, Scale, TrendingUp, TrendingDown, Edit, Trash2 } from 'lucide-react'
+import { Plus, Scale, TrendingUp, TrendingDown, Edit, Trash2, Ruler } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { MeasurementForm } from '@/components/body-measurements/measurement-form'
 import { MeasurementChart } from '@/components/body-measurements/measurement-chart'
-import { TableSkeleton } from '@/components/ui/loading-skeleton'
 import { useAuthStore } from '@/store/auth.store'
 import { useBodyMeasurementStore } from '@/store/body-measurement.store'
 import { useGoalStore } from '@/store/goal.store'
@@ -23,7 +22,7 @@ import { BodyMeasurement, BodyMeasurementFormData, MeasurementType, GoalType } f
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { useSafeLoading } from '@/hooks/use-safe-async'
-import { formatDate } from '@/lib/utils'
+import { formatDate, cn } from '@/lib/utils'
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { ROUTES } from '@/lib/constants'
 
@@ -33,6 +32,7 @@ export default function BodyMeasurementsPage() {
   const { measurements, loadMeasurements, createMeasurement, deleteMeasurement, isLoading } = useBodyMeasurementStore()
   const { activeGoals, loadActiveGoals } = useGoalStore()
   const t = useTranslations('bodyMeasurements')
+  const tCharts = useTranslations('charts')
   const tCommon = useTranslations('common')
   const { isLoading: isSafeLoading, setLoading } = useSafeLoading()
   
@@ -171,53 +171,70 @@ export default function BodyMeasurementsPage() {
   }
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-1 duration-400">
+      {/* Header - Compact & Styled */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Scale className="h-6 w-6" />
-            {t('title')}
+          <h1 className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary/60 italic mb-1">
+            {t('title') || 'Body Measurements'}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">{t('description')}</p>
+          <h2 className="text-2xl font-black uppercase italic tracking-tighter text-foreground/90">
+             {tCharts('progress') || 'Progress'}
+          </h2>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
+        
+        <Drawer open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DrawerTrigger asChild>
+            <Button 
+              size="sm"
+              className="h-10 rounded-xl font-bold uppercase tracking-wider text-[10px] bg-primary text-white shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all pt-6 pb-6 w-full sm:w-auto"
+            >
+              <Plus className="h-3.5 w-3.5 mr-2" />
               {t('addMeasurement')}
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{t('addMeasurement')}</DialogTitle>
-              <DialogDescription>{t('addMeasurementDescription')}</DialogDescription>
-            </DialogHeader>
-            <MeasurementForm
-              onSubmit={handleCreateMeasurement}
-              isLoading={isLoading || isSafeLoading}
-            />
-          </DialogContent>
-        </Dialog>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="mx-auto w-full max-w-sm">
+                <DrawerHeader>
+                  <DrawerTitle>{t('addMeasurement')}</DrawerTitle>
+                  <DrawerDescription>{t('addMeasurementDescription')}</DrawerDescription>
+                </DrawerHeader>
+                <div className="p-4 pb-0">
+                    <MeasurementForm
+                      onSubmit={handleCreateMeasurement}
+                      isLoading={isLoading || isSafeLoading}
+                    />
+                </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </div>
 
       {/* Measurements Grouped by Type */}
       {isLoading && measurements.length === 0 ? (
-        <div className="space-y-2">
-          <TableSkeleton rows={3} />
-          <TableSkeleton rows={3} />
+        <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-4">
+               <div className="h-48 rounded-[2rem] bg-accent/5 animate-pulse" />
+               <div className="h-48 rounded-[2rem] bg-accent/5 animate-pulse" />
+            </div>
+             <div className="space-y-4">
+               <div className="h-48 rounded-[2rem] bg-accent/5 animate-pulse" />
+            </div>
         </div>
       ) : measurementTypes.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Scale className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-center mb-4">
-              {t('noMeasurements')}
+        <Card className="rounded-[2.5rem] border-none bg-accent/5 overflow-hidden shadow-none">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center opacity-60">
+            <div className="h-16 w-16 bg-background/50 rounded-2xl flex items-center justify-center mb-4 shadow-sm backdrop-blur-sm">
+                <Ruler className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-black italic tracking-tight mb-2 text-foreground/80 lowercase first-letter:uppercase">{t('noMeasurements')}</h3>
+            <p className="text-sm font-medium text-muted-foreground mb-6 max-w-xs mx-auto">
+              Start tracking your body metrics to see your progress over time.
             </p>
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setCreateDialogOpen(true)}
+              className="rounded-xl border-none bg-background shadow-sm hover:bg-background/80"
             >
               <Plus className="h-4 w-4 mr-2" />
               {t('addFirstMeasurement')}
@@ -225,115 +242,110 @@ export default function BodyMeasurementsPage() {
           </CardContent>
         </Card>
       ) : (
-        <Accordion type="multiple" className="space-y-2">
+        <Accordion type="multiple" className="space-y-4">
           {measurementTypes.map((type) => {
             const typeMeasurements = measurementsByType[type] || []
             const goal = type === MeasurementType.WEIGHT ? weightGoal : null
             const typeLabel = t(getTypeTranslationKey(type) as any) || type
+            const latestValue = typeMeasurements[0]?.value
+            const latestUnit = typeMeasurements[0]?.unit
 
             return (
-              <AccordionItem key={type} value={type} className="border rounded-lg">
-                <AccordionTrigger className="px-4 hover:no-underline">
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold">{typeLabel}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {typeMeasurements.length} {typeMeasurements.length === 1 ? t('measurement') : t('measurements')}
+              <AccordionItem key={type} value={type} className="border-none bg-accent/5 rounded-[2.5rem] overflow-hidden">
+                <AccordionTrigger className="hover:no-underline pt-6 pb-6 py-4">
+                   <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-4">
+                         <div className="h-12 w-12 rounded-2xl bg-background flex items-center justify-center shadow-sm text-primary shrink-0">
+                            <Scale className="h-6 w-6" />
+                         </div>
+                         <div className="text-left">
+                            <h3 className="text-xl font-black italic tracking-tighter text-foreground/90 lowercase first-letter:uppercase">
+                                {typeLabel}
+                            </h3>
+                            {latestValue && (
+                                <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                                    Latest: <span className="text-foreground font-bold">{latestValue.toFixed(1)} {latestUnit}</span>
+                                </p>
+                            )}
+                         </div>
+                      </div>
+                      <Badge variant="secondary" className="mr-4 rounded-xl pt-3 pb-3 text-[10px] font-bold uppercase tracking-wider bg-background text-muted-foreground shadow-sm hover:bg-background">
+                        {typeMeasurements.length} {type === MeasurementType.WEIGHT ? 'Entries' : 'Rec'}
                       </Badge>
-                    </div>
-                  </div>
+                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-4">
-                  {/* Chart */}
-                  {typeMeasurements.length > 0 && (
-                    <Card>
-                      <CardContent className="pt-6">
-                        <MeasurementChart
-                          measurements={typeMeasurements}
-                          goal={goal}
-                          title=""
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
+                
+                <AccordionContent className="p-0 pb-6">
+                  <div className="grid lg:grid-cols-3 gap-0">
+                     {/* Chart Section */}
+                     <div className="lg:col-span-2 pt-6 pb-6 pt-2">
+                        {typeMeasurements.length > 0 ? (
+                            <div className="bg-accent/10 rounded-[2rem] p-4 shadow-lg border-none">
+                              <MeasurementChart
+                                measurements={typeMeasurements}
+                                goal={goal}
+                                title=""
+                              />
+                            </div>
+                        ) : (
+                            <div className="h-[200px] flex items-center justify-center text-muted-foreground text-xs font-medium bg-background/30 rounded-[2rem]">
+                                No data for chart
+                            </div>
+                        )}
+                     </div>
 
-                  {/* Table */}
-                  {typeMeasurements.length > 0 && (
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[120px]">{t('date')}</TableHead>
-                            <TableHead className="w-[100px]">{t('value')}</TableHead>
-                            <TableHead className="w-[80px]">{t('unit')}</TableHead>
-                            <TableHead className="w-[100px]">{t('change')}</TableHead>
-                            <TableHead>{t('notes')}</TableHead>
-                            <TableHead className="w-[100px] text-right">{tCommon('actions')}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {typeMeasurements.map((measurement, index) => {
-                            const change = getChange(measurement, typeMeasurements, index)
-                            
-                            return (
-                              <TableRow key={measurement.id}>
-                                <TableCell className="font-medium">
-                                  {formatDate(measurement.measurement_date, 'PP')}
-                                </TableCell>
-                                <TableCell className="font-semibold">
-                                  {measurement.value.toFixed(2)}
-                                </TableCell>
-                                <TableCell className="text-muted-foreground">
-                                  {measurement.unit}
-                                </TableCell>
-                                <TableCell>
-                                  {change ? (
-                                    <div className="flex items-center gap-1">
-                                      {change.isPositive ? (
-                                        <TrendingDown className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <TrendingUp className="h-4 w-4 text-red-600" />
-                                      )}
-                                      <span className={change.isPositive ? 'text-green-600' : 'text-red-600'}>
-                                        {change.value.toFixed(2)} {measurement.unit}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="max-w-[200px] truncate">
-                                  {measurement.notes || (
-                                    <span className="text-muted-foreground">{tCommon('noNotes')}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => router.push(ROUTES.BODY_MEASUREMENT_EDIT(measurement.id))}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-destructive hover:text-destructive"
-                                      onClick={() => handleDeleteMeasurement(measurement.id)}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
+                     {/* Table Section */}
+                     <div className="lg:col-span-1 p-4 pt-0 lg:pt-6 lg:pl-0">
+                        <div className="bg-background/80 backdrop-blur-sm rounded-[2rem] overflow-hidden shadow-sm border border-border/5 h-full max-h-[400px] flex flex-col">
+                          <div className="overflow-y-auto custom-scrollbar flex-1 p-2">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="hover:bg-transparent border-none">
+                                  <TableHead className="w-[30%] text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 pl-4">{t('date')}</TableHead>
+                                  <TableHead className="w-[30%] text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">{t('value')}</TableHead>
+                                  <TableHead className="w-[20%] text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 text-right pr-4">{t('change')}</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {typeMeasurements.map((measurement, index) => {
+                                  const change = getChange(measurement, typeMeasurements, index)
+                                  
+                                  return (
+                                    <TableRow key={measurement.id} className="hover:bg-accent/5 border-none group">
+                                      <TableCell className="py-2.5 pl-4 text-xs font-semibold text-muted-foreground">
+                                        {formatDate(measurement.measurement_date, 'MMM d')}
+                                      </TableCell>
+                                      <TableCell className="py-2.5 font-bold text-sm text-foreground">
+                                        {measurement.value.toFixed(1)} <span className="text-[10px] font-medium text-muted-foreground">{measurement.unit}</span>
+                                      </TableCell>
+                                      <TableCell className="py-2.5 pr-4 text-right">
+                                        <div className="flex flex-col items-end gap-0.5">
+                                          {change ? (
+                                            <div className="flex items-center justify-end gap-1">
+                                              
+                                              <span className={cn("text-xs font-bold", change.isPositive ? 'text-green-500' : 'text-red-500')}>
+                                                {change.value.toFixed(1)}
+                                              </span>
+                                              {change.isPositive ? (
+                                                <TrendingDown className="h-2.5 w-2.5 text-green-500" />
+                                              ) : (
+                                                <TrendingUp className="h-2.5 w-2.5 text-red-500" />
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <span className="text-muted-foreground/40 text-[10px] font-bold">-</span>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                     </div>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             )

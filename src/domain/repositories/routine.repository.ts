@@ -10,8 +10,8 @@ import { BaseRepository } from './base.repository'
 export interface IRoutineRepository {
   findById(id: string): Promise<ApiResponse<RoutineWithExercises>>
   findAll(): Promise<ApiResponse<Routine[]>>
-  findByUserId(userId: string): Promise<ApiResponse<Routine[]>>
-  findActiveByUserId(userId: string): Promise<ApiResponse<Routine[]>>
+  findByUserId(userId: string): Promise<ApiResponse<RoutineWithExercises[]>>
+  findActiveByUserId(userId: string): Promise<ApiResponse<RoutineWithExercises[]>>
   create(data: Partial<Routine>): Promise<ApiResponse<Routine>>
   update(id: string, data: Partial<Routine>): Promise<ApiResponse<Routine>>
   delete(id: string): Promise<ApiResponse<boolean>>
@@ -62,32 +62,44 @@ export class RoutineRepository extends BaseRepository<Routine> implements IRouti
     }
   }
 
-  async findByUserId(userId: string): Promise<ApiResponse<Routine[]>> {
+  async findByUserId(userId: string): Promise<ApiResponse<RoutineWithExercises[]>> {
     try {
       const { data, error } = await supabase
         .from(this.tableName)
-        .select('*')
+        .select(`
+          *,
+          exercises:routine_exercises (
+            *,
+            exercise:exercises (*)
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
       if (error) return this.handleError(error)
-      return this.success(data as Routine[])
+      return this.success(data as RoutineWithExercises[])
     } catch (error) {
       return this.handleError(error)
     }
   }
 
-  async findActiveByUserId(userId: string): Promise<ApiResponse<Routine[]>> {
+  async findActiveByUserId(userId: string): Promise<ApiResponse<RoutineWithExercises[]>> {
     try {
       const { data, error } = await supabase
         .from(this.tableName)
-        .select('*')
+        .select(`
+          *,
+          exercises:routine_exercises (
+            *,
+            exercise:exercises (*)
+          )
+        `)
         .eq('user_id', userId)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
       if (error) return this.handleError(error)
-      return this.success(data as Routine[])
+      return this.success(data as RoutineWithExercises[])
     } catch (error) {
       return this.handleError(error)
     }

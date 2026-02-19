@@ -101,7 +101,8 @@
     "viewAll": "View all",
     "copy": "Copy",
     "saveChanges": "Save Changes",
-    "linkCopied": "Link copied to clipboard"
+    "linkCopied": "Link copied to clipboard",
+    "readyToTrain": "Ready to train?"
   },
   "auth": {
     "title": "Welcome to FitTrackr",
@@ -248,6 +249,12 @@
     "week": "Week",
     "day": "Day",
     "legend": "Calendar legend",
+    "completed": "Completed",
+    "scheduled": "Scheduled",
+    "noEvents": "No events for this day",
+    "searchPlaceholder": "Search notes...",
+    "noRoutines": "No routines available",
+    "chooseTemplate": "Choose a template",
     "sortBy": "Sort by",
     "sortByDateDesc": "Date (Newest)",
     "sortByDateAsc": "Date (Oldest)",

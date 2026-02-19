@@ -575,7 +575,16 @@
     "privateAccessDescription": "Solo tú puedes ver esta rutina.",
     "publicAccessDescription": "Cualquiera con el enlace puede ver esta rutina.",
     "viewOnlyMode": "Modo de solo lectura",
-    "author": "Autor"
+    "author": "Autor",
+    "importRoutine": "Importar Rutina",
+    "importRoutineFromAI": "Importar Rutina con IA",
+    "pasteRoutineCSV": "Pega el texto de tu rutina abajo para analizar e importar.",
+    "reviewImport": "Revisa los ejercicios encontrados antes de guardar.",
+    "pleaseEnterCSV": "Por favor ingresa el texto de la rutina",
+    "routineImported": "¡Rutina importada exitosamente!",
+    "csvFormatInfo": "Formato: Día, Ejercicio, Series, Reps, Descanso",
+    "downloadExample": "Descargar Ejemplo",
+    "routineUpdatedSuccessfully": "Rutina actualizada exitosamente"
   },
   "profile": {
     "title": "Perfil",

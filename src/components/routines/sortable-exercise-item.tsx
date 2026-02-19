@@ -89,7 +89,7 @@ export function SortableExerciseItem({
               <span className="text-[10px] font-black italic tracking-tighter text-primary/40 tabular-nums">
                 {String(index + 1).padStart(2, '0')}
               </span>
-              <h3 className="font-bold text-sm truncate uppercase tracking-tight text-foreground/90">
+              <h3 className="font-bold text-sm break-words uppercase tracking-tight text-foreground/90 leading-tight">
                 {routineExercise.exercise.name}
               </h3>
             </div>

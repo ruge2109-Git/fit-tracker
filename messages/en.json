@@ -569,7 +569,15 @@
     "privateAccessDescription": "Only you can see this routine.",
     "publicAccessDescription": "Anyone with the link can see this routine.",
     "viewOnlyMode": "View Only Mode",
-    "author": "Author"
+    "author": "Author",
+    "importRoutine": "Import Routine",
+    "importRoutineFromAI": "Import Routine with AI",
+    "pasteRoutineCSV": "Paste your routine text below to analyze and import.",
+    "reviewImport": "Review the matched exercises before saving.",
+    "pleaseEnterCSV": "Please enter routine text",
+    "routineImported": "Routine imported successfully!",
+    "csvFormatInfo": "Format: Day, Exercise, Sets, Reps, Rest",
+    "downloadExample": "Download Example"
   },
   "profile": {
     "title": "Profile",

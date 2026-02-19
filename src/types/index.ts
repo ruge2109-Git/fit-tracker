@@ -183,6 +183,7 @@ export interface RoutineFormData {
     target_sets: number;
     target_reps: number;
     target_weight?: number;
+    target_rest_time?: number;
   }[];
 }
 

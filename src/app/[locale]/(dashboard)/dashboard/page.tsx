@@ -45,6 +45,20 @@ import { DashboardCalendar } from '@/components/dashboard/dashboard-calendar'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { Routine } from '@/types'
 
+function EmptyChartCard({ title, message }: { title: string; message: string }) {
+  return (
+    <Card className="rounded-3xl border-none shadow-sm overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-bold text-muted-foreground/70">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center justify-center py-10 text-center gap-2 opacity-50">
+        <Dumbbell className="h-8 w-8 text-muted-foreground/40 stroke-[1.5px]" />
+        <p className="text-xs text-muted-foreground max-w-[200px] leading-relaxed">{message}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function DashboardPage() {
   const router = useNavigationRouter()
   const { user } = useAuthStore()
@@ -60,6 +74,7 @@ export default function DashboardPage() {
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
   const [totalVolume, setTotalVolume] = useState(0)
   const [routines, setRoutines] = useState<Routine[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -97,6 +112,8 @@ export default function DashboardPage() {
       if (exercisesResult.data) setTopExercises(exercisesResult.data)
       if (recordsResult.data) setPersonalRecords(recordsResult.data)
       if (totalVolumeResult.data) setTotalVolume(totalVolumeResult.data)
+    }).finally(() => {
+      setIsLoaded(true)
     })
   }, [user, loadWorkouts])
 
@@ -142,7 +159,7 @@ export default function DashboardPage() {
 
       {/* Stats - Horizontal Scroll on Mobile (Flutter-like) */}
       <div className="flex overflow-x-auto pb-4 gap-3 -mx-4 px-4 scrollbar-hide no-scrollbar md:grid md:grid-cols-5 md:pb-0 md:mx-0 md:px-0">
-        {!stats && totalVolume === 0 ? (
+        {!isLoaded && !stats && totalVolume === 0 ? (
           Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="min-w-[140px] md:min-w-0">
               <StatsCardSkeleton />
@@ -226,13 +243,29 @@ export default function DashboardPage() {
 
         {/* Charts - Two columns on desktop, single on mobile */}
         <div className="grid gap-4 md:grid-cols-2">
-          {volumeData.length === 0 ? <ChartSkeleton /> : <VolumeChart data={volumeData} />}
-          {Object.keys(muscleDistribution).length === 0 ? <ChartSkeleton /> : <MuscleGroupChart data={muscleDistribution} />}
+          {!isLoaded && volumeData.length === 0
+            ? <ChartSkeleton />
+            : volumeData.length === 0
+              ? <EmptyChartCard title="Volumen Semanal" message="Registra entrenamientos para ver tu progreso de volumen." />
+              : <VolumeChart data={volumeData} />}
+          {!isLoaded && Object.keys(muscleDistribution).length === 0
+            ? <ChartSkeleton />
+            : Object.keys(muscleDistribution).length === 0
+              ? <EmptyChartCard title="Distribución Muscular" message="Completa entrenamientos para ver qué músculos trabajas más." />
+              : <MuscleGroupChart data={muscleDistribution} />}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {topExercises.length === 0 ? <ChartSkeleton /> : <TopExercisesChart data={topExercises} />}
-          {personalRecords.length === 0 ? <CardSkeleton /> : <PersonalRecordsList data={personalRecords} />}
+          {!isLoaded && topExercises.length === 0
+            ? <ChartSkeleton />
+            : topExercises.length === 0
+              ? <EmptyChartCard title="Ejercicios Frecuentes" message="Después de algunos entrenamientos verás tus ejercicios más frecuentes." />
+              : <TopExercisesChart data={topExercises} />}
+          {!isLoaded && personalRecords.length === 0
+            ? <CardSkeleton />
+            : personalRecords.length === 0
+              ? <EmptyChartCard title="Récords Personales" message="Tus mejores levantamientos aparecerán aquí cuando registres entrenamientos." />
+              : <PersonalRecordsList data={personalRecords} />}
         </div>
 
         {/* Recent Workouts Card */}
@@ -310,4 +343,5 @@ function StatCard({ title, value, unit, icon, color, bg }: { title: string, valu
     </div>
   )
 }
+
 

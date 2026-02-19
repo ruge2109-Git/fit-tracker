@@ -568,7 +568,14 @@
     "modifyExerciseDetails": "Modificar objetivos del ejercicio y tiempo de descanso",
     "selectAndConfigure": "Selecciona un ejercicio y configura objetivos",
     "exerciseDetails": "Detalles del Ejercicio",
-    "active": "Activa"
+    "active": "Activa",
+    "public": "Público",
+    "publicAccess": "Acceso Público",
+    "privateAccess": "Acceso Privado",
+    "privateAccessDescription": "Solo tú puedes ver esta rutina.",
+    "publicAccessDescription": "Cualquiera con el enlace puede ver esta rutina.",
+    "viewOnlyMode": "Modo de solo lectura",
+    "author": "Autor"
   },
   "profile": {
     "title": "Perfil",

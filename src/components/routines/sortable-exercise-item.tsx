@@ -18,8 +18,8 @@ import { cn } from '@/lib/utils'
 interface SortableExerciseItemProps {
   routineExercise: RoutineExercise
   index: number
-  onRemove: (id: string) => void
-  onEdit: (exercise: RoutineExercise) => void
+  onRemove?: (id: string) => void
+  onEdit?: (exercise: RoutineExercise) => void
 }
 
 export function SortableExerciseItem({
@@ -130,22 +130,26 @@ export function SortableExerciseItem({
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEdit(routineExercise)}
-              className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onRemove(routineExercise.id)}
-              className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(routineExercise)}
+                className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onRemove(routineExercise.id)}
+                className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </Card>

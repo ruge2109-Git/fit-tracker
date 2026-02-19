@@ -109,6 +109,7 @@ export interface Routine extends BaseEntity {
   is_active: boolean;
   frequency?: RoutineFrequency;
   scheduled_days?: DayOfWeek[];
+  is_public?: boolean;
 }
 
 export interface RoutineExercise extends BaseEntity {
@@ -176,6 +177,7 @@ export interface RoutineFormData {
   description?: string;
   frequency?: RoutineFrequency;
   scheduled_days?: DayOfWeek[];
+  is_public?: boolean;
   exercises: {
     exercise_id: string;
     target_sets: number;

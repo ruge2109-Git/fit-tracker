@@ -44,7 +44,10 @@ export default function DashboardLayout({
     )
   }
 
-  if (!user) {
+  // Check if it's a public routine page
+  const isPublicRoutine = pathname?.match(/\/routines\/(?!new$)[^/]+$/)
+
+  if (!user && !isPublicRoutine) {
     return null
   }
 
@@ -87,14 +90,16 @@ export default function DashboardLayout({
         <OfflineIndicator />
         
         {/* Desktop Active Button */}
-        <div className="hidden md:block">
-          <ActiveRoutineButton />
-        </div>
+        {user && (
+          <div className="hidden md:block">
+            <ActiveRoutineButton />
+          </div>
+        )}
 
         {/* Mobile Active Indicator */}
-        <ActiveSessionBanner />
+        {user && <ActiveSessionBanner />}
         
-        <BottomNav />
+        {user && <BottomNav />}
         <KeyboardShortcuts />
       </div>
     </SearchDialogProvider>

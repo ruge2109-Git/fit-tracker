@@ -24,7 +24,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { ArrowLeft, Plus, Trash2, Dumbbell, Edit, Copy, MoreVertical, Share2, Calendar, Info, Clock, CheckCircle2, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Dumbbell, Edit, Copy, MoreVertical, Share2, Calendar, Info, Clock, CheckCircle2, ChevronRight, Globe, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -47,6 +47,8 @@ import { routineRepository } from '@/domain/repositories/routine.repository'
 import { logAuditEvent } from '@/lib/audit/audit-helper'
 import { RoutineWithExercises, RoutineExercise, DayOfWeek } from '@/types'
 import { ROUTES, DAYS_OF_WEEK_OPTIONS } from '@/lib/constants'
+import { Switch } from '@/components/ui/switch'
+import { useAuthStore } from '@/store/auth.store'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 
@@ -54,6 +56,7 @@ import { cn } from '@/lib/utils'
 export default function RoutineDetailPage() {
   const params = useParams()
   const router = useNavigationRouter()
+  const { user } = useAuthStore()
   const t = useTranslations('routines')
   const tCommon = useTranslations('common')
   const [routine, setRoutine] = useState<RoutineWithExercises | null>(null)
@@ -80,6 +83,7 @@ export default function RoutineDetailPage() {
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [editScheduledDays, setEditScheduledDays] = useState<DayOfWeek[]>([])
+  const [editIsPublic, setEditIsPublic] = useState(false)
   const routineId = params.id as string
 
   // Drag and drop sensors - optimized for mobile
@@ -117,6 +121,7 @@ export default function RoutineDetailPage() {
         setEditName(result.data.name)
         setEditDescription(result.data.description || '')
         setEditScheduledDays(result.data.scheduled_days || [])
+        setEditIsPublic(result.data.is_public || false)
       } else {
         toast.error(t('failedToLoad') || 'Failed to load routine')
       }
@@ -156,6 +161,7 @@ export default function RoutineDetailPage() {
         name: editName,
         description: editDescription,
         scheduled_days: editScheduledDays,
+        is_public: editIsPublic,
       })
 
       if (result.data) {
@@ -203,15 +209,23 @@ export default function RoutineDetailPage() {
   const handleDuplicate = async () => {
     if (!routine) return
 
+    if (!user) {
+        toast.error(tCommon('pleaseLogin') || 'Please login to duplicate routines')
+        // Optional: redirect to login
+        router.push('/auth/login')
+        return
+    }
+
     setIsDuplicating(true)
     try {
-      // Create new routine with "Copy of" prefix
+      // Create new routine with "Copy of" prefix for the CURRENT USER
       const newRoutineResult = await routineRepository.create({
-        user_id: routine.user_id,
+        user_id: user.id,
         name: `${t('copyOf') || 'Copy of'} ${routine.name}`,
         description: routine.description,
         is_active: false,
         scheduled_days: routine.scheduled_days,
+        is_public: false, // Copies should be private by default
       })
 
       if (newRoutineResult.error || !newRoutineResult.data) {
@@ -436,14 +450,16 @@ export default function RoutineDetailPage() {
           >
             <Share2 className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={handleDelete}
-            className="rounded-full bg-destructive/10 h-9 w-9 text-destructive hover:bg-destructive/20 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {routine.user_id === user?.id && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={handleDelete}
+              className="rounded-full bg-destructive/10 h-9 w-9 text-destructive hover:bg-destructive/20 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -460,21 +476,27 @@ export default function RoutineDetailPage() {
                 <div className="flex gap-1">
                   {!isEditingRoutine ? (
                     <>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setIsEditingRoutine(true)}
-                        className="h-8 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-accent/10"
-                      >
-                        <Edit className="h-3 w-3 mr-1.5" />
-                        {tCommon('edit')}
-                      </Button>
+                      {routine.user_id === user?.id && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setIsEditingRoutine(true)}
+                          className="h-8 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-accent/10"
+                        >
+                          <Edit className="h-3 w-3 mr-1.5" />
+                          {tCommon('edit')}
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm"
                         onClick={handleDuplicate}
                         disabled={isDuplicating}
-                        className="h-8 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-accent/10"
+                        className={cn(
+                          "h-8 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-accent/10",
+                          // Highlight duplicate button if viewing someone else's routine
+                          routine.user_id !== user?.id && "bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20"
+                        )}
                       >
                         <Copy className="h-3 w-3 mr-1.5" />
                         {isDuplicating ? t('duplicating') : t('duplicate')}
@@ -489,6 +511,7 @@ export default function RoutineDetailPage() {
                         setEditName(routine.name)
                         setEditDescription(routine.description || '')
                         setEditScheduledDays(routine.scheduled_days || [])
+                        setEditIsPublic(routine.is_public || false)
                       }}
                       className="h-8 rounded-full text-[10px] font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10"
                     >
@@ -553,8 +576,46 @@ export default function RoutineDetailPage() {
                       )}
                     </button>
                   </div>
+                  {/* Public Badge */}
+                  {routine.is_public && (
+                    <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-bold uppercase tracking-widest mt-1">
+                      <Globe className="h-3 w-3" />
+                      {t('public') || 'Public'}
+                    </div>
+                  )}
                 </div>
-              </div>
+                {/* Only show public status if not editing, or read-only info if viewing others */}
+                {routine.user_id !== user?.id && (
+                  <div className="bg-background/40 rounded-2xl p-4 border border-accent/5">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-1">{t('author') || 'Author'}</p>
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                        ?
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{t('viewOnlyMode') || 'View Only Mode'}</span>
+                    </div>
+                  </div>
+                )}
+                  {isEditingRoutine && (
+                    <div className="pt-2 px-0.5 flex items-center justify-between bg-accent/5 p-3 rounded-xl border border-accent/5">
+                      <div className="space-y-0.5">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
+                          {editIsPublic ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                          {t('publicAccess') || 'Public Access'}
+                        </Label>
+                        <p className="text-[10px] text-muted-foreground">
+                          {editIsPublic 
+                            ? (t('publicAccessDescription') || 'Anyone with the link can view this routine') 
+                            : (t('privateAccessDescription') || 'Only you can view this routine')}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={editIsPublic}
+                        onCheckedChange={setEditIsPublic}
+                      />
+                    </div>
+                  )}
+                </div>
 
               <div className="space-y-3 pt-2">
                 <Label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/60 px-0.5 flex items-center gap-2">
@@ -646,14 +707,16 @@ export default function RoutineDetailPage() {
                   {tCommon('exercises')} ({routine.exercises?.length || 0})
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={() => setAddExerciseDialogOpen(true)}
-                    size="sm"
-                    className="h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-primary text-white hover:bg-primary/90 transition-all shadow-md shadow-primary/10"
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    {t('addExercise')}
-                  </Button>
+                  {routine.user_id === user?.id && (
+                    <Button 
+                      onClick={() => setAddExerciseDialogOpen(true)}
+                      size="sm"
+                      className="h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-primary text-white hover:bg-primary/90 transition-all shadow-md shadow-primary/10"
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1.5" />
+                      {t('addExercise')}
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -683,8 +746,8 @@ export default function RoutineDetailPage() {
                             key={routineExercise.id}
                             routineExercise={routineExercise}
                             index={index}
-                            onRemove={handleRemoveExercise}
-                            onEdit={handleEditClick}
+                            onRemove={routine.user_id === user?.id ? handleRemoveExercise : undefined}
+                            onEdit={routine.user_id === user?.id ? handleEditClick : undefined}
                           />
                         ))}
                     </div>

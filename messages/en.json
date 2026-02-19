@@ -562,7 +562,14 @@
     "modifyExerciseDetails": "Modify exercise targets and rest time",
     "selectAndConfigure": "Select an exercise and configure targets",
     "exerciseDetails": "Exercise details",
-    "active": "Active"
+    "active": "Active",
+    "public": "Public",
+    "publicAccess": "Public Access",
+    "privateAccess": "Private Access",
+    "privateAccessDescription": "Only you can see this routine.",
+    "publicAccessDescription": "Anyone with the link can see this routine.",
+    "viewOnlyMode": "View Only Mode",
+    "author": "Author"
   },
   "profile": {
     "title": "Profile",

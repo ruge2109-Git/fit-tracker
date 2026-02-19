@@ -160,9 +160,14 @@ async function handleAuth(request: NextRequest, response: NextResponse) {
   // Allow access to landing page (root locale route)
   const isLandingPage = pathname === `/${locale}` || pathname === `/${locale}/`
 
+  // Check if it's a routine detail route (public access allowed for sharing)
+  // Pattern: /[locale]/routines/[id] OR /routines/[id] (handling redirects)
+  // [id] must not be 'new'
+  const isRoutineDetailRoute = pathname.match(/(\/[a-zA-Z-]+)?\/routines\/(?!new$)[^/]+$/)
+
   // If user is not signed in and trying to access protected routes, redirect to landing page
-  // But allow landing page, auth pages, and callback route
-  if (!user && !pathname.includes('/auth') && !isLandingPage && !isCallbackRoute) {
+  // But allow landing page, auth pages, callback route, and routine detail pages
+  if (!user && !pathname.includes('/auth') && !isLandingPage && !isCallbackRoute && !isRoutineDetailRoute) {
     const landingUrl = new URL(`/${locale}`, request.url)
     return NextResponse.redirect(landingUrl)
   }

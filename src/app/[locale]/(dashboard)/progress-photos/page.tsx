@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Camera, Grid3x3, GitCompare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from '@/components/ui/drawer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PhotoUpload } from '@/components/progress-photos/photo-upload'
 import { PhotoGallery } from '@/components/progress-photos/photo-gallery'
@@ -223,18 +223,18 @@ export default function ProgressPhotosPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Edit Dialog */}
+      {/* Edit Drawer */}
       {editingPhoto && (
-        <Dialog open={!!editingPhoto} onOpenChange={() => setEditingPhoto(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{t('editPhoto') || 'Edit Photo'}</DialogTitle>
-              <DialogDescription>
+        <Drawer open={!!editingPhoto} onOpenChange={(open) => { if (!open) setEditingPhoto(null) }}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader>
+              <DrawerTitle>{t('editPhoto') || 'Edit Photo'}</DrawerTitle>
+              <DrawerDescription>
                 {t('editPhotoDescription') || 'Update photo information'}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="relative aspect-[3/4] w-full rounded-lg overflow-hidden border">
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4 space-y-4 overflow-y-auto">
+              <div className="relative aspect-[3/4] w-full max-h-[50vh] rounded-2xl overflow-hidden border">
                 <PhotoImage
                   photoUrl={editingPhoto.photo_url}
                   alt="Photo"
@@ -242,6 +242,8 @@ export default function ProgressPhotosPage() {
                   className="object-contain"
                 />
               </div>
+            </div>
+            <DrawerFooter className="pt-4">
               <Button
                 variant="destructive"
                 onClick={async () => {
@@ -254,9 +256,12 @@ export default function ProgressPhotosPage() {
               >
                 {tCommon('delete')} {t('photo')}
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              <DrawerClose asChild>
+                <Button variant="outline">{tCommon('cancel')}</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
       )}
     </div>
   )

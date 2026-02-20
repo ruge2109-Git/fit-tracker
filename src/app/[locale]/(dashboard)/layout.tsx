@@ -23,6 +23,8 @@ import { SearchDialogProvider } from '@/hooks/use-search-dialog'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES } from '@/lib/constants'
 import { AiCoachChat } from '@/components/ai/ai-coach-chat'
+import { NavigationTracker } from '@/components/audit/navigation-tracker'
+import { NotificationManager } from '@/components/social/notification-manager'
 
 export default function DashboardLayout({
   children,
@@ -62,7 +64,7 @@ export default function DashboardLayout({
         {/* Top Navbar - hidden on very small mobile if preferred, but usually okay */}
         <NavBar />
         
-        <main className="flex-1 container mx-auto px-4 py-8 pb-32 md:pb-8">
+        <main className="flex-1 container mx-auto px-2 py-3 pb-20 md:px-4 md:py-8 md:pb-8">
           <Suspense
             fallback={
               <div className="space-y-6 animate-in fade-in duration-300">
@@ -104,6 +106,8 @@ export default function DashboardLayout({
         <KeyboardShortcuts />
         {/* AI Coach floating chat — available on all dashboard pages */}
         {user && <AiCoachChat />}
+        {user && <NavigationTracker />}
+        {user && <NotificationManager />}
       </div>
     </SearchDialogProvider>
   )

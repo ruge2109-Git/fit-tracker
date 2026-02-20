@@ -1,16 +1,12 @@
 'use client'
 
-/**
- * AI Coach Chat — Floating chat panel
- * Gives users a conversational fitness coach powered by GPT-4o-mini
- * with access to their full workout history, goals, and measurements.
- */
-
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Bot, X, Send, Loader2, ChevronDown, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+
+import { useAiCoachStore } from '@/store/ai-coach.store'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -26,7 +22,7 @@ const SUGGESTED_PROMPTS = [
 ]
 
 export function AiCoachChat() {
-  const [isOpen, setIsOpen] = useState(false)
+  const { isOpen, close } = useAiCoachStore()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -102,60 +98,19 @@ export function AiCoachChat() {
   }
 
   return (
-    <>
-      {/* FAB — fully inline styles so PWA browsers can't override */}
-      <button
-        onClick={() => setIsOpen(prev => !prev)}
-        aria-label="Abrir coach IA"
-        style={{
-          position: 'fixed',
-          bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))',
-          left: '16px',
-          zIndex: 50,
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'grid',
-          placeItems: 'center',
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          boxShadow: isOpen ? 'none' : '0 8px 32px rgba(139,92,246,0.45)',
-          background: isOpen
-            ? 'var(--muted)'
-            : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%)',
-          color: isOpen ? 'var(--muted-foreground)' : '#fff',
-          transform: isOpen ? 'scale(0.88)' : 'scale(1)',
-          animation: isOpen ? 'none' : 'fabPulse 2.4s ease-in-out infinite',
-          WebkitTapHighlightColor: 'transparent',
-        }}
-      >
-        <style>{`
-          @keyframes fabPulse {
-            0%,100% { box-shadow: 0 8px 32px rgba(139,92,246,0.45); }
-            50%      { box-shadow: 0 8px 48px rgba(139,92,246,0.75), 0 0 0 8px rgba(139,92,246,0.12); }
-          }
-        `}</style>
-        {isOpen
-          ? <ChevronDown style={{ width: 24, height: 24, display: 'block' }} />
-          : <Sparkles   style={{ width: 24, height: 24, display: 'block' }} />
-        }
-      </button>
-
-      {/* Chat Panel */}
-      <div
-        className={cn(
-          'fixed bottom-40 left-4 md:bottom-24 md:left-6 z-50',
-          'w-[calc(100vw-2rem)] max-w-[380px]',
-          'rounded-3xl border border-accent/20 bg-background/95 backdrop-blur-xl shadow-2xl shadow-black/20',
-          'flex flex-col overflow-hidden',
-          'transition-all duration-300 origin-bottom-right',
-          isOpen
-            ? 'opacity-100 scale-100 pointer-events-auto'
-            : 'opacity-0 scale-90 pointer-events-none',
-        )}
-        style={{ height: isOpen ? '520px' : '0' }}
-      >
+    <div
+      className={cn(
+        'fixed bottom-20 left-4 md:bottom-6 md:left-6 z-50',
+        'w-[calc(100vw-2rem)] max-w-[380px]',
+        'rounded-3xl border border-accent/20 bg-background/95 backdrop-blur-xl shadow-2xl shadow-black/20',
+        'flex flex-col overflow-hidden',
+        'transition-all duration-300 origin-bottom-left',
+        isOpen
+          ? 'opacity-100 scale-100 pointer-events-auto translate-y-0'
+          : 'opacity-0 scale-90 pointer-events-none translate-y-10',
+      )}
+      style={{ height: isOpen ? '520px' : '0' }}
+    >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-accent/10 bg-gradient-to-r from-violet-500/10 to-purple-700/5 flex-shrink-0">
           <div className="flex items-center gap-2.5">
@@ -182,7 +137,7 @@ export function AiCoachChat() {
               </button>
             )}
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => close()}
               className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:bg-accent/10 hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4" />
@@ -296,6 +251,5 @@ export function AiCoachChat() {
           </Button>
         </div>
       </div>
-    </>
   )
 }

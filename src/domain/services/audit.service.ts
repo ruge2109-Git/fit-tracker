@@ -23,6 +23,19 @@ export class AuditService {
    */
   async logAction(data: AuditLogData, supabaseClient?: SupabaseClient): Promise<void> {
     try {
+      let client = supabaseClient
+
+      // On server-side, if no client or if we want to ensure RLS bypass, use admin client
+      if (typeof window === 'undefined') {
+        try {
+          const { createAdminClient } = await import('@/lib/supabase/server')
+          client = await createAdminClient()
+        } catch (e) {
+          // Fallback to provided client if admin client fails to initialize 
+          // (e.g. missing env vars during build)
+        }
+      }
+
       const result = await auditLogRepository.create({
         user_id: data.userId,
         action: data.action,
@@ -31,7 +44,7 @@ export class AuditService {
         details: data.details || null,
         ip_address: data.ipAddress || null,
         user_agent: data.userAgent || null,
-      }, supabaseClient)
+      }, client)
 
       if (result.error) {
         logger.error('Failed to log audit action', new Error(result.error), 'AuditService')

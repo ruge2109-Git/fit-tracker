@@ -33,12 +33,22 @@ class AuthService implements IAuthService {
       if (error) throw error
       if (!data.user) throw new Error('No user returned')
 
+      // Wait a moment for the trigger to create the public.users row, then fetch
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
       return {
         data: {
           id: data.user.id,
           email: data.user.email!,
-          name: name,
+          name: profile?.name || name,
           created_at: data.user.created_at,
+          is_public: profile?.is_public ?? false,
+          nickname: profile?.nickname || undefined,
+          is_admin: profile?.is_admin ?? false,
         },
       }
     } catch (error: any) {
@@ -56,12 +66,22 @@ class AuthService implements IAuthService {
       if (error) throw error
       if (!data.user) throw new Error('No user returned')
 
+      // Fetch full profile from public.users (includes is_public, nickname, etc.)
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
       return {
         data: {
           id: data.user.id,
           email: data.user.email!,
-          name: data.user.user_metadata.name || '',
+          name: profile?.name || data.user.user_metadata.name || '',
           created_at: data.user.created_at,
+          is_public: profile?.is_public ?? false,
+          nickname: profile?.nickname || undefined,
+          is_admin: profile?.is_admin ?? false,
         },
       }
     } catch (error: any) {
@@ -86,12 +106,22 @@ class AuthService implements IAuthService {
       if (error) throw error
       if (!user) return { data: null }
 
+      // Fetch full profile from public.users (includes is_public, nickname, etc.)
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
       return {
         data: {
           id: user.id,
           email: user.email!,
-          name: user.user_metadata.name || '',
+          name: profile?.name || user.user_metadata.name || '',
           created_at: user.created_at,
+          is_public: profile?.is_public ?? false,
+          nickname: profile?.nickname || undefined,
+          is_admin: profile?.is_admin ?? false,
         },
       }
     } catch (error: any) {

@@ -92,17 +92,24 @@ export class AuditLogRepository extends BaseRepository<AuditLog> implements IAud
     }
   }
 
-  async findByUserId(userId: string, limit = 100, offset = 0): Promise<ApiResponse<AuditLog[]>> {
+  async findByUserId(userId: string, limit = 100, offset = 0): Promise<ApiResponse<AuditLogWithUser[]>> {
     try {
       const { data, error } = await supabase
         .from(this.tableName)
-        .select('*')
+        .select(`
+          *,
+          user:users (
+            id,
+            email,
+            name
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1)
 
       if (error) return this.handleError(error)
-      return this.success(data || [])
+      return this.success(data as AuditLogWithUser[])
     } catch (error) {
       return this.handleError(error)
     }

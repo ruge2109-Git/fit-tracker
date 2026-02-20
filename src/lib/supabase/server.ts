@@ -87,3 +87,28 @@ export async function createClient() {
   )
 }
 
+/**
+ * Admin Supabase client with Service Role Key
+ * Bypasses RLS - FOR SERVER SIDE USE ONLY
+ */
+export async function createAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase Service Role configuration')
+  }
+
+  return createServerClient(
+    supabaseUrl,
+    supabaseServiceKey,
+    {
+      cookies: {
+        get() { return undefined },
+        set() {},
+        remove() {},
+      },
+    }
+  )
+}
+

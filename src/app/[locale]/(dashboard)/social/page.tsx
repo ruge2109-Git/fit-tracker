@@ -1,153 +1,213 @@
 /**
- * Social Page
- * Hub for community features, starting with the Volume Leaderboard
+ * Social Page Hub - Rediseño Total "The Arena"
+ * Una experiencia social unificada, intuitiva y premium.
  */
 
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Users, Globe, Info, ShieldCheck } from 'lucide-react'
+import React, { useEffect, useState, useCallback, Suspense } from 'react'
+import { Users, Globe, Trophy, MessageSquare, Activity, Search, UserPlus, SlidersHorizontal } from 'lucide-react'
 import { LeaderboardCard } from '@/components/social/leaderboard-card'
+import { FriendsCard } from '@/components/social/friends-card'
+import { MessengerView } from '@/components/social/messenger-view'
+import { ActivityFeedCard } from '@/components/social/activity-feed-card'
 import { statsService, LeaderboardEntry } from '@/domain/services/stats.service'
 import { useAuthStore } from '@/store/auth.store'
-import { Card, CardContent } from '@/components/ui/card'
+import { useSocialStore } from '@/store/social.store'
 import { Button } from '@/components/ui/button'
-import { ROUTES } from '@/lib/constants'
-import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useTranslations } from 'next-intl'
-import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
+import { useSearchParams } from 'next/navigation'
 
-export default function SocialPage() {
+type SocialSection = 'arena' | 'feed' | 'messenger' | 'athletes'
+
+function SocialPageContent() {
   const t = useTranslations('social')
   const { user } = useAuthStore()
-  const router = useNavigationRouter()
+  const { unreadMessagesCount } = useSocialStore()
+  const searchParams = useSearchParams()
+  
+  const [activeSection, setActiveSection] = useState<SocialSection>((searchParams.get('tab') as SocialSection) || 'arena')
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    loadLeaderboard()
+  // DM state for deep linking
+  const [dmTarget, setDmTarget] = useState<{ id: string; nickname: string } | null>(null)
+
+  const loadLeaderboard = useCallback(async () => {
+    setIsLoading(true)
+    const res = await statsService.getWeeklyLeaderboard()
+    if (res.data) setLeaderboard(res.data)
+    setIsLoading(false)
   }, [])
 
-  const loadLeaderboard = async () => {
-    setIsLoading(true)
-    try {
-      const res = await statsService.getWeeklyLeaderboard()
-      if (res.data) {
-        setLeaderboard(res.data)
-      }
-    } catch (error) {
-      logger.error('Error loading leaderboard', error as Error, 'SocialPage')
-    } finally {
-      setIsLoading(false)
-    }
+  useEffect(() => {
+    loadLeaderboard()
+  }, [loadLeaderboard])
+
+  const openDM = (id: string, nickname: string) => {
+    setDmTarget({ id, nickname })
+    setActiveSection('messenger')
   }
 
-  const isUserOnLeaderboard = leaderboard.some(entry => entry.user_id === user?.id)
-
   return (
-    <div className="max-w-4xl mx-auto pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="flex flex-col h-[calc(100dvh-9rem)] md:h-auto max-w-7xl mx-auto overflow-visible">
       
-      {/* Header section */}
-      <header className="mb-10 text-center md:text-left space-y-4 px-2">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-5xl font-black tracking-tighter uppercase italic flex items-center justify-center md:justify-start gap-3">
-              <Globe className="h-10 w-10 text-primary" />
-              {t('title') || 'Comunidad'}
-            </h1>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.3em] opacity-60">
-              {t('subtitle') || 'Compite y progresa con otros atletas'}
-            </p>
-          </div>
+      {/* Ultra Compact Sticky Header */}
+      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg pt-1 pb-3 px-2 border-b border-white/5">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h1 className="text-lg font-black tracking-tighter uppercase italic leading-none">
+            {activeSection === 'arena' && (t('ranking') || 'The Arena')}
+            {activeSection === 'feed' && (t('activityFeed') || 'Activity')}
+            {activeSection === 'messenger' && 'Chat Central'}
+            {activeSection === 'athletes' && (t('friends') || 'Atletas')}
+          </h1>
           
-          {!user?.is_public && (
-            <Button 
-              variant="outline" 
-              className="rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary font-black uppercase tracking-tighter text-[10px] h-10 px-6"
-              onClick={() => router.push(ROUTES.PROFILE + '?tab=settings')}
-            >
-              <Users className="h-3.5 w-3.5 mr-2" />
-              {t('joinLeaderboard') || 'Unirse al Ranking'}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Functional actions could go here */}
+          </div>
         </div>
+
+        {/* Segmented Control - Standard PWA Style */}
+        <nav className="flex items-center justify-between gap-1 bg-accent/5 p-1 rounded-xl border border-white/10 mx-auto max-w-lg shadow-sm">
+          <SegmentButton 
+            active={activeSection === 'arena'} 
+            onClick={() => setActiveSection('arena')}
+            label="Arena"
+          />
+          <SegmentButton 
+            active={activeSection === 'feed'} 
+            onClick={() => setActiveSection('feed')}
+            label="Feed"
+          />
+          <SegmentButton 
+            active={activeSection === 'messenger'} 
+            onClick={() => setActiveSection('messenger')}
+            label="Chat"
+            unreadCount={unreadMessagesCount}
+          />
+          <SegmentButton 
+            active={activeSection === 'athletes'} 
+            onClick={() => setActiveSection('athletes')}
+            label="Atletas"
+          />
+        </nav>
       </header>
 
-      <div className="grid gap-8 md:grid-cols-12">
-        {/* Main Content - Leaderboard */}
-        <div className="md:col-span-8 space-y-6">
-          <LeaderboardCard data={leaderboard} isLoading={isLoading} />
-          
-          {/* Info Section */}
-          <Card className="rounded-3xl border-none bg-accent/5 overflow-hidden border border-white/5">
-            <CardContent className="p-6 flex gap-4 items-start">
-              <div className="h-10 w-10 rounded-2xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                <Info className="h-5 w-5 text-blue-500" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-black uppercase tracking-tighter italic text-sm">
-                  {t('howItWorks') || '¿Cómo funciona el Ranking?'}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t('rankingGuide') || 'El ranking suma todo el peso que levantes (Volumen = Series x Repeticiones x Peso) desde el lunes de cada semana. Se reinicia cada domingo a medianoche.'}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Main Content Area - Optimized for device height */}
+      <main className="flex-1 overflow-y-auto md:overflow-visible px-2 pt-6 pb-24 md:pb-8 scrollbar-none">
+        
+        {/* Arena Section - Visual Leaderboard */}
+        <div className={cn(
+          "transition-all duration-300",
+          activeSection === 'arena' ? "opacity-100 block" : "hidden opacity-0"
+        )}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8">
+              <LeaderboardCard data={leaderboard} isLoading={isLoading} />
+            </div>
+            <div className="lg:col-span-4 space-y-4">
+                <div className="relative group overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-[2.5rem] p-8 shadow-2xl shadow-primary/5 transition-all hover:bg-primary/10">
+                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <Trophy className="h-32 w-32 rotate-12 text-primary" />
+                   </div>
+                   <h3 className="font-black uppercase italic text-sm mb-4 flex items-center gap-2 text-primary">
+                     <Activity className="h-5 w-5 animate-pulse" />
+                     Poder de la Arena
+                   </h3>
+                   <div className="space-y-4 relative z-10">
+                      <div>
+                         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Volumen Semanal Comunitario</p>
+                         <p className="text-4xl font-black italic tracking-tighter">
+                            {isLoading ? '---' : (leaderboard.reduce((acc, curr) => acc + curr.total_volume, 0) / 1000).toFixed(1)}
+                            <span className="text-sm ml-1 opacity-40">TONS</span>
+                          </p>
 
-        {/* Sidebar - Privacy & Rules */}
-        <div className="md:col-span-4 space-y-6">
-          <Card className="rounded-3xl border-none bg-accent/5 overflow-hidden border border-white/5">
-            <CardContent className="p-6 space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-primary">
-                  <ShieldCheck className="h-5 w-5" />
-                  <h3 className="font-black uppercase tracking-tighter italic text-sm">
-                    {t('privacyTitle') || 'Privacidad Pro'}
-                  </h3>
-                </div>
-                <p className="text-[11px] font-bold text-muted-foreground/80 uppercase leading-relaxed tracking-wide">
-                  {t('privacyText') || 'Tu perfil social es 100% opcional. Solo se muestra tu apodo y tus logros de volumen. Tus rutinas y notas personales siguen siendo privadas.'}
-                </p>
-                
-                <div className="pt-2">
-                   <div className="flex items-center justify-between p-3 bg-background/50 rounded-2xl border border-border/5">
-                      <span className="text-[10px] font-black uppercase text-muted-foreground">{t('socialStatus') || 'Estado'}</span>
-                      <span className={cn(
-                        "text-[10px] font-black uppercase px-2 py-0.5 rounded-full",
-                        user?.is_public ? "bg-green-500/10 text-green-500" : "bg-muted text-muted-foreground"
-                      )}>
-                        {user?.is_public ? (t('active') || 'Activo') : (t('inactive') || 'Inactivo')}
-                      </span>
+                      </div>
+                      <div className="p-3 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                         <p className="text-[9px] font-black uppercase text-muted-foreground leading-tight italic">
+                            "La fuerza de la arena no es individual, es la suma de cada guerrero."
+                         </p>
+                      </div>
                    </div>
                 </div>
-              </div>
-
-              <div className="pt-4 border-t border-border/5 space-y-4">
-                <h4 className="font-black uppercase tracking-tighter italic text-xs">
-                  {t('comingSoon') || 'Próximamente'}
-                </h4>
-                <ul className="space-y-3">
-                  {['Rachas Globales', 'Compartir Rutinas', 'Desafíos de Grupo'].map(item => (
-                    <li key={item} className="flex items-center gap-3 opacity-40">
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <footer className="px-4 text-center md:text-left">
-            <p className="text-[8px] font-black uppercase tracking-[0.3em] opacity-20">
-              SOCIAL ENGINE v1.0 • OPTIMIZADO PARA COMPETICIÓN
-            </p>
-          </footer>
+                
+                <div className="bg-accent/5 border border-white/5 rounded-[2.5rem] p-8 flex flex-col gap-4">
+                   <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-2xl bg-background border border-white/10 flex items-center justify-center">
+                         <Users className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-black uppercase italic text-sm tracking-tight text-foreground/80">Código del Atleta</h3>
+                   </div>
+                   <p className="text-[11px] font-bold text-muted-foreground/60 uppercase leading-relaxed">
+                      Conecta con otros guerreros, comparte tus marcas personales y asciende en el ranking para convertirte en leyenda.
+                   </p>
+                   <Button variant="outline" className="w-full rounded-2xl border-white/5 bg-white/5 font-black uppercase italic text-[10px] tracking-widest hover:bg-primary/10 transition-all">
+                      Buscar Guerreros
+                   </Button>
+                </div>
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Feed Section */}
+        <div className={cn(
+          "max-w-xl mx-auto transition-all duration-300",
+          activeSection === 'feed' ? "opacity-100 block" : "hidden opacity-0"
+        )}>
+          <ActivityFeedCard />
+        </div>
+
+        {/* Messenger Section - Optimized Height */}
+        <div className={cn(
+          "h-[calc(100dvh-14rem)] md:h-[700px] transition-all duration-300",
+          activeSection === 'messenger' ? "opacity-100 block" : "hidden opacity-0"
+        )}>
+           <MessengerView 
+             initialFriendId={dmTarget?.id} 
+             initialFriendNickname={dmTarget?.nickname} 
+           />
+        </div>
+
+        {/* Athletes Section */}
+        <div className={cn(
+          "max-w-2xl mx-auto transition-all duration-300",
+          activeSection === 'athletes' ? "opacity-100 block" : "hidden opacity-0"
+        )}>
+          <FriendsCard onOpenDM={openDM} />
+        </div>
+
+      </main>
     </div>
+  )
+}
+
+function SegmentButton({ active, onClick, label, unreadCount }: { active: boolean, onClick: () => void, label: string, unreadCount?: number }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center justify-center gap-1 flex-1 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter transition-all relative",
+        "active:scale-95",
+        active 
+          ? "bg-background text-primary shadow-sm border border-white/5" 
+          : "text-muted-foreground/60 hover:text-muted-foreground"
+      )}
+    >
+      <span className="block">{label}</span>
+      {unreadCount !== undefined && unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[8px] font-black text-white shadow-sm ring-1 ring-background">
+          {unreadCount > 9 ? '+9' : unreadCount}
+        </span>
+      )}
+    </button>
+  )
+}
+
+export default function SocialPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center font-black uppercase italic tracking-widest animate-pulse">Entrando en la Arena...</div>}>
+      <SocialPageContent />
+    </Suspense>
   )
 }

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { pushSubscriptionRepository } from '@/domain/repositories/push-subscription.repository'
+import { auditService } from '@/domain/services/audit.service'
 import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
@@ -42,6 +43,14 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Audit log
+    await auditService.logAction({
+      userId: user.id,
+      action: 'push_unsubscribe',
+      entityType: 'notifications',
+      details: { endpoint: endpoint.substring(0, 50) },
+    }, supabase)
 
     return NextResponse.json(
       { success: true },

@@ -14,32 +14,100 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Download, RefreshCw, Calendar, User, Activity } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
+import { Search, Filter, Download, RefreshCw, Calendar, User, Activity, ChevronsUpDown, Check } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { formatDate } from '@/lib/utils'
+import { formatDate, cn } from '@/lib/utils'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase/client'
+
+interface UserOption {
+  id: string
+  email: string
+  name: string | null
+}
 
 const ACTIONS = [
+  // Auth
   'login',
   'logout',
   'signup',
+  // Navigation
+  'page_view',
+  'session_start',
+  'session_end',
+  'pwa_launch',
+  'app_foreground',
+  'app_background',
+  'connectivity_change',
+  // Workouts
   'create_workout',
   'update_workout',
   'delete_workout',
+  // Exercises
   'create_exercise',
   'update_exercise',
   'delete_exercise',
+  // Routines
   'create_routine',
   'update_routine',
   'delete_routine',
+  // Goals
+  'create_goal',
+  'update_goal',
+  'delete_goal',
+  'add_goal_progress',
+  // Body
+  'create_body_measurement',
+  'update_body_measurement',
+  'delete_body_measurement',
+  // Progress Photos
+  'create_progress_photo',
+  'update_progress_photo',
+  'delete_progress_photo',
+  // Social
+  'send_friend_request',
+  'accept_friend_request',
+  'reject_friend_request',
+  'send_message',
+  'send_dm',
+  'create_feed_event',
+  'update_social_profile',
+  // AI
+  'ai_coach_query',
+  // Notifications
+  'push_subscribe',
+  'push_unsubscribe',
+  // Feedback
+  'submit_feedback',
+  // Data
   'export_data',
   'import_data',
   'update_settings',
 ]
 
-const ENTITY_TYPES = ['auth', 'workout', 'exercise', 'routine', 'settings', 'data']
+const ENTITY_TYPES = [
+  'auth',
+  'navigation',
+  'workout',
+  'exercise',
+  'routine',
+  'goal',
+  'body_measurement',
+  'progress_photo',
+  'social',
+  'chat',
+  'friends',
+  'feed',
+  'ai',
+  'notifications',
+  'feedback',
+  'settings',
+  'data',
+]
 
 export default function AdminAuditPage() {
   const t = useTranslations('admin')
@@ -47,7 +115,7 @@ export default function AdminAuditPage() {
   const { isAdmin, isLoading: isAdminLoading } = useAdmin()
   const [logs, setLogs] = useState<AuditLogWithUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedUserId, setSelectedUserId] = useState<string>('all')
   const [selectedAction, setSelectedAction] = useState<string>('all')
   const [selectedEntityType, setSelectedEntityType] = useState<string>('all')
   const [startDate, setStartDate] = useState('')
@@ -56,11 +124,40 @@ export default function AdminAuditPage() {
   const [totalCount, setTotalCount] = useState(0)
   const itemsPerPage = 50
 
+  // User list for combobox
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [userComboOpen, setUserComboOpen] = useState(false)
+
+  // Load users on mount
+  useEffect(() => {
+    if (!isAdminLoading && isAdmin) {
+      loadUsers()
+    }
+  }, [isAdmin, isAdminLoading])
+
+  const loadUsers = async () => {
+    setUsersLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, name')
+        .order('email', { ascending: true })
+      if (!error && data) {
+        setUsers(data)
+      }
+    } catch (err) {
+      logger.error('Error loading users', err as Error, 'AdminAudit')
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!isAdminLoading && isAdmin) {
       loadLogs()
     }
-  }, [isAdmin, isAdminLoading, currentPage, selectedAction, selectedEntityType, startDate, endDate])
+  }, [isAdmin, isAdminLoading, currentPage, selectedAction, selectedEntityType, selectedUserId, startDate, endDate])
 
   const loadLogs = async () => {
     setIsLoading(true)
@@ -69,12 +166,12 @@ export default function AdminAuditPage() {
 
       if (startDate && endDate) {
         result = await auditLogRepository.findByDateRange(startDate, endDate, itemsPerPage, (currentPage - 1) * itemsPerPage)
+      } else if (selectedUserId !== 'all') {
+        result = await auditLogRepository.findByUserId(selectedUserId, itemsPerPage, (currentPage - 1) * itemsPerPage)
       } else if (selectedAction !== 'all') {
         result = await auditLogRepository.findByAction(selectedAction, itemsPerPage, (currentPage - 1) * itemsPerPage)
       } else if (selectedEntityType !== 'all') {
         result = await auditLogRepository.findByEntityType(selectedEntityType, itemsPerPage, (currentPage - 1) * itemsPerPage)
-      } else if (searchQuery) {
-        result = await auditLogRepository.search(searchQuery, itemsPerPage, (currentPage - 1) * itemsPerPage)
       } else {
         result = await auditLogRepository.findAll(itemsPerPage, (currentPage - 1) * itemsPerPage)
       }
@@ -100,7 +197,7 @@ export default function AdminAuditPage() {
   }
 
   const handleReset = () => {
-    setSearchQuery('')
+    setSelectedUserId('all')
     setSelectedAction('all')
     setSelectedEntityType('all')
     setStartDate('')
@@ -180,18 +277,58 @@ export default function AdminAuditPage() {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
-              <Label>{t('auditLog.search')}</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder={t('auditLog.searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                />
-                <Button onClick={handleSearch} size="icon">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
+              <Label>{t('auditLog.user') || 'Usuario'}</Label>
+              <Popover open={userComboOpen} onOpenChange={setUserComboOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={userComboOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {selectedUserId === 'all'
+                      ? (t('auditLog.allUsers') || 'Todos los usuarios')
+                      : users.find(u => u.id === selectedUserId)?.email || selectedUserId.substring(0, 8) + '...'}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('auditLog.searchUser') || 'Buscar usuario...'} />
+                    <CommandList>
+                      <CommandEmpty>{t('auditLog.noUsersFound') || 'No se encontraron usuarios'}</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          value="all"
+                          onSelect={() => {
+                            setSelectedUserId('all')
+                            setUserComboOpen(false)
+                          }}
+                        >
+                          <Check className={cn('mr-2 h-4 w-4', selectedUserId === 'all' ? 'opacity-100' : 'opacity-0')} />
+                          {t('auditLog.allUsers') || 'Todos los usuarios'}
+                        </CommandItem>
+                        {users.map((user) => (
+                          <CommandItem
+                            key={user.id}
+                            value={`${user.email} ${user.name || ''}`}
+                            onSelect={() => {
+                              setSelectedUserId(user.id)
+                              setUserComboOpen(false)
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4', selectedUserId === user.id ? 'opacity-100' : 'opacity-0')} />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{user.email}</span>
+                              {user.name && <span className="text-xs text-muted-foreground">{user.name}</span>}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">

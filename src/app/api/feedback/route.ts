@@ -11,6 +11,7 @@ import { FeedbackFormData, FeedbackStatus, FeedbackType } from '@/types'
 import { logger } from '@/lib/logger'
 import { isAdmin } from '@/lib/auth/admin'
 import { notifyAdminsAboutFeedback } from '@/lib/notifications/admin-notifications'
+import { auditService } from '@/domain/services/audit.service'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -99,6 +100,15 @@ export async function POST(request: NextRequest) {
         logger.error('Failed to notify admins about feedback', error as Error, 'FeedbackAPI')
       })
     }
+
+    // Audit log
+    await auditService.logAction({
+      userId: user.id,
+      action: 'submit_feedback',
+      entityType: 'feedback',
+      entityId: result.data?.id,
+      details: { type: feedbackData.type, subject: feedbackData.subject, rating: feedbackData.rating },
+    }, supabase)
 
     return NextResponse.json(
       { success: true, data: result.data },

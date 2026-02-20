@@ -362,3 +362,40 @@ export interface BodyMeasurementFormData {
   measurement_date: string;
 }
 
+// Community / Social types
+export type FriendshipStatus = 'pending' | 'accepted' | 'rejected'
+
+export interface Friendship extends BaseEntity {
+  user_id_1: string;
+  user_id_2: string;
+  status: FriendshipStatus;
+  updated_at?: string;
+  // Joined fields
+  friend_nickname?: string;
+  friend_id?: string;
+}
+
+export interface ChatMessage extends BaseEntity {
+  user_id: string;
+  content: string;
+  // Joined
+  nickname?: string;
+}
+
+export interface DirectMessage extends BaseEntity {
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  is_read?: boolean;
+  // Joined
+  sender_nickname?: string;
+}
+
+export interface ActivityFeedItem extends BaseEntity {
+  user_id: string;
+  type: 'workout_completed' | 'pr_achieved' | 'streak' | string;
+  payload: Record<string, any>;
+  // Joined
+  nickname?: string;
+}
+

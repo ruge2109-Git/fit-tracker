@@ -79,6 +79,7 @@ export const ROUTES = {
   TOOLS: '/tools',
   PROFILE: '/profile',
   FEEDBACK: '/feedback',
+  ADMIN: '/admin',
   ADMIN_FEEDBACK: '/admin/feedback',
   ADMIN_AUDIT: '/admin/audit',
   GOALS: '/goals',

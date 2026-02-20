@@ -19,7 +19,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const contentType = request.headers.get('content-type') || ''
+    let body: any
+    
+    // sendBeacon sends as text/plain, so handle both
+    if (contentType.includes('application/json')) {
+      body = await request.json()
+    } else {
+      const text = await request.text()
+      try {
+        body = JSON.parse(text)
+      } catch {
+        return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+      }
+    }
+    
     const { action, entityType, entityId, details } = body
 
     if (!action || !entityType) {

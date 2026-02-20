@@ -15,6 +15,7 @@ import { Globe, Users, Check, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@/store/auth.store'
 import { userService } from '@/domain/services/user.service'
+import { logAuditEvent } from '@/lib/audit/audit-helper'
 import { toast } from 'sonner'
 
 export function SocialProfileSettings() {
@@ -42,6 +43,16 @@ export function SocialProfileSettings() {
           is_public: res.data.is_public,
           nickname: res.data.nickname
         })
+        
+        logAuditEvent({
+          action: 'update_social_profile',
+          entityType: 'social',
+          details: {
+            is_public: isPublic,
+            nickname: nickname.trim() || user.name,
+          },
+        })
+        
         toast.success(t('profileUpdated') || 'Perfil social actualizado')
       }
     } catch (error: any) {

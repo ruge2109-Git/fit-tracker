@@ -1,13 +1,9 @@
-/**
- * NavBar Component
- * Main navigation bar with theme toggle
- */
-
 'use client'
 
+import React from 'react'
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { Dumbbell, Home, Globe, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, ChevronDown, Search, FileText, Target, Scale, Camera } from 'lucide-react'
+import { Dumbbell, Home, Globe, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, ChevronDown, Search, FileText, Target, Scale, Camera, Sparkles } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { LanguageSelector } from '@/components/language/language-selector'
@@ -25,12 +21,18 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useSearchDialog } from '@/hooks/use-search-dialog'
 
+import { useAiCoachStore } from '@/store/ai-coach.store'
+import { useSocialStore } from '@/store/social.store'
+import { Sparkles as SparklesIcon, Bot } from 'lucide-react'
+
 export function NavBar() {
   const t = useTranslations('common')
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const { isAdmin } = useAdmin()
   const { openSearch } = useSearchDialog()
+  const { unreadMessagesCount } = useSocialStore()
+  const { toggle, isOpen: isCoachOpen } = useAiCoachStore()
 
   // Organize navigation items by sections
   const navSections: Array<{
@@ -84,8 +86,7 @@ export function NavBar() {
     navSections.push(    {
       title: 'administration',
       items: [
-        { href: ROUTES.ADMIN_FEEDBACK, labelKey: 'admin', icon: Shield },
-        { href: ROUTES.ADMIN_AUDIT, labelKey: 'auditLog', icon: FileText },
+        { href: ROUTES.ADMIN, labelKey: 'admin', icon: Shield },
       ],
     })
   }
@@ -93,16 +94,44 @@ export function NavBar() {
   return (
     <nav className="border-b bg-background sticky top-0 z-40">
       <div className="container mx-auto px-2 sm:px-4">
-        <div className="flex h-14 sm:h-16 items-center justify-between">
+        <div className="flex h-12 sm:h-16 items-center justify-between">
           {/* Logo - Always visible */}
-          <div className="flex items-center gap-2 px-2">
-            <Link href={ROUTES.DASHBOARD} className="flex items-center gap-1.5 sm:gap-2 font-black text-xl tracking-tighter">
-              <Dumbbell className="h-6 w-6 text-primary" />
-              <span>{t('appName')}</span>
+          <div className="flex items-center gap-2 sm:gap-4 px-1 sm:px-2">
+            <Link href={ROUTES.DASHBOARD} className="flex items-center gap-1.5 sm:gap-2 font-black text-lg sm:text-xl tracking-tighter">
+              <Dumbbell className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <span className="hidden xs:block">{t('appName')}</span>
             </Link>
+
+            {/* AI Coach Button - Accessible on ALL devices in the header */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggle}
+                    className={cn(
+                      "h-8 w-8 sm:h-9 sm:w-9 relative group overflow-hidden rounded-xl",
+                      isCoachOpen ? "bg-violet-500/20 text-violet-600 shadow-inner" : "text-violet-500 hover:bg-violet-500/10 hover:text-violet-600"
+                    )}
+                    aria-label="Coach IA"
+                  >
+                    <SparklesIcon className={cn("h-4 w-4 sm:h-5 sm:w-5 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110", isCoachOpen && "animate-pulse")} />
+                    <span className="absolute inset-0 bg-gradient-to-tr from-violet-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    
+                    {/* Tiny "New" dot or status indicator */}
+                    {!isCoachOpen && (
+                      <span className="absolute top-1.5 right-1.5 h-1 w-1 rounded-full bg-violet-500 animate-ping" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Coach IA Inteligente</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
-          {/* Navigation Links - Desktop */}
           <div className="hidden md:flex items-center gap-1 lg:gap-2">
             {navSections.map((section, sectionIndex) => {
               // If section has only one item, show it directly
@@ -122,12 +151,19 @@ export function NavBar() {
                           <Link
                             href={item.href}
                             className={cn(
-                              'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary px-2 py-1 rounded-md',
+                              'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary px-2 py-1 rounded-md relative',
                               isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'
                             )}
                             aria-label={t(item.labelKey)}
                           >
-                            <Icon className="h-4 w-4" />
+                            <div className="relative">
+                              <Icon className="h-4 w-4" />
+                              {item.href === ROUTES.SOCIAL && unreadMessagesCount > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-black text-white shadow-sm ring-1 ring-background">
+                                  {unreadMessagesCount > 9 ? '+9' : unreadMessagesCount}
+                                </span>
+                              )}
+                            </div>
                             {t(item.labelKey)}
                           </Link>
                         </TooltipTrigger>
@@ -212,6 +248,7 @@ export function NavBar() {
                   <p>{t('search')} (Ctrl+K)</p>
                 </TooltipContent>
               </Tooltip>
+
               <LanguageSelector />
               <Tooltip>
                 <TooltipTrigger asChild>

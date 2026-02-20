@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
+import { auditService } from '@/domain/services/audit.service'
 
 export async function POST(req: Request) {
   try {
@@ -258,6 +259,18 @@ Las suggestions deben ser preguntas o frases cortas (< 8 palabras) que el usuari
     } catch {
       reply = raw
     }
+
+    // Audit log
+    await auditService.logAction({
+      userId: user.id,
+      action: 'ai_coach_query',
+      entityType: 'ai',
+      details: {
+        message_length: message.length,
+        history_count: history?.length || 0,
+        has_suggestions: suggestions.length > 0,
+      },
+    }, supabase)
 
     return NextResponse.json({ reply, suggestions })
 

@@ -210,7 +210,22 @@
     "day": "Día",
     "legend": "Leyenda del calendario",
     "noWorkoutsYet": "Aún no hay entrenamientos. ¡Comienza a rastrear tu viaje de fitness!",
-    "logFirstWorkout": "Registra Tu Primer Entrenamiento"
+    "logFirstWorkout": "Registra Tu Primer Entrenamiento",
+    "aiReport": {
+      "title": "Resumen Semanal IA",
+      "new": "NUEVO",
+      "improvements": "Mejoras",
+      "focus": "Enfoque Próxima Semana",
+      "viewFull": "Ver Análisis Completo"
+    },
+    "streak": {
+      "label": "Días",
+      "caption": "Racha Actual de Entrenamiento",
+      "atRisk": "Racha en riesgo. ¡Entrena hoy!",
+      "atRiskShort": "Racha en riesgo",
+      "empty": "¡Empieza tu racha hoy!"
+    },
+    "reminder": "RECORDATORIO: Sueles entrenar a las {hour}:00. Te avisaremos en esa ventana."
   },
   "workouts": {
     "title": "Entrenamientos",
@@ -605,14 +620,31 @@
     "recentActivity": "Actividad Reciente",
     "latestSessions": "Tus últimas sesiones de entrenamiento",
     "noWorkouts": "Aún no hay entrenamientos registrados",
+    "careerTotals": "Historial Vitalicio",
+    "careerSummary": "Resumen de tu trayectoria en FitTrackr",
+    "totalVolumeMove": "Volumen Total Movido",
+    "weightMoved": "Peso levantado en total en todos tus entrenamientos",
     "focusArea": "Área de Enfoque",
-    "mostTrainedMuscle": "Tu grupo muscular más entrenado",
-    "mostTrained": "Grupo muscular más entrenado",
+    "focusDescription": "Tu grupo muscular más entrenado según el número de series",
+    "consistency": "Consistencia",
+    "streakAchievements": "Logros de Consistencia",
+    "locked": "Bloqueado",
+    "days": "Días",
+    "badge7": "Consistencia Base",
+    "badge30": "Hábito de Hierro",
+    "badge100": "Leyenda Viviente",
+    "lastWorkout": "Último Entrenamiento",
+    "sessions": "sesiones",
+    "oneRmTitle": "Top 5 Fuerza (1RM)",
+    "oneRmSubtitle": "Proyección de peso máximo para 1 repetición",
+    "oneRmEmpty": "Registra entrenamientos para ver tus estimaciones de 1RM.",
+    "personalBest": "Récord Personal",
     "personalRecords": "Récords Personales",
-    "bestLiftsDescription": "Tus mejores levantamientos para cada ejercicio",
-    "bestLiftsTop5": "Tus mejores levantamientos para cada ejercicio (top 5)",
-    "noRecordsYet": "Aún no hay récords. ¡Comienza a levantar!",
-    "reps": "Repeticiones"
+    "bestLiftsDescription": "Tus mejores levantamientos por cada ejercicio.",
+    "bestLiftsTop5": "Tus mejores levantamientos (top 5)",
+    "noRecordsYet": "Aún no hay récords registrados.",
+    "reps": "Repeticiones",
+    "appPreferences": "Preferencias de la App"
   },
   "tools": {
     "title": "Herramientas",

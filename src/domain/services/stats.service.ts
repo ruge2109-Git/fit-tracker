@@ -45,6 +45,12 @@ export interface IStatsService {
   getMostFrequentExercises(userId: string, limit?: number): Promise<ApiResponse<ExerciseFrequency[]>>
   getPersonalRecords(userId: string): Promise<ApiResponse<PersonalRecord[]>>
   getWeeklyProgress(userId: string, weeks?: number): Promise<ApiResponse<WeeklyProgress[]>>
+  getDailyVolumeForYear(userId: string): Promise<ApiResponse<Record<string, number>>>
+  getPersonalBest1RMs(userId: string, limit?: number): Promise<ApiResponse<{ exercise_name: string; one_rm: number; date: string }[]>>
+  getPeriodMetrics(userId: string, startDate: string, endDate: string): Promise<ApiResponse<{ volume: number; workouts: number; avgDuration: number }>>
+  getLastPerformance(userId: string, exerciseId: string): Promise<ApiResponse<{ weight: number; reps: number; date: string } | null>>
+  getCurrentStreak(userId: string): Promise<ApiResponse<{ current: number; isAtRisk: boolean; lastWorkoutDate: string | null }>>
+  getAdaptiveReminderHour(userId: string): Promise<ApiResponse<{ suggestedHour: number }>>
 }
 
 class StatsService implements IStatsService {
@@ -405,6 +411,241 @@ class StatsService implements IStatsService {
       }))
 
       return { data: result }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async getDailyVolumeForYear(userId: string): Promise<ApiResponse<Record<string, number>>> {
+    try {
+      const oneYearAgo = new Date()
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+      const startDate = oneYearAgo.toISOString().split('T')[0]
+
+      // Fetch workouts with their sets in the last year
+      const { data: workouts, error } = await supabase
+        .from('workouts')
+        .select(`
+          id,
+          date,
+          sets (
+            weight,
+            reps
+          )
+        `)
+        .eq('user_id', userId)
+        .gte('date', startDate)
+        .order('date', { ascending: true })
+
+      if (error) throw error
+
+      const dailyVolume: Record<string, number> = {}
+
+      workouts?.forEach((workout: any) => {
+        const date = workout.date
+        const volume = workout.sets?.reduce((sum: number, set: any) => sum + (set.weight * set.reps), 0) || 0
+        
+        dailyVolume[date] = (dailyVolume[date] || 0) + volume
+      })
+
+      return { data: dailyVolume }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async getPersonalBest1RMs(userId: string, limit: number = 5): Promise<ApiResponse<{ exercise_name: string; one_rm: number; date: string }[]>> {
+    try {
+      const { data: workouts } = await supabase
+        .from('workouts')
+        .select('id, date')
+        .eq('user_id', userId)
+
+      const { data: sets, error } = await supabase
+        .from('sets')
+        .select('exercise_id, weight, reps, workout_id, exercise:exercises(name)')
+        .in('workout_id', workouts?.map(w => w.id) || [])
+
+      if (error) throw error
+
+      // Calculate max estimated 1RM for each exercise
+      // Formula Brzycki: 1RM = weight / (1.0278 - 0.0278 * reps)
+      const best1RMs: Record<string, { name: string; max_1rm: number; date: string }> = {}
+
+      sets?.forEach((set: any) => {
+        const id = set.exercise_id
+        if (set.reps <= 0) return
+
+        const oneRM = set.weight / (1.0278 - (0.0278 * set.reps))
+        
+        if (!best1RMs[id] || oneRM > best1RMs[id].max_1rm) {
+          const workout = workouts?.find(w => w.id === set.workout_id)
+          best1RMs[id] = {
+            name: set.exercise?.name || 'Unknown',
+            max_1rm: oneRM,
+            date: workout?.date || '',
+          }
+        }
+      })
+
+      const result = Object.values(best1RMs)
+        .sort((a, b) => b.max_1rm - a.max_1rm)
+        .slice(0, limit)
+        .map(item => ({
+          exercise_name: item.name,
+          one_rm: Math.round(item.max_1rm * 10) / 10,
+          date: item.date,
+        }))
+
+      return { data: result }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async getPeriodMetrics(userId: string, startDate: string, endDate: string): Promise<ApiResponse<{ volume: number; workouts: number; avgDuration: number }>> {
+    try {
+      const { data: workouts, error: wError } = await supabase
+        .from('workouts')
+        .select(`
+          id,
+          duration,
+          sets (
+            weight,
+            reps
+          )
+        `)
+        .eq('user_id', userId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+
+      if (wError) throw wError
+
+      if (!workouts || workouts.length === 0) {
+        return { data: { volume: 0, workouts: 0, avgDuration: 0 } }
+      }
+
+      let totalVolume = 0
+      let totalDuration = 0
+
+      workouts.forEach((w: any) => {
+        totalDuration += w.duration || 0
+        const wVolume = w.sets?.reduce((sum: number, s: any) => sum + (s.weight * s.reps), 0) || 0
+        totalVolume += wVolume
+      })
+
+      return {
+        data: {
+          volume: Math.round(totalVolume),
+          workouts: workouts.length,
+          avgDuration: Math.round(totalDuration / workouts.length),
+        },
+      }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async getLastPerformance(userId: string, exerciseId: string): Promise<ApiResponse<{ weight: number; reps: number; date: string } | null>> {
+    try {
+      const { data, error } = await supabase
+        .from('sets')
+        .select(`
+          weight,
+          reps,
+          workout:workouts(date)
+        `)
+        .eq('user_id', userId)
+        .eq('exercise_id', exerciseId)
+        .order('created_at', { ascending: false })
+        .maybeSingle()
+
+      if (error) throw error
+      if (!data) return { data: null }
+
+      return {
+        data: {
+          weight: data.weight,
+          reps: data.reps,
+          date: (data.workout as any).date,
+        },
+      }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async getCurrentStreak(userId: string): Promise<ApiResponse<{ current: number; isAtRisk: boolean; lastWorkoutDate: string | null }>> {
+    try {
+      const { data, error } = await supabase
+        .from('workouts')
+        .select('date')
+        .eq('user_id', userId)
+        .order('date', { ascending: false })
+
+      if (error) throw error
+      if (!data || data.length === 0) return { data: { current: 0, isAtRisk: false, lastWorkoutDate: null } }
+
+      const uniqueDates = Array.from(new Set(data.map(w => w.date)))
+      const today = new Date().toISOString().split('T')[0]
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+
+      let streak = 0
+      let currentCheck = today
+      let lastWorkoutDate = uniqueDates[0]
+
+      // If no workout today AND no workout yesterday, streak is 0
+      if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) {
+        return { data: { current: 0, isAtRisk: false, lastWorkoutDate: uniqueDates[0] } }
+      }
+
+      // Check if currentCheck needs to be yesterday if today has no workout
+      if (uniqueDates[0] === yesterday && uniqueDates[0] !== today) {
+        currentCheck = yesterday
+      }
+
+      for (const date of uniqueDates) {
+        const expected = new Date(new Date(currentCheck).getTime() - streak * 86400000).toISOString().split('T')[0]
+        if (date === expected) {
+          streak++
+        } else {
+          break
+        }
+      }
+
+      return {
+        data: {
+          current: streak,
+          isAtRisk: uniqueDates[0] !== today && streak > 0,
+          lastWorkoutDate
+        }
+      }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async getAdaptiveReminderHour(userId: string): Promise<ApiResponse<{ suggestedHour: number }>> {
+    try {
+      const { data, error } = await supabase
+        .from('workouts')
+        .select('created_at')
+        .eq('user_id', userId)
+        .limit(20)
+
+      if (error) throw error
+      if (!data || data.length < 3) return { data: { suggestedHour: 8 } } // Default to 8 AM
+
+      const hours = data.map(w => new Date(w.created_at).getHours())
+      const counts: Record<number, number> = {}
+      hours.forEach(h => counts[h] = (counts[h] || 0) + 1)
+
+      const keys = Object.keys(counts).map(Number)
+      const suggestedHour = keys.reduce((a, b) => 
+        counts[a] > counts[b] ? a : b
+      , 8)
+
+      return { data: { suggestedHour: Number(suggestedHour) } }
     } catch (error: any) {
       return { error: error.message }
     }

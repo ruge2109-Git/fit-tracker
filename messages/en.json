@@ -202,7 +202,22 @@
     "month": "Month",
     "week": "Week",
     "day": "Day",
-    "legend": "Calendar legend"
+    "legend": "Calendar legend",
+    "aiReport": {
+      "title": "Weekly AI Summary",
+      "new": "NEW",
+      "improvements": "Improvements",
+      "focus": "Next Week Focus",
+      "viewFull": "View Full Analysis"
+    },
+    "streak": {
+      "label": "Days",
+      "caption": "Current Workout Streak",
+      "atRisk": "Streak at risk. Train today!",
+      "atRiskShort": "Streak at risk",
+      "empty": "Start your streak today!"
+    },
+    "reminder": "REMINDER: You usually train at {hour}:00. We'll notify you in that window."
   },
   "workouts": {
     "title": "Workouts",
@@ -598,14 +613,31 @@
     "recentActivity": "Recent Activity",
     "latestSessions": "Your latest workout sessions",
     "noWorkouts": "No workouts recorded yet",
+    "careerTotals": "Career Totals",
+    "careerSummary": "A summary of your fitness journey on FitTrackr",
+    "totalVolumeMove": "Total Volume Moved",
+    "weightMoved": "Total weight lifted across all workouts",
     "focusArea": "Focus Area",
-    "mostTrainedMuscle": "Your most trained muscle group",
-    "mostTrained": "Most trained muscle group",
+    "focusDescription": "Your most trained muscle group by sets",
+    "consistency": "Consistency",
+    "streakAchievements": "Consistency Achievements",
+    "locked": "Locked",
+    "days": "Days",
+    "badge7": "Base Consistency",
+    "badge30": "Iron Habit",
+    "badge100": "Living Legend",
+    "lastWorkout": "Last Workout",
+    "sessions": "sessions",
+    "oneRmTitle": "Top 5 Strength (1RM)",
+    "oneRmSubtitle": "Projected max weight for 1 repetition",
+    "oneRmEmpty": "Log workouts to see your 1RM estimations.",
+    "personalBest": "Personal Best",
     "personalRecords": "Personal Records",
-    "bestLiftsDescription": "Your best lifts for each exercise",
-    "bestLiftsTop5": "Your best lifts for each exercise (top 5)",
-    "noRecordsYet": "No records yet. Start lifting!",
-    "reps": "Reps"
+    "bestLiftsDescription": "Your best lifts for each exercise.",
+    "bestLiftsTop5": "Your best lifts (top 5)",
+    "noRecordsYet": "No records recorded yet.",
+    "reps": "Reps",
+    "appPreferences": "App Preferences"
   },
   "tools": {
     "title": "Tools",

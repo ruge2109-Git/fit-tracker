@@ -6,7 +6,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { Activity, TrendingUp, Calendar, Target, Dumbbell } from 'lucide-react'
+import { Activity, TrendingUp, Calendar, Target, Dumbbell, Clock } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/auth.store'
@@ -32,6 +32,21 @@ const TopExercisesChart = dynamic(() => import('@/components/charts/top-exercise
 })
 const PersonalRecordsList = dynamic(() => import('@/components/charts/personal-records-list').then(mod => ({ default: mod.PersonalRecordsList })), {
   loading: () => <CardSkeleton />,
+  ssr: false,
+})
+const ConsistencyHeatmap = dynamic(() => import('@/components/charts/consistency-heatmap').then(mod => ({ default: mod.ConsistencyHeatmap })), {
+  ssr: false,
+})
+const PeriodComparison = dynamic(() => import('@/components/dashboard/period-comparison').then(mod => ({ default: mod.PeriodComparison })), {
+  ssr: false,
+})
+const AiReportBanner = dynamic(() => import('@/components/dashboard/ai-report-banner').then(mod => ({ default: mod.AiReportBanner })), {
+  ssr: false,
+})
+const QuickStartRoutines = dynamic(() => import('@/components/dashboard/quick-start-routines').then(mod => ({ default: mod.QuickStartRoutines })), {
+  ssr: false,
+})
+const StreakCounter = dynamic(() => import('@/components/dashboard/streak-counter').then(mod => ({ default: mod.StreakCounter })), {
   ssr: false,
 })
 
@@ -74,6 +89,8 @@ export default function DashboardPage() {
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
   const [totalVolume, setTotalVolume] = useState(0)
   const [routines, setRoutines] = useState<Routine[]>([])
+  const [dailyVolume, setDailyVolume] = useState<Record<string, number>>({})
+  const [suggestedHour, setSuggestedHour] = useState<number | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
 
   const loadData = useCallback(async () => {
@@ -97,6 +114,8 @@ export default function DashboardPage() {
       statsService.getMostFrequentExercises(user.id, 5),
       statsService.getPersonalRecords(user.id),
       statsService.getTotalVolume(user.id),
+      statsService.getDailyVolumeForYear(user.id),
+      statsService.getAdaptiveReminderHour(user.id),
     ]).then(([
       statsResult,
       volumeResult,
@@ -104,6 +123,8 @@ export default function DashboardPage() {
       exercisesResult,
       recordsResult,
       totalVolumeResult,
+      dailyVolumeResult,
+      hourResult,
     ]) => {
       // Update state as data arrives
       if (statsResult.data) setStats(statsResult.data)
@@ -112,6 +133,8 @@ export default function DashboardPage() {
       if (exercisesResult.data) setTopExercises(exercisesResult.data)
       if (recordsResult.data) setPersonalRecords(recordsResult.data)
       if (totalVolumeResult.data) setTotalVolume(totalVolumeResult.data)
+      if (dailyVolumeResult.data) setDailyVolume(dailyVolumeResult.data)
+      if (hourResult.data) setSuggestedHour(hourResult.data.suggestedHour)
     }).finally(() => {
       setIsLoaded(true)
     })
@@ -226,6 +249,24 @@ export default function DashboardPage() {
         </Button>
       </div>
 
+      {/* Quick Start Routines */}
+      {user && <QuickStartRoutines userId={user.id} />}
+
+      {/* Streak Counter */}
+      {user && <StreakCounter userId={user.id} />}
+
+      {suggestedHour !== null && (
+        <div className="px-1">
+          <p className="text-[10px] font-bold text-muted-foreground/60 flex items-center gap-2">
+            <Clock className="h-3 w-3" />
+            {t('reminder', { hour: suggestedHour })}
+          </p>
+        </div>
+      )}
+
+      {/* AI Summary Banner */}
+      <AiReportBanner />
+
       {/* Main Content Grid */}
       <div className="grid gap-6">
         {/* Calendar Section */}
@@ -240,6 +281,14 @@ export default function DashboardPage() {
             <DashboardCalendar workouts={workouts} routines={routines} />
           </CardContent>
         </Card>
+
+        {/* Consistency Heatmap */}
+        <Card className="rounded-3xl border-none shadow-sm overflow-hidden p-6 md:p-8 bg-card flex flex-col items-center">
+            <ConsistencyHeatmap data={dailyVolume} className="w-full max-w-4xl mx-auto" />
+        </Card>
+
+        {/* Period Comparison */}
+        {user && <PeriodComparison userId={user.id} />}
 
         {/* Charts - Two columns on desktop, single on mobile */}
         <div className="grid gap-4 md:grid-cols-2">

@@ -41,6 +41,7 @@ import { RoutineWithExercises, SetFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
 import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress, WorkoutProgress } from '@/hooks/use-workout-persistence'
 import { useTranslations } from 'next-intl'
+import { ExerciseHistoryHints } from '@/components/workouts/exercise-history-hints'
 
 interface WorkoutSet extends SetFormData {
   tempId: string
@@ -541,6 +542,13 @@ export default function NewWorkoutFromRoutinePage() {
                                                 </Button>
                                              </div>
                                         </div>
+
+                                        {/* History Hints */}
+                                        {user && (
+                                            <div className="px-4 py-1.5">
+                                              <ExerciseHistoryHints userId={user.id} exerciseId={exerciseId} />
+                                            </div>
+                                        )}
 
                                         {/* Sets Table */}
                                         <div className="p-2 sm:p-4 overflow-x-auto">

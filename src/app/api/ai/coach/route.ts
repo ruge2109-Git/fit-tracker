@@ -6,6 +6,12 @@ export async function POST(req: Request) {
   try {
     const { message, history } = await req.json()
     const apiKey = process.env.OPENAI_API_KEY
+    
+    if (!apiKey) {
+      console.error('AI Coach — OPENAI_API_KEY is missing in process.env')
+    } else {
+      console.log('AI Coach — OPENAI_API_KEY found (length:', apiKey.length, ')')
+    }
 
     if (!message || !apiKey) {
       return NextResponse.json({ error: 'Missing message or API key configuration' }, { status: 400 })

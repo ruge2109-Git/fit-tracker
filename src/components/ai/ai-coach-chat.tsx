@@ -79,10 +79,10 @@ export function AiCoachChat() {
         content: data.reply,
         suggestions: data.suggestions || [],
       }])
-    } catch (error) {
+    } catch (error: any) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: '❌ Hubo un problema al conectarme. Asegúrate de que OPENAI_API_KEY esté configurado.',
+        content: `❌ Error: ${error.message || 'Hubo un problema al conectarme.'}`,
       }])
     } finally {
       setIsLoading(false)

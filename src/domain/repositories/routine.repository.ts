@@ -39,7 +39,7 @@ export class RoutineRepository extends BaseRepository<Routine> implements IRouti
           )
         `)
         .eq('id', id)
-        .single()
+        .maybeSingle()
 
       if (error) return this.handleError(error)
       return this.success(data as RoutineWithExercises)

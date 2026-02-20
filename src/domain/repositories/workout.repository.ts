@@ -35,7 +35,7 @@ export class WorkoutRepository extends BaseRepository<Workout> implements IWorko
           )
         `)
         .eq('id', id)
-        .single()
+        .maybeSingle()
 
       if (error) return this.handleError(error)
       return this.success(data as WorkoutWithSets)
@@ -123,7 +123,7 @@ export class WorkoutRepository extends BaseRepository<Workout> implements IWorko
         .from(this.tableName)
         .insert(data)
         .select()
-        .single()
+        .maybeSingle()
 
       if (error) return this.handleError(error)
       return this.success(workout as Workout)
@@ -139,7 +139,7 @@ export class WorkoutRepository extends BaseRepository<Workout> implements IWorko
         .update(data)
         .eq('id', id)
         .select()
-        .single()
+        .maybeSingle()
 
       if (error) return this.handleError(error)
       return this.success(workout as Workout)

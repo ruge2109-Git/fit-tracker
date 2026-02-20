@@ -20,6 +20,7 @@ import { ExerciseMedia } from '@/components/exercises/exercise-media'
 import { exerciseRepository } from '@/domain/repositories/exercise.repository'
 import { Exercise } from '@/types'
 import { useTranslations } from 'next-intl'
+import { PlateauAlert } from '@/components/exercises/plateau-alert'
 
 export default function ExerciseStatsPage() {
   const params = useParams()
@@ -114,6 +115,9 @@ export default function ExerciseStatsPage() {
           {tCommon('back') || 'Back'}
         </Button>
       </div>
+
+      {/* Plateau Alert */}
+      <PlateauAlert exerciseId={exerciseId} />
 
       {/* Title */}
       <div>

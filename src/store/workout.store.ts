@@ -6,9 +6,11 @@
 import { create } from 'zustand'
 import { Workout, WorkoutWithSets, SetFormData, WorkoutFormData } from '@/types'
 import { workoutService } from '@/domain/services/workout.service'
+import { statsService } from '@/domain/services/stats.service'
 import { goalTrackingService } from '@/domain/services/goal-tracking.service'
 import { logAuditEvent } from '@/lib/audit/audit-helper'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
 
 interface WorkoutState {
   workouts: Workout[]
@@ -56,7 +58,10 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   },
 
   createWorkout: async (userId, data, sets) => {
-    set({ isLoading: true, error: null })
+    // Check for PRs before creating (get old maxes)
+    const oldPRsResult = await statsService.getPersonalRecords(userId)
+    const oldPRs = oldPRsResult.data || []
+    
     const result = await workoutService.createWorkoutWithSets(userId, data, sets)
 
     if (result.error) {
@@ -70,17 +75,40 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     
     // Log create workout event
     if (result.data) {
+      const workout = result.data
       logAuditEvent({
         action: 'create_workout',
         entityType: 'workout',
-        entityId: result.data.id,
+        entityId: workout.id,
         details: { date: data.date, duration: data.duration, setsCount: sets.length },
       })
 
-      // Update goals automatically based on workout
-      // This runs asynchronously and won't block workout creation
-      goalTrackingService.updateGoalsFromWorkout(userId, result.data).catch((error) => {
-        // Silently fail - goal tracking shouldn't break workout creation
+      // NEW: Check for Personal Records
+      const newPRs: { name: string, weight: number }[] = []
+      workout.sets.forEach(s => {
+        const oldPR = oldPRs.find(pr => pr.exercise_id === s.exercise_id)
+        if (!oldPR || s.weight > oldPR.max_weight) {
+          // New PR detected!
+          // Only add if not already in the list (multiple sets of same weight in same workout)
+          const name = s.exercise?.name || 'Ejercicio'
+          if (!newPRs.some(n => n.name === name)) {
+            newPRs.push({ name, weight: s.weight })
+          }
+        }
+      })
+
+      if (newPRs.length > 0) {
+        newPRs.forEach(pr => {
+          toast.success(`🏆 ¡NUEVO RÉCORD!`, {
+            description: `${pr.name}: ${pr.weight} kg. ¡Sigue así!`,
+            duration: 6000,
+          })
+        })
+        // Trigger confetti if possible (using a simple emoji for now, or I can add a dedicated component)
+      }
+
+      // Update goals automatically
+      goalTrackingService.updateGoalsFromWorkout(userId, workout).catch((error) => {
         logger.error('Error updating goals from workout', error as Error, 'WorkoutStore')
       })
     }

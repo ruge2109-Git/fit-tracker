@@ -103,28 +103,25 @@ export function AiCoachChat() {
 
   return (
     <>
-      {/* Floating Trigger Button */}
+      {/* Pulse ring — sibling so it never affects button layout */}
+      {!isOpen && (
+        <span className="fixed bottom-24 left-4 md:bottom-8 md:left-6 z-50 h-14 w-14 rounded-full bg-violet-500/35 animate-ping pointer-events-none" />
+      )}
+
       <button
         onClick={() => setIsOpen(prev => !prev)}
         aria-label="Abrir coach IA"
         className={cn(
           'fixed bottom-24 left-4 md:bottom-8 md:left-6 z-50',
           'h-14 w-14 rounded-full shadow-2xl',
-          'relative flex items-center justify-center overflow-hidden',
+          'flex items-center justify-center',
           'transition-all duration-300 active:scale-95',
           isOpen
             ? 'bg-muted text-muted-foreground scale-90'
             : 'bg-gradient-to-br from-violet-500 to-purple-700 text-white scale-100 hover:scale-105 shadow-purple-500/30',
         )}
       >
-        {/* Pulse ring — behind the icon */}
-        {!isOpen && (
-          <span className="absolute inset-0 rounded-full bg-violet-500/40 animate-ping" />
-        )}
-        {/* Icon — always on top and centered */}
-        <span className="relative z-10 flex items-center justify-center">
-          {isOpen ? <ChevronDown className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
-        </span>
+        {isOpen ? <ChevronDown className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
       </button>
 
       {/* Chat Panel */}

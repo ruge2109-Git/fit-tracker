@@ -110,18 +110,21 @@ export function AiCoachChat() {
         className={cn(
           'fixed bottom-24 left-4 md:bottom-8 md:left-6 z-50',
           'h-14 w-14 rounded-full shadow-2xl',
-          'flex items-center justify-center',
+          'relative flex items-center justify-center overflow-hidden',
           'transition-all duration-300 active:scale-95',
           isOpen
             ? 'bg-muted text-muted-foreground scale-90'
             : 'bg-gradient-to-br from-violet-500 to-purple-700 text-white scale-100 hover:scale-105 shadow-purple-500/30',
         )}
       >
-        {isOpen ? <ChevronDown className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
-        {/* Pulse ring when closed */}
+        {/* Pulse ring — behind the icon */}
         {!isOpen && (
           <span className="absolute inset-0 rounded-full bg-violet-500/40 animate-ping" />
         )}
+        {/* Icon — always on top and centered */}
+        <span className="relative z-10 flex items-center justify-center">
+          {isOpen ? <ChevronDown className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
+        </span>
       </button>
 
       {/* Chat Panel */}

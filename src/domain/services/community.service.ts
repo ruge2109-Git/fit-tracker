@@ -5,7 +5,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
-import { ApiResponse, Friendship, ChatMessage, DirectMessage, ActivityFeedItem } from '@/types'
+import { ApiResponse, Friendship, ChatMessage, DirectMessage, ActivityFeedItem, ActivityFeedComment } from '@/types'
 
 export interface ICommunityService {
   // Friends
@@ -27,6 +27,9 @@ export interface ICommunityService {
   // Feed
   getActivityFeed(): Promise<ApiResponse<ActivityFeedItem[]>>
   createActivityEvent(type: string, payload: any): Promise<ApiResponse<void>>
+  toggleLike(feedId: string): Promise<ApiResponse<{ liked: boolean, likesCount: number }>>
+  getFeedComments(feedId: string): Promise<ApiResponse<ActivityFeedComment[]>>
+  addFeedComment(feedId: string, content: string): Promise<ApiResponse<ActivityFeedComment>>
 }
 
 class CommunityService implements ICommunityService {
@@ -201,6 +204,43 @@ class CommunityService implements ICommunityService {
       })
       if (!res.ok) throw new Error((await res.json()).error || 'Failed to create event')
       return {}
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async toggleLike(feedId: string): Promise<ApiResponse<{ liked: boolean, likesCount: number }>> {
+    try {
+      const res = await fetch(`/api/feed/${feedId}/like`, { method: 'POST' })
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to toggle like')
+      const data = await res.json()
+      return { data }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async getFeedComments(feedId: string): Promise<ApiResponse<ActivityFeedComment[]>> {
+    try {
+      const res = await fetch(`/api/feed/${feedId}/comments`)
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to fetch comments')
+      const data = await res.json()
+      return { data }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+
+  async addFeedComment(feedId: string, content: string): Promise<ApiResponse<ActivityFeedComment>> {
+    try {
+      const res = await fetch(`/api/feed/${feedId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      })
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to add comment')
+      const data = await res.json()
+      return { data }
     } catch (error: any) {
       return { error: error.message }
     }

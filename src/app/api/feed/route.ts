@@ -40,8 +40,27 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Enrich with nicknames
-  const userIds = [...new Set((feed || []).map(f => f.user_id))]
+  const feedIds = (feed || []).map(f => f.id)
+  
+  // Get likes and comments count
+  let likesData: any[] = []
+  let commentsData: any[] = []
+  if (feedIds.length > 0) {
+    const { data: lData } = await supabase
+      .from('activity_feed_likes')
+      .select('feed_id, user_id')
+      .in('feed_id', feedIds)
+    if (lData) likesData = lData
+
+    const { data: cData } = await supabase
+      .from('activity_feed_comments')
+      .select('feed_id')
+      .in('feed_id', feedIds)
+    if (cData) commentsData = cData
+  }
+
+  // Enrich with nicknames for feed authors AND like users
+  const userIds = [...new Set([...(feed || []).map(f => f.user_id), ...likesData.map(l => l.user_id)])]
   let nickMap: Record<string, string> = {}
   if (userIds.length > 0) {
     const { data: users } = await supabase
@@ -53,10 +72,23 @@ export async function GET() {
     }
   }
 
-  const enriched = (feed || []).map(f => ({
-    ...f,
-    nickname: nickMap[f.user_id] || 'Atleta',
-  }))
+  const enriched = (feed || []).map(f => {
+    const itemLikes = likesData.filter(l => l.feed_id === f.id)
+    const activeLikeUsers = itemLikes.map(l => ({
+      id: l.user_id,
+      nickname: nickMap[l.user_id] || 'Atleta'
+    }))
+    const itemComments = commentsData.filter(c => c.feed_id === f.id)
+    
+    return {
+      ...f,
+      nickname: nickMap[f.user_id] || 'Atleta',
+      likes_count: itemLikes.length,
+      is_liked_by_me: itemLikes.some(l => l.user_id === user.id),
+      like_users: activeLikeUsers,
+      comments_count: itemComments.length
+    }
+  })
 
   return NextResponse.json(enriched)
 }

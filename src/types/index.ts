@@ -395,7 +395,17 @@ export interface ActivityFeedItem extends BaseEntity {
   user_id: string;
   type: 'workout_completed' | 'pr_achieved' | 'streak' | string;
   payload: Record<string, any>;
-  // Joined
+  nickname?: string;
+  likes_count?: number;
+  is_liked_by_me?: boolean;
+  like_users?: { id: string; nickname?: string }[];
+  comments_count?: number;
+}
+
+export interface ActivityFeedComment extends BaseEntity {
+  user_id: string;
+  feed_id: string;
+  content: string;
   nickname?: string;
 }
 

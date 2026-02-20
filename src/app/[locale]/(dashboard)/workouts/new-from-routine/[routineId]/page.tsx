@@ -672,8 +672,8 @@ export default function NewWorkoutFromRoutinePage() {
                 </Drawer>
             </div>
              
-             {/* Bottom Save Button (Mobile) - Fixed position to clear nav bar */}
-             <div className="lg:hidden fixed bottom-24 left-4 right-20 z-40">
+             {/* Bottom Save Button (Mobile) - Centered between coach (left) and timer (right) */}
+             <div className="lg:hidden fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-auto">
                  <Button 
                     onClick={handleSave} 
                     disabled={isSaving} 

@@ -39,10 +39,10 @@ export default function NewWorkoutPage() {
   }, [user, tRoutines])
 
   useEffect(() => {
-    if (user && availableRoutines.length === 0 && !isLoadingRoutines) {
+    if (user && availableRoutines.length === 0) {
       loadAvailableRoutines()
     }
-  }, [user, availableRoutines.length, isLoadingRoutines, loadAvailableRoutines])
+  }, [user, loadAvailableRoutines])
 
   const filteredRoutines = useMemo(() => {
     if (!routineSearch) return availableRoutines
@@ -104,7 +104,7 @@ export default function NewWorkoutPage() {
              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                 {/* Free Workout Card - Always visible in Active tab */}
                 <div 
-                  onClick={() => router.push(ROUTES.WORKOUT_DETAIL('new'))}
+                  onClick={() => router.push(ROUTES.NEW_WORKOUT_FREE)}
                   className="group relative flex flex-col justify-between h-full min-h-[160px] p-6 rounded-[2rem] border-2 border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all cursor-pointer overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:scale-110 transition-transform duration-500">

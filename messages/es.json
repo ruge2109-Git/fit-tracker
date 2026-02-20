@@ -379,6 +379,9 @@
     "saveRoutine": "Guardar Rutina",
     "exerciseRemoved": "Ejercicio eliminado",
     "exerciseAdded": "Ejercicio agregado",
+    "exerciseAlreadyAdded": "Este ejercicio ya fue agregado",
+    "noExercisesYet": "Aún no hay ejercicios",
+    "addFirstExercise": "Agrega tu primer ejercicio abajo",
     "activeSession": "Sesión activa",
     "continueWorkout": "Continuar Entrenamiento"
   },

@@ -370,6 +370,9 @@
     "saveRoutine": "Save Routine",
     "exerciseRemoved": "Exercise removed",
     "exerciseAdded": "Exercise added",
+    "exerciseAlreadyAdded": "Exercise already added",
+    "noExercisesYet": "No exercises yet",
+    "addFirstExercise": "Add your first exercise below",
     "activeSession": "Active Session",
     "continueWorkout": "Continue Workout"
   },

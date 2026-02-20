@@ -22,6 +22,7 @@ import { KeyboardShortcuts } from '@/components/ui/keyboard-shortcuts'
 import { SearchDialogProvider } from '@/hooks/use-search-dialog'
 import { useAuthStore } from '@/store/auth.store'
 import { ROUTES } from '@/lib/constants'
+import { AiCoachChat } from '@/components/ai/ai-coach-chat'
 
 export default function DashboardLayout({
   children,
@@ -101,6 +102,8 @@ export default function DashboardLayout({
         
         {user && <BottomNav />}
         <KeyboardShortcuts />
+        {/* AI Coach floating chat — available on all dashboard pages */}
+        {user && <AiCoachChat />}
       </div>
     </SearchDialogProvider>
   )

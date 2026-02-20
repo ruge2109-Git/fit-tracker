@@ -8,6 +8,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.OPENAI_API_KEY
     
     if (!apiKey) {
+      console.log('ENVS: ', process.env)
       console.error('AI Coach — OPENAI_API_KEY is missing in process.env')
     } else {
       console.log('AI Coach — OPENAI_API_KEY found (length:', apiKey.length, ')')

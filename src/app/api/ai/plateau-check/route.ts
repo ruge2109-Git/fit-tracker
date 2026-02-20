@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger'
 export async function POST(req: Request) {
   try {
     const { exerciseId } = await req.json()
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
 
     if (!exerciseId || !apiKey) {
       return NextResponse.json({ error: 'Missing exerciseId or API key' }, { status: 400 })

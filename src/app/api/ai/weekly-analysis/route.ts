@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: 'Missing API key' }, { status: 500 })
     }

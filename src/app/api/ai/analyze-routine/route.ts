@@ -11,7 +11,7 @@ const supabase = createClient(
 export async function POST(req: Request) {
   try {
     const { csvText } = await req.json()
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
 
     if (!csvText || !apiKey) {
       return NextResponse.json(

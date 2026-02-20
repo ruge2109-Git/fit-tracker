@@ -5,13 +5,12 @@ import { createClient } from '@/lib/supabase/server'
 export async function POST(req: Request) {
   try {
     const { message, history } = await req.json()
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
     
     if (!apiKey) {
-      console.log('ENVS: ', process.env)
-      console.error('AI Coach — OPENAI_API_KEY is missing in process.env')
+      console.error('AI Coach — NEXT_PUBLIC_OPENAI_API_KEY is missing in process.env')
     } else {
-      console.log('AI Coach — OPENAI_API_KEY found (length:', apiKey.length, ')')
+      console.log('AI Coach — NEXT_PUBLIC_OPENAI_API_KEY found (length:', apiKey.length, ')')
     }
 
     if (!message || !apiKey) {

@@ -103,25 +103,43 @@ export function AiCoachChat() {
 
   return (
     <>
-      {/* Pulse ring — sibling so it never affects button layout */}
-      {!isOpen && (
-        <span className="fixed bottom-24 left-4 md:bottom-8 md:left-6 z-50 h-14 w-14 rounded-full bg-violet-500/35 animate-ping pointer-events-none" />
-      )}
-
+      {/* FAB — fully inline styles so PWA browsers can't override */}
       <button
         onClick={() => setIsOpen(prev => !prev)}
         aria-label="Abrir coach IA"
-        className={cn(
-          'fixed bottom-24 left-4 md:bottom-8 md:left-6 z-50',
-          'h-14 w-14 rounded-full shadow-2xl',
-          'flex items-center justify-center',
-          'transition-all duration-300 active:scale-95',
-          isOpen
-            ? 'bg-muted text-muted-foreground scale-90'
-            : 'bg-gradient-to-br from-violet-500 to-purple-700 text-white scale-100 hover:scale-105 shadow-purple-500/30',
-        )}
+        style={{
+          position: 'fixed',
+          bottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))',
+          left: '16px',
+          zIndex: 50,
+          width: 56,
+          height: 56,
+          borderRadius: '50%',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'grid',
+          placeItems: 'center',
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          boxShadow: isOpen ? 'none' : '0 8px 32px rgba(139,92,246,0.45)',
+          background: isOpen
+            ? 'var(--muted)'
+            : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%)',
+          color: isOpen ? 'var(--muted-foreground)' : '#fff',
+          transform: isOpen ? 'scale(0.88)' : 'scale(1)',
+          animation: isOpen ? 'none' : 'fabPulse 2.4s ease-in-out infinite',
+          WebkitTapHighlightColor: 'transparent',
+        }}
       >
-        {isOpen ? <ChevronDown className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
+        <style>{`
+          @keyframes fabPulse {
+            0%,100% { box-shadow: 0 8px 32px rgba(139,92,246,0.45); }
+            50%      { box-shadow: 0 8px 48px rgba(139,92,246,0.75), 0 0 0 8px rgba(139,92,246,0.12); }
+          }
+        `}</style>
+        {isOpen
+          ? <ChevronDown style={{ width: 24, height: 24, display: 'block' }} />
+          : <Sparkles   style={{ width: 24, height: 24, display: 'block' }} />
+        }
       </button>
 
       {/* Chat Panel */}

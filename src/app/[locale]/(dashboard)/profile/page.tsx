@@ -30,6 +30,7 @@ import { StatsCardSkeleton, CardSkeleton } from '@/components/ui/loading-skeleto
 import { OneRepMaxDisplay } from '@/components/profile/one-rep-max-display'
 import { StreakBadges } from '@/components/profile/streak-badges'
 import { AppSettings } from '@/components/profile/app-settings'
+import { SocialProfileSettings } from '@/components/profile/social-profile-settings'
 import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
 import { ROUTES } from '@/lib/constants'
@@ -303,6 +304,8 @@ export default function ProfilePage() {
                   </div>
                 </CardContent>
               </Card>
+
+              <SocialProfileSettings />
               
               <NotificationSettings />
             </div>

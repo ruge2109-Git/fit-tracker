@@ -7,7 +7,7 @@
 
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { Dumbbell, Home, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, ChevronDown, Search, FileText, Target, Scale, Camera } from 'lucide-react'
+import { Dumbbell, Home, Globe, CalendarDays, BookOpen, ListTodo, User, Moon, Sun, Wrench, MessageSquare, Shield, ChevronDown, Search, FileText, Target, Scale, Camera } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { LanguageSelector } from '@/components/language/language-selector'
@@ -45,6 +45,7 @@ export function NavBar() {
       title: 'main',
       items: [
         { href: ROUTES.DASHBOARD, labelKey: 'dashboard', icon: Home },
+        { href: ROUTES.SOCIAL, labelKey: 'social', icon: Globe },
       ],
     },
     {

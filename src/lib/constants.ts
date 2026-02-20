@@ -88,6 +88,7 @@ export const ROUTES = {
   BODY_MEASUREMENTS: '/body-measurements',
   BODY_MEASUREMENT_EDIT: (id: string) => `/body-measurements/${id}/edit`,
   PROGRESS_PHOTOS: '/progress-photos',
+  SOCIAL: '/social',
 } as const
 
 // Exercise type options

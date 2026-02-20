@@ -14,6 +14,8 @@ export interface User extends BaseEntity {
   email: string;
   name: string;
   is_admin?: boolean;
+  is_public?: boolean;
+  nickname?: string;
 }
 
 export interface UserProfile extends User {
@@ -134,6 +136,7 @@ export interface WorkoutStats {
   total_duration: number;
   total_sets: number;
   average_duration: number;
+  total_volume: number;
   most_trained_muscle: MuscleGroup | null;
 }
 

@@ -7,7 +7,7 @@
 
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import { Home, CalendarDays, ListTodo, Scale, Menu, User, Target, Camera, Wrench, Moon, Sun, Shield, MessageSquare, Search } from 'lucide-react'
+import { Home, Globe, CalendarDays, ListTodo, Scale, Menu, User, Target, Camera, Wrench, Moon, Sun, Shield, MessageSquare, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import { useAdmin } from '@/hooks/use-admin'
@@ -76,6 +76,13 @@ export function BottomNav() {
               <DropdownMenuItem onClick={openSearch} className="rounded-2xl h-12 gap-3 px-4 focus:bg-primary/10 transition-all">
                 <IconWrapper><Search size={18} /></IconWrapper>
                 <span className="font-bold text-sm tracking-tight">{t('search')}</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem asChild className="rounded-2xl h-12 gap-3 px-4 focus:bg-primary/10">
+                <Link href={ROUTES.SOCIAL}>
+                  <IconWrapper><Globe size={18} /></IconWrapper>
+                  <span className="font-bold text-sm tracking-tight">{t('social')}</span>
+                </Link>
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild className="rounded-2xl h-12 gap-3 px-4 focus:bg-primary/10">

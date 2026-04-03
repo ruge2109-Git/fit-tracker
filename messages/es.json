@@ -224,13 +224,29 @@
       "caption": "Racha Actual de Entrenamiento",
       "atRisk": "Racha en riesgo. ¡Entrena hoy!",
       "atRiskShort": "Racha en riesgo",
-      "empty": "¡Empieza tu racha hoy!"
+      "empty": "¡Empieza tu racha hoy!",
+      "captionRecover": "Perdiste la racha. Puedes recuperarla si aún tienes intentos.",
+      "recover": "Recuperar racha",
+      "recoverCredits": "{remaining} de {max} recuperaciones",
+      "recoverSuccess": "Racha recuperada",
+      "recoverError": "No se pudo recuperar la racha"
+    },
+    "weeklySchedule": {
+      "title": "Tu semana: rutina y descanso",
+      "badgeRest": "Desc",
+      "badgeRoutine": "Rut",
+      "badgeFree": "Libre",
+      "legendRoutine": "Día con rutina activa",
+      "legendRest": "Descanso (racha)",
+      "legendFree": "Sin rutina fija"
     },
     "reminder": "RECORDATORIO: Sueles entrenar a las {hour}:00. Te avisaremos en esa ventana."
   },
   "workouts": {
     "title": "Entrenamientos",
     "subtitle": "Rastrea tus sesiones de entrenamiento",
+    "restDaysInWorkoutsTitle": "Días de descanso y racha",
+    "restDaysInWorkoutsDescription": "Misma configuración que en Perfil: no entrenar esos días no rompe tu racha.",
     "workout": "entrenamiento",
     "newWorkout": "Nuevo Entrenamiento",
     "createWorkout": "Crear Entrenamiento",
@@ -645,7 +661,11 @@
     "bestLiftsTop5": "Tus mejores levantamientos (top 5)",
     "noRecordsYet": "Aún no hay récords registrados.",
     "reps": "Repeticiones",
-    "appPreferences": "Preferencias de la App"
+    "appPreferences": "Preferencias de la App",
+    "restDaysTitle": "Días de descanso",
+    "restDaysDescription": "La racha no se pierde si no entrenas en estos días",
+    "restDaysHint": "Marca los días en que no planeas entrenar. Esos días no cuentan como falta para tu racha.",
+    "restDaysSaved": "Días de descanso guardados"
   },
   "tools": {
     "title": "Herramientas",

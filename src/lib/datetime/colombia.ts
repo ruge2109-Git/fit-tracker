@@ -4,6 +4,8 @@
  * Los instantes guardados en BD (created_at, etc.) pueden seguir en ISO UTC.
  */
 
+import { DayOfWeek } from '@/types'
+
 export const APP_TIMEZONE = 'America/Bogota'
 
 /** YYYY-MM-DD del instante `date` en Colombia */
@@ -49,6 +51,22 @@ export function addCalendarYears(dateStr: string, deltaYears: number): string {
 export function parseDateStringAtColombiaNoon(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(Number)
   return new Date(Date.UTC(y, m - 1, d, 17, 0, 0))
+}
+
+const JS_DAY_TO_ENUM: Record<number, DayOfWeek> = {
+  0: DayOfWeek.SUNDAY,
+  1: DayOfWeek.MONDAY,
+  2: DayOfWeek.TUESDAY,
+  3: DayOfWeek.WEDNESDAY,
+  4: DayOfWeek.THURSDAY,
+  5: DayOfWeek.FRIDAY,
+  6: DayOfWeek.SATURDAY,
+}
+
+/** Día de la semana civil de `YYYY-MM-DD` en Colombia (según mediodía local). */
+export function getDayOfWeekColombia(dateStr: string): DayOfWeek {
+  const noon = parseDateStringAtColombiaNoon(dateStr)
+  return JS_DAY_TO_ENUM[noon.getUTCDay()]
 }
 
 /** Inicio de semana domingo (comportamiento previo de la app) en calendario Colombia. */

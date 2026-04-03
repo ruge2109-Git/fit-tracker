@@ -26,6 +26,7 @@ import { SavedFiltersManager } from '@/components/filters/saved-filters-manager'
 import { cn } from '@/lib/utils'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { RoutineWithExercises } from '@/types'
+import { RestDaysSettings } from '@/components/profile/rest-days-settings'
 
 export default function WorkoutsPage() {
   const router = useNavigationRouter()
@@ -152,6 +153,8 @@ export default function WorkoutsPage() {
           {t('newWorkout') || 'New Workout'}
         </Button>
       </div>
+
+      {user && <RestDaysSettings variant="workouts" />}
 
       {/* Filters Bar - Clean & Integrated */}
       <div className="flex flex-col gap-4">

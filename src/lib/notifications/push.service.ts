@@ -6,6 +6,23 @@
 import { PushSubscriptionData } from '@/types'
 import { logger } from '@/lib/logger'
 
+/**
+ * Fallos habituales cuando no hay motor push (dev, HTTP sin localhost, políticas del SO/navegador).
+ * No son bugs de la app; evitamos loguear como ERROR.
+ */
+function isExpectedPushUnavailableError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const m = error.message.toLowerCase()
+  const n = error.name
+  if (m.includes('push service not available')) return true
+  if (m.includes('push service') && m.includes('not available')) return true
+  if (m.includes('no push service')) return true
+  if (m.includes('secure context') && m.includes('push')) return true
+  // Chromium suele usar AbortError + "Registration failed..."
+  if (n === 'AbortError' && m.includes('registration failed')) return true
+  return false
+}
+
 class PushService {
   private vapidPublicKey: string | null = null
 
@@ -89,6 +106,14 @@ class PushService {
       return null
     }
 
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      logger.warn(
+        'Push skipped: requires HTTPS (or localhost). Secure context missing.',
+        'PushService'
+      )
+      return null
+    }
+
     if (!this.vapidPublicKey) {
       logger.error('VAPID public key not configured', new Error('Missing VAPID key'), 'PushService')
       return null
@@ -128,7 +153,14 @@ class PushService {
       logger.info('Push subscription created', 'PushService')
       return subscriptionData
     } catch (error) {
-      logger.error('Failed to subscribe to push notifications', error as Error, 'PushService')
+      if (isExpectedPushUnavailableError(error)) {
+        logger.warn(
+          'Push subscription skipped: browser push service unavailable (common in dev, some browsers, or OS settings)',
+          'PushService'
+        )
+      } else {
+        logger.error('Failed to subscribe to push notifications', error as Error, 'PushService')
+      }
       return null
     }
   }

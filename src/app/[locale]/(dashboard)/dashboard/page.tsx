@@ -58,6 +58,7 @@ import { formatColombiaDayMonth } from '@/lib/datetime/colombia'
 import { LayoutGrid, LayoutList } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DashboardCalendar } from '@/components/dashboard/dashboard-calendar'
+import { WeeklyScheduleStrip } from '@/components/dashboard/weekly-schedule-strip'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { Routine } from '@/types'
 
@@ -283,6 +284,10 @@ export default function DashboardPage() {
             <DashboardCalendar workouts={workouts} routines={routines} />
           </CardContent>
         </Card>
+
+        {user && (
+          <WeeklyScheduleStrip restDays={user.rest_days} routines={routines} />
+        )}
 
         {/* Consistency Heatmap */}
         <Card className="rounded-3xl border-none shadow-sm overflow-hidden p-6 md:p-8 bg-card flex flex-col items-center">

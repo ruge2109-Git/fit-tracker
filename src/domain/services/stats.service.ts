@@ -12,6 +12,12 @@ import {
   getTodayColombia,
   getWeekStartSundayColombia,
 } from '@/lib/datetime/colombia'
+import {
+  canOfferStreakRecovery,
+  computeTrainingStreak,
+  getRecoveryCreditsRemaining,
+  normalizeRestDays,
+} from '@/lib/streak'
 import { WorkoutStats, ExerciseProgress, MuscleGroup, ApiResponse } from '@/types'
 
 export interface VolumeByWeek {
@@ -64,7 +70,16 @@ export interface IStatsService {
   getPersonalBest1RMs(userId: string, limit?: number): Promise<ApiResponse<{ exercise_name: string; one_rm: number; date: string }[]>>
   getPeriodMetrics(userId: string, startDate: string, endDate: string): Promise<ApiResponse<{ volume: number; workouts: number; avgDuration: number }>>
   getLastPerformance(userId: string, exerciseId: string): Promise<ApiResponse<{ weight: number; reps: number; date: string } | null>>
-  getCurrentStreak(userId: string): Promise<ApiResponse<{ current: number; isAtRisk: boolean; lastWorkoutDate: string | null }>>
+  getCurrentStreak(userId: string): Promise<
+    ApiResponse<{
+      current: number
+      isAtRisk: boolean
+      lastWorkoutDate: string | null
+      recoveryCreditsRemaining: number
+      canRecoverStreak: boolean
+      recoverableMissedDate: string | null
+    }>
+  >
   getAdaptiveReminderHour(userId: string): Promise<ApiResponse<{ suggestedHour: number }>>
   getWeeklyLeaderboard(): Promise<ApiResponse<LeaderboardEntry[]>>
 }
@@ -590,50 +605,79 @@ class StatsService implements IStatsService {
     }
   }
 
-  async getCurrentStreak(userId: string): Promise<ApiResponse<{ current: number; isAtRisk: boolean; lastWorkoutDate: string | null }>> {
+  async getCurrentStreak(userId: string): Promise<
+    ApiResponse<{
+      current: number
+      isAtRisk: boolean
+      lastWorkoutDate: string | null
+      recoveryCreditsRemaining: number
+      canRecoverStreak: boolean
+      recoverableMissedDate: string | null
+    }>
+  > {
     try {
-      const { data, error } = await supabase
-        .from('workouts')
-        .select('date')
-        .eq('user_id', userId)
-        .order('date', { ascending: false })
+      const [
+        { data: workoutRows, error: workoutError },
+        { data: profile },
+        { data: forgivenessRows, error: forgivenessError },
+      ] = await Promise.all([
+        supabase
+          .from('workouts')
+          .select('date')
+          .eq('user_id', userId)
+          .order('date', { ascending: false }),
+        supabase.from('users').select('rest_days').eq('id', userId).maybeSingle(),
+        supabase.from('streak_recovery_forgiveness').select('forgiven_date').eq('user_id', userId),
+      ])
 
-      if (error) throw error
-      if (!data || data.length === 0) return { data: { current: 0, isAtRisk: false, lastWorkoutDate: null } }
+      if (workoutError) throw workoutError
+      if (forgivenessError) throw forgivenessError
 
-      const uniqueDates = Array.from(new Set(data.map(w => w.date)))
-      const today = getTodayColombia()
-      const yesterday = addCalendarDays(today, -1)
+      const forgivenessCount = forgivenessRows?.length ?? 0
+      const recoveryCreditsRemaining = getRecoveryCreditsRemaining(forgivenessCount)
+      const forgivenDates = new Set((forgivenessRows ?? []).map((r) => r.forgiven_date))
 
-      let streak = 0
-      let currentCheck = today
-      let lastWorkoutDate = uniqueDates[0]
-
-      // If no workout today AND no workout yesterday, streak is 0
-      if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) {
-        return { data: { current: 0, isAtRisk: false, lastWorkoutDate: uniqueDates[0] } }
-      }
-
-      // Check if currentCheck needs to be yesterday if today has no workout
-      if (uniqueDates[0] === yesterday && uniqueDates[0] !== today) {
-        currentCheck = yesterday
-      }
-
-      for (const date of uniqueDates) {
-        const expected = addCalendarDays(currentCheck, -streak)
-        if (date === expected) {
-          streak++
-        } else {
-          break
+      if (!workoutRows || workoutRows.length === 0) {
+        return {
+          data: {
+            current: 0,
+            isAtRisk: false,
+            lastWorkoutDate: null,
+            recoveryCreditsRemaining,
+            canRecoverStreak: false,
+            recoverableMissedDate: null,
+          },
         }
       }
+
+      const uniqueDates = Array.from(new Set(workoutRows.map((w) => w.date)))
+      const restDays = normalizeRestDays(profile?.rest_days as string[] | undefined)
+      const today = getTodayColombia()
+      const { streak, isAtRisk, lastWorkoutDate, firstMissedDate } = computeTrainingStreak(
+        uniqueDates,
+        today,
+        restDays,
+        forgivenDates
+      )
+
+      const canRecoverStreak = canOfferStreakRecovery({
+        streak,
+        workoutDatesCount: uniqueDates.length,
+        recoveryCreditsRemaining,
+        firstMissedDate,
+        lastWorkoutDate,
+        todayStr: today,
+      })
 
       return {
         data: {
           current: streak,
-          isAtRisk: uniqueDates[0] !== today && streak > 0,
-          lastWorkoutDate
-        }
+          isAtRisk,
+          lastWorkoutDate,
+          recoveryCreditsRemaining,
+          canRecoverStreak,
+          recoverableMissedDate: canRecoverStreak ? firstMissedDate : null,
+        },
       }
     } catch (error: any) {
       return { error: error.message }

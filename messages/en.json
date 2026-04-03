@@ -216,13 +216,29 @@
       "caption": "Current Workout Streak",
       "atRisk": "Streak at risk. Train today!",
       "atRiskShort": "Streak at risk",
-      "empty": "Start your streak today!"
+      "empty": "Start your streak today!",
+      "captionRecover": "You lost your streak. Recover it if you still have uses left.",
+      "recover": "Recover streak",
+      "recoverCredits": "{remaining} of {max} recoveries",
+      "recoverSuccess": "Streak recovered",
+      "recoverError": "Could not recover streak"
+    },
+    "weeklySchedule": {
+      "title": "Your week: routine & rest",
+      "badgeRest": "Off",
+      "badgeRoutine": "Plan",
+      "badgeFree": "Open",
+      "legendRoutine": "Active routine day",
+      "legendRest": "Rest (streak)",
+      "legendFree": "No fixed routine"
     },
     "reminder": "REMINDER: You usually train at {hour}:00. We'll notify you in that window."
   },
   "workouts": {
     "title": "Workouts",
     "subtitle": "Track your training sessions",
+    "restDaysInWorkoutsTitle": "Rest days & streak",
+    "restDaysInWorkoutsDescription": "Same as in Profile: skipping these days will not break your streak.",
     "workout": "workout",
     "newWorkout": "New Workout",
     "createWorkout": "Create Workout",
@@ -638,7 +654,11 @@
     "bestLiftsTop5": "Your best lifts (top 5)",
     "noRecordsYet": "No records recorded yet.",
     "reps": "Reps",
-    "appPreferences": "App Preferences"
+    "appPreferences": "App Preferences",
+    "restDaysTitle": "Rest days",
+    "restDaysDescription": "Your streak won't break if you skip training on these days",
+    "restDaysHint": "Pick days you don't plan to work out. Skipping those days won't count against your streak.",
+    "restDaysSaved": "Rest days saved"
   },
   "tools": {
     "title": "Tools",

@@ -9,6 +9,16 @@ export interface BaseEntity {
   created_at: string;
 }
 
+export enum DayOfWeek {
+  MONDAY = 'monday',
+  TUESDAY = 'tuesday',
+  WEDNESDAY = 'wednesday',
+  THURSDAY = 'thursday',
+  FRIDAY = 'friday',
+  SATURDAY = 'saturday',
+  SUNDAY = 'sunday',
+}
+
 // User types
 export interface User extends BaseEntity {
   email: string;
@@ -16,6 +26,8 @@ export interface User extends BaseEntity {
   is_admin?: boolean;
   is_public?: boolean;
   nickname?: string;
+  /** Días de descanso semanal; no entrenar ese día no rompe la racha */
+  rest_days?: DayOfWeek[];
 }
 
 export interface UserProfile extends User {
@@ -92,16 +104,6 @@ export enum RoutineFrequency {
   WEEKLY_5 = 'weekly_5',
   WEEKLY_6 = 'weekly_6',
   DAILY = 'daily',
-}
-
-export enum DayOfWeek {
-  MONDAY = 'monday',
-  TUESDAY = 'tuesday',
-  WEDNESDAY = 'wednesday',
-  THURSDAY = 'thursday',
-  FRIDAY = 'friday',
-  SATURDAY = 'saturday',
-  SUNDAY = 'sunday',
 }
 
 export interface Routine extends BaseEntity {

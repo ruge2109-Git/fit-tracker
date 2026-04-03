@@ -49,6 +49,7 @@ class AuthService implements IAuthService {
           is_public: profile?.is_public ?? false,
           nickname: profile?.nickname || undefined,
           is_admin: profile?.is_admin ?? false,
+          rest_days: (profile?.rest_days as User['rest_days']) ?? [],
         },
       }
     } catch (error: any) {
@@ -82,6 +83,7 @@ class AuthService implements IAuthService {
           is_public: profile?.is_public ?? false,
           nickname: profile?.nickname || undefined,
           is_admin: profile?.is_admin ?? false,
+          rest_days: (profile?.rest_days as User['rest_days']) ?? [],
         },
       }
     } catch (error: any) {
@@ -122,6 +124,7 @@ class AuthService implements IAuthService {
           is_public: profile?.is_public ?? false,
           nickname: profile?.nickname || undefined,
           is_admin: profile?.is_admin ?? false,
+          rest_days: (profile?.rest_days as User['rest_days']) ?? [],
         },
       }
     } catch (error: any) {

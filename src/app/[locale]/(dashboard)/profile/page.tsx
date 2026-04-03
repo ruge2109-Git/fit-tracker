@@ -30,6 +30,7 @@ import { StatsCardSkeleton, CardSkeleton } from '@/components/ui/loading-skeleto
 import { OneRepMaxDisplay } from '@/components/profile/one-rep-max-display'
 import { StreakBadges } from '@/components/profile/streak-badges'
 import { AppSettings } from '@/components/profile/app-settings'
+import { RestDaysSettings } from '@/components/profile/rest-days-settings'
 import { SocialProfileSettings } from '@/components/profile/social-profile-settings'
 import { useAuthStore } from '@/store/auth.store'
 import { useWorkoutStore } from '@/store/workout.store'
@@ -311,6 +312,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-6">
+              <RestDaysSettings />
               <AppSettings />
               
               <section className="space-y-4">

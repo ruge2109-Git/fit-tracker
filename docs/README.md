@@ -19,6 +19,10 @@ Bienvenido a la documentación completa de FitTrackr. Esta guía te ayudará a e
 - **[PWA](./PWA.md)** - Configuración y características de Progressive Web App, íconos y funcionalidad offline
 - **[Notificaciones Push](./PUSH_NOTIFICATIONS.md)** - Configuración completa de notificaciones push, VAPID keys, cron jobs y testing
 
+### 📋 Inventario y evolución
+
+- **[Funcionalidades y posibles mejoras](./FUNCIONALIDADES_Y_MEJORAS.md)** - Listado de capacidades actuales de la app e ideas de mejora orientativas
+
 ## 🎯 Guía Rápida por Rol
 
 ### Para Desarrolladores Nuevos

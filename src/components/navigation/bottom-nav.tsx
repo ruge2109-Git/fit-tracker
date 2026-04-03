@@ -54,6 +54,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={`nav-${item.labelKey}`}
               className={cn(
                 'flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all',
                 isActive ? 'text-primary scale-110' : 'text-muted-foreground opacity-70'
@@ -156,6 +157,7 @@ function DrawerNavItem({ href, icon, label, highlight }: { href: string, icon: R
     <DrawerClose asChild>
       <Link 
         href={href}
+        data-tour={href === ROUTES.PROFILE ? 'nav-profile' : undefined}
         className={cn(
           "flex flex-col items-center gap-3 p-4 rounded-[2rem] transition-all active:scale-95",
           highlight ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-accent/5 hover:bg-accent/10 text-muted-foreground"

@@ -97,7 +97,7 @@ export function NavBar() {
         <div className="flex h-12 sm:h-16 items-center justify-between">
           {/* Logo - Always visible */}
           <div className="flex items-center gap-2 sm:gap-4 px-1 sm:px-2">
-            <Link href={ROUTES.DASHBOARD} className="flex items-center gap-1.5 sm:gap-2 font-black text-lg sm:text-xl tracking-tighter">
+            <Link href={ROUTES.DASHBOARD} data-tour="nav-brand" className="flex items-center gap-1.5 sm:gap-2 font-black text-lg sm:text-xl tracking-tighter">
               <Dumbbell className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="hidden xs:block">{t('appName')}</span>
             </Link>
@@ -150,6 +150,7 @@ export function NavBar() {
                         <TooltipTrigger asChild>
                           <Link
                             href={item.href}
+                            data-tour={`nav-${item.labelKey}`}
                             className={cn(
                               'flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary px-2 py-1 rounded-md relative',
                               isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'
@@ -210,6 +211,7 @@ export function NavBar() {
                           <DropdownMenuItem key={item.href} asChild>
                             <Link
                               href={item.href}
+                              data-tour={`nav-${item.labelKey}`}
                               className={cn(
                                 'flex items-center gap-2 cursor-pointer',
                                 isActive && 'bg-accent'

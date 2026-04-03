@@ -40,7 +40,7 @@ class AuthService implements IAuthService {
         .eq('id', data.user.id)
         .single()
 
-      return {
+        return {
         data: {
           id: data.user.id,
           email: data.user.email!,
@@ -50,6 +50,7 @@ class AuthService implements IAuthService {
           nickname: profile?.nickname || undefined,
           is_admin: profile?.is_admin ?? false,
           rest_days: (profile?.rest_days as User['rest_days']) ?? [],
+          onboarding_completed_at: profile?.onboarding_completed_at ?? null,
         },
       }
     } catch (error: any) {
@@ -84,6 +85,7 @@ class AuthService implements IAuthService {
           nickname: profile?.nickname || undefined,
           is_admin: profile?.is_admin ?? false,
           rest_days: (profile?.rest_days as User['rest_days']) ?? [],
+          onboarding_completed_at: profile?.onboarding_completed_at ?? null,
         },
       }
     } catch (error: any) {
@@ -125,6 +127,7 @@ class AuthService implements IAuthService {
           nickname: profile?.nickname || undefined,
           is_admin: profile?.is_admin ?? false,
           rest_days: (profile?.rest_days as User['rest_days']) ?? [],
+          onboarding_completed_at: profile?.onboarding_completed_at ?? null,
         },
       }
     } catch (error: any) {

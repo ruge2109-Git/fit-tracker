@@ -28,6 +28,8 @@ export interface User extends BaseEntity {
   nickname?: string;
   /** Días de descanso semanal; no entrenar ese día no rompe la racha */
   rest_days?: DayOfWeek[];
+  /** When set, guided onboarding was completed or skipped */
+  onboarding_completed_at?: string | null;
 }
 
 export interface UserProfile extends User {

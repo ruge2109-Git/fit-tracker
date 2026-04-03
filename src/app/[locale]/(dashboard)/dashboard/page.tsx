@@ -156,7 +156,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 pb-10">
       {/* Header - More App-like */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-1" data-tour="dashboard-welcome">
         <div>
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight">
             {t('welcomeBack', { name: user?.name?.split(' ')[0] || '' })}
@@ -184,7 +184,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats - Horizontal Scroll on Mobile (Flutter-like) */}
-      <div className="flex overflow-x-auto pb-4 gap-3 -mx-4 px-4 scrollbar-hide no-scrollbar md:grid md:grid-cols-5 md:pb-0 md:mx-0 md:px-0">
+      <div
+        className="flex overflow-x-auto pb-4 gap-3 -mx-4 px-4 scrollbar-hide no-scrollbar md:grid md:grid-cols-5 md:pb-0 md:mx-0 md:px-0"
+        data-tour="dashboard-stats"
+      >
         {!isLoaded && !stats && totalVolume === 0 ? (
           Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="min-w-[140px] md:min-w-0">
@@ -234,7 +237,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions (Floating-like style) */}
-      <div className="grid grid-cols-2 gap-3 md:hidden">
+      <div className="grid grid-cols-2 gap-3 md:hidden" data-tour="dashboard-quick-actions">
         <Button 
           onClick={() => router.push(ROUTES.NEW_WORKOUT)} 
           className="h-14 rounded-2xl bg-primary shadow-lg shadow-primary/20 flex flex-col items-center justify-center gap-0.5"
@@ -253,10 +256,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Start Routines */}
-      {user && <QuickStartRoutines userId={user.id} />}
+      <div data-tour="dashboard-quick-start" className="min-h-[1px]">
+        {user && <QuickStartRoutines userId={user.id} />}
+      </div>
 
       {/* Streak Counter */}
-      {user && <StreakCounter userId={user.id} />}
+      <div data-tour="dashboard-streak" className="min-h-[72px]">
+        {user && <StreakCounter userId={user.id} />}
+      </div>
 
       {suggestedHour !== null && (
         <div className="px-1">
@@ -273,7 +280,10 @@ export default function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid gap-6">
         {/* Calendar Section */}
-        <Card className="rounded-3xl border-none bg-accent/30 shadow-none overflow-hidden">
+        <Card
+          className="rounded-3xl border-none bg-accent/30 shadow-none overflow-hidden"
+          data-tour="dashboard-calendar"
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
@@ -286,7 +296,9 @@ export default function DashboardPage() {
         </Card>
 
         {user && (
-          <WeeklyScheduleStrip restDays={user.rest_days} routines={routines} />
+          <div data-tour="dashboard-weekstrip">
+            <WeeklyScheduleStrip restDays={user.rest_days} routines={routines} />
+          </div>
         )}
 
         {/* Consistency Heatmap */}

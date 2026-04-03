@@ -25,6 +25,8 @@ import { ROUTES } from '@/lib/constants'
 import { AiCoachChat } from '@/components/ai/ai-coach-chat'
 import { NavigationTracker } from '@/components/audit/navigation-tracker'
 import { NotificationManager } from '@/components/social/notification-manager'
+import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard'
+import { DashboardTour } from '@/components/onboarding/dashboard-tour'
 
 export default function DashboardLayout({
   children,
@@ -108,6 +110,8 @@ export default function DashboardLayout({
         {user && <AiCoachChat />}
         {user && <NavigationTracker />}
         {user && <NotificationManager />}
+        {user && <OnboardingWizard />}
+        {user && <DashboardTour />}
       </div>
     </SearchDialogProvider>
   )

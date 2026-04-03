@@ -11,6 +11,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { notificationService } from '@/lib/notifications/notification.service'
 import { pushService } from '@/lib/notifications/push.service'
+import {
+  requestNotificationPermissionAndPushSubscription,
+  subscribePushAndRegister,
+} from '@/lib/notifications/notification-push-setup'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@/store/auth.store'
@@ -54,37 +58,16 @@ export function NotificationSettings() {
   const handleEnable = async () => {
     setIsLoading(true)
     try {
-      const granted = await notificationService.requestPermission()
-      setPermission(Notification.permission)
+      const { permission: perm, granted, pushSubscribed } =
+        await requestNotificationPermissionAndPushSubscription()
+      setPermission(perm)
 
       if (granted) {
         toast.success(t('enabledSuccess'))
-        
-        // Try to enable push notifications if supported
-        if (isPushSupported && user) {
-          // Small delay to ensure permission is fully granted
-          setTimeout(async () => {
-            const subscription = await pushService.subscribe()
-            if (subscription) {
-              // Save to backend
-              const response = await fetch('/api/push/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subscription),
-              })
-
-              if (response.ok) {
-                setIsSubscribed(true)
-                toast.success(t('pushEnabled') || 'Push notifications enabled!')
-              } else {
-                const errorData = await response.json().catch(() => ({}))
-                toast.error(errorData.error || t('pushFailed') || 'Failed to enable push notifications')
-              }
-            }
-          }, 500)
+        if (pushSubscribed) {
+          setIsSubscribed(true)
+          toast.success(t('pushEnabled') || 'Push notifications enabled!')
         }
-        
-        // Test notification
         await notificationService.showTestNotification()
       } else {
         toast.error(t('permissionDenied'))
@@ -109,7 +92,6 @@ export function NotificationSettings() {
         return
       }
 
-      // Ensure we have notification permission
       if (permission !== 'granted') {
         const granted = await notificationService.requestPermission()
         setPermission(Notification.permission)
@@ -119,23 +101,10 @@ export function NotificationSettings() {
         }
       }
 
-      // Subscribe to push notifications
-      const subscription = await pushService.subscribe()
-      if (subscription) {
-        // Save to backend
-        const response = await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(subscription),
-        })
-
-        if (response.ok) {
-          setIsSubscribed(true)
-          toast.success(t('pushEnabled') || 'Push notifications enabled!')
-        } else {
-          const errorData = await response.json().catch(() => ({}))
-          toast.error(errorData.error || t('pushFailed') || 'Failed to enable push notifications')
-        }
+      const ok = await subscribePushAndRegister()
+      if (ok) {
+        setIsSubscribed(true)
+        toast.success(t('pushEnabled') || 'Push notifications enabled!')
       } else {
         toast.error(t('pushFailed') || 'Failed to subscribe to push notifications')
       }

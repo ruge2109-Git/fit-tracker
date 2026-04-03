@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BodyMeasurementFormData, MeasurementType } from '@/types'
 import { useTranslations } from 'next-intl'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 
 interface MeasurementFormProps {
   onSubmit: (data: BodyMeasurementFormData) => void
@@ -48,7 +49,7 @@ export function MeasurementForm({ onSubmit, defaultValues, isLoading }: Measurem
       value: defaultValues?.value || 0,
       unit: defaultValues?.unit || 'kg',
       notes: defaultValues?.notes || '',
-      measurement_date: defaultValues?.measurement_date || new Date().toISOString().split('T')[0],
+      measurement_date: defaultValues?.measurement_date || getTodayColombia(),
     },
   })
 

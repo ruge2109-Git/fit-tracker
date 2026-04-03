@@ -5,6 +5,13 @@
  */
 
 import { supabase } from '@/lib/supabase/client'
+import {
+  APP_TIMEZONE,
+  addCalendarDays,
+  addCalendarYears,
+  getTodayColombia,
+  getWeekStartSundayColombia,
+} from '@/lib/datetime/colombia'
 import { WorkoutStats, ExerciseProgress, MuscleGroup, ApiResponse } from '@/types'
 
 export interface VolumeByWeek {
@@ -209,14 +216,13 @@ class StatsService implements IStatsService {
 
   async getVolumeByWeek(userId: string, weeks: number = 12): Promise<ApiResponse<VolumeByWeek[]>> {
     try {
-      const weeksAgo = new Date()
-      weeksAgo.setDate(weeksAgo.getDate() - weeks * 7)
+      const weeksAgoStr = addCalendarDays(getTodayColombia(), -weeks * 7)
 
       const { data: workouts } = await supabase
         .from('workouts')
         .select('id, date')
         .eq('user_id', userId)
-        .gte('date', weeksAgo.toISOString().split('T')[0])
+        .gte('date', weeksAgoStr)
         .order('date', { ascending: true })
 
       if (!workouts || workouts.length === 0) {
@@ -234,10 +240,7 @@ class StatsService implements IStatsService {
       const weeklyData: Record<string, { volume: number; workouts: Set<string> }> = {}
       
       sets?.forEach((set: any) => {
-        const date = new Date(set.workouts.date)
-        const weekStart = new Date(date)
-        weekStart.setDate(date.getDate() - date.getDay()) // Start of week (Sunday)
-        const weekKey = weekStart.toISOString().split('T')[0]
+        const weekKey = getWeekStartSundayColombia(set.workouts.date as string)
         
         if (!weeklyData[weekKey]) {
           weeklyData[weekKey] = { volume: 0, workouts: new Set() }
@@ -367,14 +370,13 @@ class StatsService implements IStatsService {
 
   async getWeeklyProgress(userId: string, weeks: number = 8): Promise<ApiResponse<WeeklyProgress[]>> {
     try {
-      const weeksAgo = new Date()
-      weeksAgo.setDate(weeksAgo.getDate() - weeks * 7)
+      const weeksAgoStr = addCalendarDays(getTodayColombia(), -weeks * 7)
 
       const { data: workouts } = await supabase
         .from('workouts')
         .select('id, date')
         .eq('user_id', userId)
-        .gte('date', weeksAgo.toISOString().split('T')[0])
+        .gte('date', weeksAgoStr)
         .order('date', { ascending: true })
 
       if (!workouts || workouts.length === 0) {
@@ -400,10 +402,7 @@ class StatsService implements IStatsService {
         const workout = workouts.find(w => w.id === set.workout_id)
         if (!workout) return
         
-        const date = new Date(workout.date)
-        const weekStart = new Date(date)
-        weekStart.setDate(date.getDate() - date.getDay())
-        const weekKey = weekStart.toISOString().split('T')[0]
+        const weekKey = getWeekStartSundayColombia(workout.date as string)
         
         if (!weeklyData[weekKey]) {
           weeklyData[weekKey] = { 
@@ -436,9 +435,7 @@ class StatsService implements IStatsService {
 
   async getDailyVolumeForYear(userId: string): Promise<ApiResponse<Record<string, number>>> {
     try {
-      const oneYearAgo = new Date()
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
-      const startDate = oneYearAgo.toISOString().split('T')[0]
+      const startDate = addCalendarYears(getTodayColombia(), -1)
 
       // Fetch workouts with their sets in the last year
       const { data: workouts, error } = await supabase
@@ -605,8 +602,8 @@ class StatsService implements IStatsService {
       if (!data || data.length === 0) return { data: { current: 0, isAtRisk: false, lastWorkoutDate: null } }
 
       const uniqueDates = Array.from(new Set(data.map(w => w.date)))
-      const today = new Date().toISOString().split('T')[0]
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+      const today = getTodayColombia()
+      const yesterday = addCalendarDays(today, -1)
 
       let streak = 0
       let currentCheck = today
@@ -623,7 +620,7 @@ class StatsService implements IStatsService {
       }
 
       for (const date of uniqueDates) {
-        const expected = new Date(new Date(currentCheck).getTime() - streak * 86400000).toISOString().split('T')[0]
+        const expected = addCalendarDays(currentCheck, -streak)
         if (date === expected) {
           streak++
         } else {
@@ -654,7 +651,14 @@ class StatsService implements IStatsService {
       if (error) throw error
       if (!data || data.length < 3) return { data: { suggestedHour: 8 } } // Default to 8 AM
 
-      const hours = data.map(w => new Date(w.created_at).getHours())
+      const hours = data.map((w) => {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: APP_TIMEZONE,
+          hour: 'numeric',
+          hour12: false,
+        }).formatToParts(new Date(w.created_at))
+        return Number(parts.find((p) => p.type === 'hour')?.value ?? 0)
+      })
       const counts: Record<number, number> = {}
       hours.forEach(h => counts[h] = (counts[h] || 0) + 1)
 

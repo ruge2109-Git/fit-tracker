@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { statsService } from '@/domain/services/stats.service'
 import { formatDistanceToNow } from 'date-fns'
+import { parseDateStringAtColombiaNoon } from '@/lib/datetime/colombia'
 import { es } from 'date-fns/locale'
 import { History, Sparkles } from 'lucide-react'
 
@@ -27,7 +28,10 @@ export function ExerciseHistoryHints({ userId, exerciseId }: ExerciseHistoryHint
 
   if (isLoading || !data) return null
 
-  const daysAgo = formatDistanceToNow(new Date(data.date), { addSuffix: true, locale: es })
+  const daysAgo = formatDistanceToNow(parseDateStringAtColombiaNoon(data.date), {
+    addSuffix: true,
+    locale: es,
+  })
   const suggestedWeight = data.weight + 2.5
 
   return (

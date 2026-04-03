@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
+import { addCalendarDays, getTodayColombia, parseDateStringAtColombiaNoon } from '@/lib/datetime/colombia'
 
 export async function POST(req: Request) {
   try {
@@ -16,16 +17,16 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Fetch last 6 weeks of performance for this specific exercise
-    const sixWeeksAgo = new Date()
-    sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42)
+    // Fetch last 6 weeks of performance for this specific exercise (fechas en Colombia)
+    const sixWeeksAgoStr = addCalendarDays(getTodayColombia(), -42)
+    const sixWeeksAgoAnchor = parseDateStringAtColombiaNoon(sixWeeksAgoStr)
 
     const { data: sets, error } = await supabase
       .from('sets')
       .select('weight, reps, workout:workouts(date)')
       .eq('user_id', user.id)
       .eq('exercise_id', exerciseId)
-      .gte('workout.date', sixWeeksAgo.toISOString().split('T')[0])
+      .gte('workout.date', sixWeeksAgoStr)
       .order('workout(date)', { ascending: true })
 
     if (error) throw error
@@ -33,8 +34,8 @@ export async function POST(req: Request) {
     // Group by week
     const weeklyBest: Record<number, number> = {}
     sets?.forEach((s: any) => {
-      const date = new Date(s.workout.date)
-      const weekNum = Math.floor((date.getTime() - sixWeeksAgo.getTime()) / (7 * 24 * 60 * 60 * 1000))
+      const date = parseDateStringAtColombiaNoon(s.workout.date as string)
+      const weekNum = Math.floor((date.getTime() - sixWeeksAgoAnchor.getTime()) / (7 * 24 * 60 * 60 * 1000))
       const volume = s.weight * s.reps
       if (!weeklyBest[weekNum] || volume > weeklyBest[weekNum]) {
         weeklyBest[weekNum] = volume

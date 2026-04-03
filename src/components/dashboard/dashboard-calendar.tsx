@@ -19,6 +19,7 @@ import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useTranslations } from 'next-intl'
 import { useLocale } from 'next-intl'
 import { cn } from '@/lib/utils'
+import { getTodayColombia, parseDateStringAtColombiaNoon } from '@/lib/datetime/colombia'
 import { useIsMobile } from '@/hooks/use-media-query'
 
 interface DashboardCalendarProps {
@@ -49,9 +50,9 @@ export function DashboardCalendar({ workouts, routines }: DashboardCalendarProps
   }
   
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>(getInitialViewMode)
-  const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [currentWeek, setCurrentWeek] = useState(new Date())
-  const [currentDay, setCurrentDay] = useState(new Date())
+  const [currentMonth, setCurrentMonth] = useState(() => parseDateStringAtColombiaNoon(getTodayColombia()))
+  const [currentWeek, setCurrentWeek] = useState(() => parseDateStringAtColombiaNoon(getTodayColombia()))
+  const [currentDay, setCurrentDay] = useState(() => parseDateStringAtColombiaNoon(getTodayColombia()))
 
   const dateLocale = locale === 'es' ? es : enUS
 
@@ -109,8 +110,7 @@ export function DashboardCalendar({ workouts, routines }: DashboardCalendarProps
       if (dateStr.includes('T')) {
         dateStr = dateStr.split('T')[0]
       }
-      // Create date at noon to avoid timezone shifts
-      const date = new Date(dateStr + 'T12:00:00')
+      const date = parseDateStringAtColombiaNoon(dateStr)
       return {
         type: 'completed' as const,
         workout,

@@ -19,6 +19,7 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, Command
 import { Search, Filter, Download, RefreshCw, Calendar, User, Activity, ChevronsUpDown, Check } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { formatDate, cn } from '@/lib/utils'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 import { CardSkeleton } from '@/components/ui/loading-skeleton'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
@@ -231,7 +232,7 @@ export default function AdminAuditPage() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `audit-log-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `audit-log-${getTodayColombia()}.csv`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ProgressPhotoFormData, PhotoType } from '@/types'
 import { useTranslations } from 'next-intl'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 import { Upload, X } from 'lucide-react'
 import Image from 'next/image'
 
@@ -57,7 +58,7 @@ export function PhotoUpload({ onSubmit, isLoading }: PhotoUploadProps) {
     defaultValues: {
       photo_type: PhotoType.FRONT,
       notes: '',
-      photo_date: new Date().toISOString().split('T')[0],
+      photo_date: getTodayColombia(),
     },
   })
 

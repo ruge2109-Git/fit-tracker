@@ -13,6 +13,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { WorkoutWithSets } from '@/types'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatColombiaDayMonth } from '@/lib/datetime/colombia'
 
 const CW = 1080   // canvas width
 const CH = 1920   // canvas height
@@ -234,8 +235,11 @@ async function renderCard(workout: WorkoutWithSets, routineName: string|undefine
   )
 
   // ── Date ─────────────────────────────────────────────────────────────────────
-  const dateStr = new Date(workout.date + 'T12:00:00').toLocaleDateString('es-ES', {
-    weekday:'long', day:'numeric', month:'long', year:'numeric',
+  const dateStr = formatColombiaDayMonth(workout.date, 'es-CO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   })
   const dateY = nameY + Math.min(lines.length, 3) * 108 + 16
   font(ctx, 38, '400'); ctx.fillStyle = tpl.sub
@@ -385,7 +389,11 @@ function Preview({ workout, routineName, tpl }: { workout:WorkoutWithSets; routi
           {routineName ?? 'Entrenamiento Libre'}
         </div>
         <div style={{ fontSize:11, color:tpl.sub, marginTop:3 }}>
-          {new Date(workout.date+'T12:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'long'})}
+          {formatColombiaDayMonth(workout.date, 'es-CO', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'long',
+          })}
         </div>
       </div>
 

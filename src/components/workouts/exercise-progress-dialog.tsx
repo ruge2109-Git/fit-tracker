@@ -13,6 +13,10 @@ import { statsService } from '@/domain/services/stats.service'
 import { useAuthStore } from '@/store/auth.store'
 import { ExerciseProgress } from '@/types'
 import { useTranslations, useLocale } from 'next-intl'
+import {
+  formatColombiaDayMonth,
+  parseDateStringAtColombiaNoon,
+} from '@/lib/datetime/colombia'
 
 interface ExerciseProgressDialogProps {
   exerciseId: string
@@ -86,8 +90,10 @@ export function ExerciseProgressDialog({
         workout.totalVolume += volume
       })
       
-      const history = Array.from(historyMap.values()).sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+      const history = Array.from(historyMap.values()).sort(
+        (a, b) =>
+          parseDateStringAtColombiaNoon(b.date).getTime() -
+          parseDateStringAtColombiaNoon(a.date).getTime()
       )
       
       setWorkoutHistory(history)
@@ -124,8 +130,8 @@ export function ExerciseProgressDialog({
 
   const maxWeight = progress ? Math.max(...progress.weights) : 0
 
-  const chartData = workoutHistory.map(workout => ({
-    date: new Date(workout.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+  const chartData = workoutHistory.map((workout) => ({
+    date: formatColombiaDayMonth(workout.date, 'en-US', { month: 'short', day: 'numeric' }),
     maxWeight: workout.maxWeight,
     dateKey: workout.date,
   })).reverse()
@@ -232,12 +238,11 @@ export function ExerciseProgressDialog({
                 >
                   <Accordion type="single" collapsible className="space-y-3">
                     {displayedHistory.map((workout) => {
-                      const date = new Date(workout.date)
-                      const formattedDate = date.toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })
+                      const formattedDate = formatColombiaDayMonth(
+                        workout.date,
+                        locale === 'es' ? 'es-CO' : 'en-US',
+                        { year: 'numeric', month: 'short', day: 'numeric' }
+                      )
                       
                       return (
                         <AccordionItem key={workout.date} value={workout.date} className="border-none bg-background/50 rounded-xl px-0 overflow-hidden">

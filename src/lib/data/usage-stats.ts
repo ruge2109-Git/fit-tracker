@@ -5,6 +5,12 @@
 
 import { Workout, Exercise, Routine, WorkoutWithSets, MuscleGroup } from '@/types'
 import { logger } from '@/lib/logger'
+import {
+  addCalendarDays,
+  getTodayColombia,
+  getWeekStartSundayColombia,
+  parseDateStringAtColombiaNoon,
+} from '@/lib/datetime/colombia'
 
 const STATS_KEY = 'fittrackr_usage_stats'
 
@@ -89,40 +95,40 @@ export function calculateUsageStats(
 ): UsageStats {
   const stored = getStoredStats()
   const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const todayStr = getTodayColombia()
 
   // Workout stats
   const totalWorkouts = workouts.length
   const totalWorkoutTime = workouts.reduce((sum, w) => sum + w.duration, 0)
   const averageWorkoutDuration = totalWorkouts > 0 ? totalWorkoutTime / totalWorkouts : 0
 
-  // Date range
-  const workoutDates = workouts.map((w) => new Date(w.date).getTime()).sort((a, b) => a - b)
-  const firstWorkoutDate = workoutDates.length > 0 ? new Date(workoutDates[0]).toISOString().split('T')[0] : null
-  const lastWorkoutDate =
-    workoutDates.length > 0 ? new Date(workoutDates[workoutDates.length - 1]).toISOString().split('T')[0] : null
+  // Date range (fechas de entreno son YYYY-MM-DD)
+  const sortedDateStrings = [...new Set(workouts.map((w) => w.date))].sort()
+  const firstWorkoutDate = sortedDateStrings.length > 0 ? sortedDateStrings[0] : null
+  const lastWorkoutDate = sortedDateStrings.length > 0 ? sortedDateStrings[sortedDateStrings.length - 1] : null
 
   const daysSinceFirstWorkout = firstWorkoutDate
-    ? Math.floor((today.getTime() - new Date(firstWorkoutDate).getTime()) / (1000 * 60 * 60 * 24))
+    ? Math.floor(
+        (parseDateStringAtColombiaNoon(todayStr).getTime() -
+          parseDateStringAtColombiaNoon(firstWorkoutDate).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
     : 0
   const daysSinceLastWorkout = lastWorkoutDate
-    ? Math.floor((today.getTime() - new Date(lastWorkoutDate).getTime()) / (1000 * 60 * 60 * 24))
+    ? Math.floor(
+        (parseDateStringAtColombiaNoon(todayStr).getTime() -
+          parseDateStringAtColombiaNoon(lastWorkoutDate).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
     : 0
 
-  // Weekly stats
-  const weekStart = new Date(today)
-  weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
-  const workoutsThisWeek = workouts.filter((w) => {
-    const workoutDate = new Date(w.date)
-    return workoutDate >= weekStart
-  }).length
+  // Weekly stats (domingo = inicio de semana, calendario Colombia)
+  const weekStartStr = getWeekStartSundayColombia(todayStr)
+  const workoutsThisWeek = workouts.filter((w) => w.date >= weekStartStr).length
 
   // Monthly stats
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-  const workoutsThisMonth = workouts.filter((w) => {
-    const workoutDate = new Date(w.date)
-    return workoutDate >= monthStart
-  }).length
+  const monthStartStr = `${todayStr.slice(0, 7)}-01`
+  const workoutsThisMonth = workouts.filter((w) => w.date >= monthStartStr).length
 
   // Exercise stats
   const totalExercises = exercises.length
@@ -172,10 +178,7 @@ export function calculateUsageStats(
   // Weekly activity
   const weeklyActivityMap = new Map<string, { workoutCount: number; totalDuration: number }>()
   workouts.forEach((w) => {
-    const workoutDate = new Date(w.date)
-    const weekStart = new Date(workoutDate)
-    weekStart.setDate(workoutDate.getDate() - workoutDate.getDay())
-    const weekKey = weekStart.toISOString().split('T')[0]
+    const weekKey = getWeekStartSundayColombia(w.date)
 
     const existing = weeklyActivityMap.get(weekKey) || { workoutCount: 0, totalDuration: 0 }
     weeklyActivityMap.set(weekKey, {
@@ -191,8 +194,7 @@ export function calculateUsageStats(
   // Monthly activity
   const monthlyActivityMap = new Map<string, { workoutCount: number; totalDuration: number }>()
   workouts.forEach((w) => {
-    const workoutDate = new Date(w.date)
-    const monthKey = `${workoutDate.getFullYear()}-${String(workoutDate.getMonth() + 1).padStart(2, '0')}`
+    const monthKey = w.date.slice(0, 7)
 
     const existing = monthlyActivityMap.get(monthKey) || { workoutCount: 0, totalDuration: 0 }
     monthlyActivityMap.set(monthKey, {
@@ -207,7 +209,7 @@ export function calculateUsageStats(
 
   // Session and streak stats
   const lastSessionDate = stored.lastSessionDate || now.toISOString()
-  const currentStreak = calculateStreak(workouts, today)
+  const currentStreak = calculateStreak(workouts, todayStr)
   const longestStreak = Math.max(currentStreak, stored.longestStreak || 0)
 
   const stats: UsageStats = {
@@ -239,29 +241,19 @@ export function calculateUsageStats(
 }
 
 /**
- * Calculates current streak (consecutive days with workouts)
+ * Calculates current streak (consecutive days with workouts), usando el día civil en Colombia.
  */
-function calculateStreak(workouts: WorkoutWithSets[], today: Date): number {
+function calculateStreak(workouts: WorkoutWithSets[], todayStr: string): number {
   if (workouts.length === 0) return 0
 
-  const workoutDates = new Set(
-    workouts.map((w) => {
-      const date = new Date(w.date)
-      return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-    })
-  )
+  const workoutDates = new Set(workouts.map((w) => w.date))
 
   let streak = 0
-  let checkDate = new Date(today)
+  let checkStr = todayStr
 
-  while (true) {
-    const dateKey = `${checkDate.getFullYear()}-${checkDate.getMonth()}-${checkDate.getDate()}`
-    if (workoutDates.has(dateKey)) {
-      streak++
-      checkDate.setDate(checkDate.getDate() - 1)
-    } else {
-      break
-    }
+  while (workoutDates.has(checkStr)) {
+    streak++
+    checkStr = addCalendarDays(checkStr, -1)
   }
 
   return streak

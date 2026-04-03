@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { statsService } from '@/domain/services/stats.service'
 import { logger } from '@/lib/logger'
+import { addCalendarDays, getTodayColombia } from '@/lib/datetime/colombia'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,19 +26,15 @@ export async function POST(req: Request) {
 
     const userId = user.id
 
-    // Fetch metrics for last 7 days (current) and previous 7 days (comparison)
-    const today = new Date()
-    const last7DaysStart = new Date()
-    last7DaysStart.setDate(today.getDate() - 7)
-    
-    const prev7DaysStart = new Date()
-    prev7DaysStart.setDate(today.getDate() - 14)
-    const prev7DaysEnd = new Date()
-    prev7DaysEnd.setDate(today.getDate() - 8)
+    // Fetch metrics for last 7 days (current) and previous 7 days (comparison) — fechas en Colombia
+    const todayStr = getTodayColombia()
+    const last7DaysStart = addCalendarDays(todayStr, -7)
+    const prev7DaysStart = addCalendarDays(todayStr, -14)
+    const prev7DaysEnd = addCalendarDays(todayStr, -8)
 
     const [currentRes, prevRes] = await Promise.all([
-      statsService.getPeriodMetrics(userId, last7DaysStart.toISOString().split('T')[0], today.toISOString().split('T')[0]),
-      statsService.getPeriodMetrics(userId, prev7DaysStart.toISOString().split('T')[0], prev7DaysEnd.toISOString().split('T')[0])
+      statsService.getPeriodMetrics(userId, last7DaysStart, todayStr),
+      statsService.getPeriodMetrics(userId, prev7DaysStart, prev7DaysEnd)
     ])
 
     const current = currentRes.data
@@ -52,7 +49,7 @@ export async function POST(req: Request) {
       .from('workouts')
       .select('date, notes, sets(exercise:exercises(name), weight, reps)')
       .eq('user_id', userId)
-      .gte('date', last7DaysStart.toISOString().split('T')[0])
+      .gte('date', last7DaysStart)
 
     const workoutContext = workouts?.map(w => ({
       date: w.date,

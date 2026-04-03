@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { WorkoutFormData } from '@/types'
 import { useTranslations } from 'next-intl'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 
 interface WorkoutFormProps {
   onSubmit: (data: WorkoutFormData) => void
@@ -37,7 +38,7 @@ export function WorkoutForm({ onSubmit, defaultValues, isLoading }: WorkoutFormP
   } = useForm<WorkoutFormData>({
     resolver: zodResolver(workoutSchema),
     defaultValues: defaultValues || {
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayColombia(),
       duration: 60,
     },
   })

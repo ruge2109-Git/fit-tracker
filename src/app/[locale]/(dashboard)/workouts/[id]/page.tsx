@@ -17,6 +17,7 @@ import { useWorkoutStore } from '@/store/workout.store'
 import { useAuthStore } from '@/store/auth.store'
 import { formatDate, formatDuration, formatWeight } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { exportWorkoutToPDF } from '@/lib/pdf-export'
@@ -68,7 +69,7 @@ export default function WorkoutDetailPage() {
       const newWorkoutId = await createWorkout(
         user.id,
         {
-          date: new Date().toISOString().split('T')[0],
+          date: getTodayColombia(),
           duration: currentWorkout.duration,
           notes: currentWorkout.notes ? `${t('copyOf')}: ${currentWorkout.notes}` : t('duplicatedWorkout'),
           routine_id: currentWorkout.routine_id,

@@ -36,6 +36,7 @@ import { useWorkoutStore } from '@/store/workout.store'
 import { useExerciseStore } from '@/store/exercise.store'
 import { SetFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress } from '@/hooks/use-workout-persistence'
 import { useTranslations } from 'next-intl'
 import { ExerciseHistoryHints } from '@/components/workouts/exercise-history-hints'
@@ -61,7 +62,7 @@ export default function NewFreeWorkoutPage() {
   const { exercises: availableExercises, loadExercises } = useExerciseStore()
   const t = useTranslations('workouts')
 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(getTodayColombia())
   const [duration, setDuration] = useState(60)
   const [notes, setNotes] = useState('')
   const [sets, setSets] = useState<WorkoutSet[]>([])
@@ -105,7 +106,7 @@ export default function NewFreeWorkoutPage() {
     setIsRestoring(true)
     const saved = loadWorkoutProgress(FREE_WORKOUT_ID)
     if (saved?.sets?.length) {
-      setDate(saved.date || new Date().toISOString().split('T')[0])
+      setDate(saved.date || getTodayColombia())
       setDuration(saved.duration || 60)
       setNotes(saved.notes || '')
       const restoredSets = saved.sets as WorkoutSet[]

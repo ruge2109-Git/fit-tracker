@@ -1,17 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { getTodayColombia, getWeekStartMondayColombia } from '@/lib/datetime/colombia'
 
 export async function GET() {
   try {
     const supabase = await createAdminClient()
 
-    const today = new Date()
-    const dayOfWeek = today.getDay()
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // Adjust to Monday
-    const monday = new Date(today.setDate(diff))
-    monday.setHours(0, 0, 0, 0)
-    
-    const mondayISO = monday.toISOString().split('T')[0]
+    const mondayISO = getWeekStartMondayColombia(getTodayColombia())
 
     // 1. Get all public users
     const { data: publicUsers, error: usersError } = await supabase

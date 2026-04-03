@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { auditService } from '@/domain/services/audit.service'
+import { addCalendarDays, getTodayColombia } from '@/lib/datetime/colombia'
 
 export async function POST(req: Request) {
   try {
@@ -111,7 +112,7 @@ export async function POST(req: Request) {
     console.log(`AI Coach context — workouts:${workouts?.length ?? 0} sets:${sets.length} routines:${routines?.length ?? 0} goals:${goals?.length ?? 0}`)
 
     // ─── Build context string ────────────────────────────────────────────────
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayColombia()
     const contextParts: string[] = [`Fecha de hoy: ${today}`]
 
     // Workouts context
@@ -122,12 +123,8 @@ export async function POST(req: Request) {
       contextParts.push(`\nÚltimos entrenamientos (${workouts.length} en total):\n${workoutSummary}`)
 
       // Weekly frequency
-      const last4Weeks = workouts.filter(w => {
-        const d = new Date(w.date)
-        const cutoff = new Date()
-        cutoff.setDate(cutoff.getDate() - 28)
-        return d >= cutoff
-      })
+      const cutoffStr = addCalendarDays(getTodayColombia(), -28)
+      const last4Weeks = workouts.filter((w) => w.date >= cutoffStr)
       contextParts.push(`Entrenamientos en las últimas 4 semanas: ${last4Weeks.length}`)
     } else {
       contextParts.push('\nEl usuario NO tiene entrenamientos registrados todavía.')

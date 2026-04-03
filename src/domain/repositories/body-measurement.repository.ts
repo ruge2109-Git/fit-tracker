@@ -6,6 +6,7 @@
 import { BaseRepository } from './base.repository'
 import { BodyMeasurement, BodyMeasurementFormData, ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 
 export interface IBodyMeasurementRepository {
   findById(id: string): Promise<ApiResponse<BodyMeasurement>>
@@ -110,7 +111,7 @@ export class BodyMeasurementRepository extends BaseRepository<BodyMeasurement> i
         .from(this.tableName)
         .insert({
           ...data,
-          measurement_date: data.measurement_date || new Date().toISOString().split('T')[0],
+          measurement_date: data.measurement_date || getTodayColombia(),
         })
         .select()
         .single()

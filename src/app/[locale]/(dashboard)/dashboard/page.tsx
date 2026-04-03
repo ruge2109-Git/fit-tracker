@@ -53,7 +53,8 @@ const StreakCounter = dynamic(() => import('@/components/dashboard/streak-counte
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useCompactMode } from '@/hooks/use-compact-mode'
 import { ROUTES } from '@/lib/constants'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { formatColombiaDayMonth } from '@/lib/datetime/colombia'
 import { LayoutGrid, LayoutList } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DashboardCalendar } from '@/components/dashboard/dashboard-calendar'
@@ -82,6 +83,7 @@ export default function DashboardPage() {
   const t = useTranslations('dashboard')
   const tWorkouts = useTranslations('workouts')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [stats, setStats] = useState<WorkoutStats | null>(null)
   const [volumeData, setVolumeData] = useState<VolumeByWeek[]>([])
   const [muscleDistribution, setMuscleDistribution] = useState<Record<MuscleGroup, number>>({} as Record<MuscleGroup, number>)
@@ -352,7 +354,10 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="font-bold text-sm">
-                          {new Date(workout.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                          {formatColombiaDayMonth(workout.date, locale === 'es' ? 'es-CO' : 'en-US', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
                         </p>
                         {workout.notes ? (
                           <p className="text-xs text-muted-foreground truncate max-w-[150px]">{workout.notes}</p>

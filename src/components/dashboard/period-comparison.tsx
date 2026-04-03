@@ -3,17 +3,14 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { 
-  subWeeks, 
-  subMonths, 
-  startOfWeek, 
-  endOfWeek, 
-  startOfMonth, 
-  endOfMonth, 
-  format,
-  isAfter
-} from 'date-fns'
-import { es } from 'date-fns/locale'
+import {
+  addCalendarDays,
+  addCalendarMonths,
+  getMonthEndStr,
+  getMonthStartStr,
+  getTodayColombia,
+  getWeekStartMondayColombia,
+} from '@/lib/datetime/colombia'
 import { statsService } from '@/domain/services/stats.service'
 import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -42,25 +39,28 @@ export function PeriodComparison({ userId }: PeriodComparisonProps) {
 
   const loadComparisonData = async () => {
     setIsLoading(true)
-    const now = new Date()
-    
-    let currentStart: Date, currentEnd: Date, prevStart: Date, prevEnd: Date
+    const todayStr = getTodayColombia()
+
+    let currentStartStr: string
+    let currentEndStr: string
+    let prevStartStr: string
+    let prevEndStr: string
 
     if (periodType === 'week') {
-      currentStart = startOfWeek(now, { weekStartsOn: 1 })
-      currentEnd = endOfWeek(now, { weekStartsOn: 1 })
-      prevStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 })
-      prevEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 })
+      currentStartStr = getWeekStartMondayColombia(todayStr)
+      currentEndStr = addCalendarDays(currentStartStr, 6)
+      prevStartStr = addCalendarDays(currentStartStr, -7)
+      prevEndStr = addCalendarDays(prevStartStr, 6)
     } else {
-      currentStart = startOfMonth(now)
-      currentEnd = endOfMonth(now)
-      prevStart = startOfMonth(subMonths(now, 1))
-      prevEnd = endOfMonth(subMonths(now, 1))
+      currentStartStr = getMonthStartStr(todayStr)
+      currentEndStr = getMonthEndStr(todayStr)
+      prevStartStr = addCalendarMonths(currentStartStr, -1)
+      prevEndStr = getMonthEndStr(prevStartStr)
     }
 
     const [currentRes, prevRes] = await Promise.all([
-      statsService.getPeriodMetrics(userId, format(currentStart, 'yyyy-MM-dd'), format(currentEnd, 'yyyy-MM-dd')),
-      statsService.getPeriodMetrics(userId, format(prevStart, 'yyyy-MM-dd'), format(prevEnd, 'yyyy-MM-dd'))
+      statsService.getPeriodMetrics(userId, currentStartStr, currentEndStr),
+      statsService.getPeriodMetrics(userId, prevStartStr, prevEndStr),
     ])
 
     if (currentRes.data) setCurrentMetrics(currentRes.data)

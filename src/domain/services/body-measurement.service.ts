@@ -5,6 +5,7 @@
 
 import { bodyMeasurementRepository } from '../repositories/body-measurement.repository'
 import { BodyMeasurement, BodyMeasurementFormData, ApiResponse } from '@/types'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 
 export interface IBodyMeasurementService {
   getMeasurement(id: string): Promise<ApiResponse<BodyMeasurement>>
@@ -41,7 +42,7 @@ class BodyMeasurementService implements IBodyMeasurementService {
       value: data.value,
       unit: data.unit,
       notes: data.notes && data.notes.trim() !== '' ? data.notes : undefined,
-      measurement_date: data.measurement_date || new Date().toISOString().split('T')[0],
+      measurement_date: data.measurement_date || getTodayColombia(),
     }
 
     return await bodyMeasurementRepository.create(normalizedData)

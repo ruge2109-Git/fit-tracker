@@ -5,6 +5,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { format, parseISO } from 'date-fns'
+import { parseDateStringAtColombiaNoon } from '@/lib/datetime/colombia'
 
 /**
  * Merge Tailwind classes safely
@@ -17,7 +18,12 @@ export function cn(...inputs: ClassValue[]) {
  * Format date consistently across the app
  */
 export function formatDate(date: string | Date, formatStr: string = 'PPP'): string {
-  const dateObj = typeof date === 'string' ? parseISO(date) : date
+  const dateObj =
+    typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date.trim())
+      ? parseDateStringAtColombiaNoon(date.trim())
+      : typeof date === 'string'
+        ? parseISO(date)
+        : date
   return format(dateObj, formatStr)
 }
 

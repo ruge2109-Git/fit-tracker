@@ -39,6 +39,7 @@ import { useWorkoutStore } from '@/store/workout.store'
 import { useExerciseStore } from '@/store/exercise.store'
 import { RoutineWithExercises, SetFormData } from '@/types'
 import { ROUTES } from '@/lib/constants'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 import { useWorkoutPersistence, loadWorkoutProgress, clearWorkoutProgress, WorkoutProgress } from '@/hooks/use-workout-persistence'
 import { useTranslations } from 'next-intl'
 import { ExerciseHistoryHints } from '@/components/workouts/exercise-history-hints'
@@ -74,7 +75,7 @@ export default function NewWorkoutFromRoutinePage() {
   const routineId = params.routineId as string
   const [routine, setRoutine] = useState<RoutineWithExercises | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(getTodayColombia())
   const [duration, setDuration] = useState(60)
   const [notes, setNotes] = useState('')
   const [sets, setSets] = useState<WorkoutSet[]>([])
@@ -139,7 +140,7 @@ export default function NewWorkoutFromRoutinePage() {
       setRoutine(result.data)
       
       if (savedProgress && savedProgress.sets && savedProgress.sets.length > 0) {
-        setDate(savedProgress.date || new Date().toISOString().split('T')[0])
+        setDate(savedProgress.date || getTodayColombia())
         setDuration(savedProgress.duration || 60)
         setNotes(savedProgress.notes || '')
         const restoredSets = savedProgress.sets as WorkoutSet[]

@@ -8,7 +8,8 @@
 import { Trophy } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatWeight, cn } from '@/lib/utils'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { formatColombiaDayMonth } from '@/lib/datetime/colombia'
 
 interface PersonalRecordsListProps {
   data: {
@@ -21,6 +22,7 @@ interface PersonalRecordsListProps {
 
 export function PersonalRecordsList({ data }: PersonalRecordsListProps) {
   const t = useTranslations('profile')
+  const locale = useLocale()
   
   if (data.length === 0) {
     return (
@@ -70,7 +72,10 @@ export function PersonalRecordsList({ data }: PersonalRecordsListProps) {
                 <div>
                   <p className="font-bold text-sm tracking-tight">{record.exercise_name}</p>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                    {new Date(record.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                    {formatColombiaDayMonth(record.date, locale === 'es' ? 'es-CO' : 'en-US', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
                   </p>
                 </div>
               </div>

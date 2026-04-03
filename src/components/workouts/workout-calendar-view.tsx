@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { CardContent } from '@/components/ui/card'
 import { Workout, Routine } from '@/types'
 import { formatDuration, cn } from '@/lib/utils'
+import { getTodayColombia, parseDateStringAtColombiaNoon } from '@/lib/datetime/colombia'
 import { ROUTES } from '@/lib/constants'
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useTranslations, useLocale } from 'next-intl'
@@ -48,9 +49,9 @@ export function WorkoutCalendarView({ workouts, routines = [] }: WorkoutCalendar
   }
   
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>(getInitialViewMode)
-  const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [currentWeek, setCurrentWeek] = useState(new Date())
-  const [currentDay, setCurrentDay] = useState(new Date())
+  const [currentMonth, setCurrentMonth] = useState(() => parseDateStringAtColombiaNoon(getTodayColombia()))
+  const [currentWeek, setCurrentWeek] = useState(() => parseDateStringAtColombiaNoon(getTodayColombia()))
+  const [currentDay, setCurrentDay] = useState(() => parseDateStringAtColombiaNoon(getTodayColombia()))
 
   const dateLocale = locale === 'es' ? es : enUS
 
@@ -109,7 +110,7 @@ export function WorkoutCalendarView({ workouts, routines = [] }: WorkoutCalendar
         dateStr = dateStr.split('T')[0]
       }
       // Create date at noon to avoid timezone shifts
-      const date = new Date(dateStr + 'T12:00:00')
+      const date = parseDateStringAtColombiaNoon(dateStr)
       return {
         type: 'completed' as const,
         workout,

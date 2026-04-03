@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { GoalFormData, GoalType } from '@/types'
 import { useTranslations } from 'next-intl'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 
 interface GoalFormProps {
   onSubmit: (data: GoalFormData) => void
@@ -50,7 +51,7 @@ export function GoalForm({ onSubmit, defaultValues, isLoading }: GoalFormProps) 
       type: defaultValues?.type || GoalType.CUSTOM,
       target_value: defaultValues?.target_value || 0,
       unit: defaultValues?.unit || '',
-      start_date: defaultValues?.start_date || new Date().toISOString().split('T')[0],
+      start_date: defaultValues?.start_date || getTodayColombia(),
       target_date: defaultValues?.target_date || undefined,
     },
   })

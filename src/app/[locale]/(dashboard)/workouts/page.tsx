@@ -95,9 +95,9 @@ export default function WorkoutsPage() {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date-desc':
-          return new Date(b.date).getTime() - new Date(a.date).getTime()
+          return b.date.localeCompare(a.date)
         case 'date-asc':
-          return new Date(a.date).getTime() - new Date(b.date).getTime()
+          return a.date.localeCompare(b.date)
         case 'duration-desc':
           return b.duration - a.duration
         case 'duration-asc':

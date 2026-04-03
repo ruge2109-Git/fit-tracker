@@ -8,6 +8,7 @@ import { progressPhotoRepository } from '../repositories/progress-photo.reposito
 import { ProgressPhoto, ProgressPhotoFormData, ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { logger } from '@/lib/logger'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 
 export interface IProgressPhotoService {
   getPhoto(id: string): Promise<ApiResponse<ProgressPhoto>>
@@ -112,7 +113,7 @@ class ProgressPhotoService implements IProgressPhotoService {
         photo_url: photoUrl,
         photo_type: data.photo_type,
         notes: data.notes && data.notes.trim() !== '' ? data.notes : undefined,
-        photo_date: data.photo_date || new Date().toISOString().split('T')[0],
+        photo_date: data.photo_date || getTodayColombia(),
       }
 
       return await progressPhotoRepository.create(normalizedData)

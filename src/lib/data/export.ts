@@ -5,6 +5,7 @@
 
 import { Workout, Exercise, Routine, WorkoutWithSets, RoutineWithExercises } from '@/types'
 import { logger } from '@/lib/logger'
+import { getTodayColombia } from '@/lib/datetime/colombia'
 
 export interface ExportData {
   workouts: WorkoutWithSets[]
@@ -41,7 +42,7 @@ export function downloadJSON(data: ExportData, filename?: string): void {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = filename || `fittrackr-export-${new Date().toISOString().split('T')[0]}.json`
+    link.download = filename || `fittrackr-export-${getTodayColombia()}.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -169,7 +170,7 @@ export function exportToCSV(data: ExportData): { workouts: string; exercises: st
 export function downloadCSV(data: ExportData, baseFilename?: string): void {
   try {
     const csvData = exportToCSV(data)
-    const dateStr = new Date().toISOString().split('T')[0]
+    const dateStr = getTodayColombia()
     const baseName = baseFilename || `fittrackr-export-${dateStr}`
 
     // Download workouts CSV

@@ -2,6 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { Feedback, ApiResponse } from '@/types'
 import { BaseRepository } from './base.repository'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface IFeedbackRepository {
   findById(id: string, supabase?: SupabaseClient): Promise<ApiResponse<Feedback>>
@@ -60,7 +61,7 @@ export class FeedbackRepository extends BaseRepository<Feedback> implements IFee
   }
 
   async create(data: Partial<Feedback>, supabase?: SupabaseClient): Promise<ApiResponse<Feedback>> {
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const feedbackData = { ...data, id }
     const client = await this.getClient(supabase)
 

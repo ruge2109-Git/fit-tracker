@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Goal, GoalWithProgress, GoalProgress, ApiResponse } from '@/types'
 import { BaseRepository } from './base.repository'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface IGoalRepository {
   findById(id: string): Promise<ApiResponse<GoalWithProgress>>
@@ -137,7 +138,7 @@ export class GoalRepository extends BaseRepository<Goal> implements IGoalReposit
   }
 
   async create(data: Partial<Goal>): Promise<ApiResponse<Goal>> {
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const goalData = {
       ...data,
       id,
@@ -194,7 +195,7 @@ export class GoalRepository extends BaseRepository<Goal> implements IGoalReposit
 
   async addProgress(goalId: string, progress: Partial<GoalProgress>): Promise<ApiResponse<GoalProgress>> {
     const isOnline = typeof window !== 'undefined' ? navigator.onLine : true
-    const id = `${Date.now()}-${Math.random()}`
+    const id = generateId()
     const progressData = {
       id,
       goal_id: goalId,

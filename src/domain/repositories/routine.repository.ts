@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Routine, RoutineWithExercises, RoutineExercise, ApiResponse } from '@/types'
 import { BaseRepository } from './base.repository'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface IRoutineRepository {
   findById(id: string): Promise<ApiResponse<RoutineWithExercises>>
@@ -114,7 +115,7 @@ export class RoutineRepository extends BaseRepository<Routine> implements IRouti
   }
 
   async create(data: Partial<Routine>): Promise<ApiResponse<Routine>> {
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const routineData = { ...data, id }
 
     return this.mutateWithOfflineSupport(

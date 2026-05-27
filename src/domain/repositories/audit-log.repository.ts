@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase/client'
 import { BaseRepository } from './base.repository'
 import { ApiResponse } from '@/types'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface AuditLog {
@@ -210,7 +211,7 @@ export class AuditLogRepository extends BaseRepository<AuditLog> implements IAud
   }
 
   async create(data: Omit<AuditLog, 'id' | 'created_at'>, supabaseClient?: SupabaseClient): Promise<ApiResponse<AuditLog>> {
-    const id = `${Date.now()}-${Math.random()}`
+    const id = generateId()
     const auditData = { ...data, id }
     const client = this.getClient(supabaseClient)
 

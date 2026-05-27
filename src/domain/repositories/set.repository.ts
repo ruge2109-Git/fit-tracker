@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Set, SetWithExercise, ApiResponse } from '@/types'
 import { BaseRepository } from './base.repository'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface ISetRepository {
   findById(id: string): Promise<ApiResponse<SetWithExercise>>
@@ -89,7 +90,7 @@ export class SetRepository extends BaseRepository<Set> implements ISetRepository
   }
 
   async create(data: Partial<Set>): Promise<ApiResponse<Set>> {
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const setData = { ...data, id }
     return this.mutateWithOfflineSupport(
       async () =>
@@ -110,7 +111,7 @@ export class SetRepository extends BaseRepository<Set> implements ISetRepository
     if (!isOnline) {
       const saved: Set[] = []
       for (const item of data) {
-        const id = item.id || `${Date.now()}-${Math.random()}`
+        const id = item.id || generateId()
         const setData = { ...item, id }
         await offlineDB.saveEntity(this.tableName, setData)
         await offlineDB.addToSyncQueue({

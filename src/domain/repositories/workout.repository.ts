@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Workout, WorkoutWithSets, ApiResponse } from '@/types'
 import { BaseRepository } from './base.repository'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface IWorkoutRepository {
   findById(id: string): Promise<ApiResponse<WorkoutWithSets>>
@@ -120,7 +121,7 @@ export class WorkoutRepository extends BaseRepository<Workout> implements IWorko
 
   async create(data: Partial<Workout>): Promise<ApiResponse<Workout>> {
     // For creation, we need a temp ID if offline
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const workoutData = { ...data, id }
 
     return this.mutateWithOfflineSupport(

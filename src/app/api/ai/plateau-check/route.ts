@@ -23,8 +23,8 @@ export async function POST(req: Request) {
 
     const { data: sets, error } = await supabase
       .from('sets')
-      .select('weight, reps, workout:workouts(date)')
-      .eq('user_id', user.id)
+      .select('weight, reps, workout:workouts!inner(date)')
+      .eq('workout.user_id', user.id)
       .eq('exercise_id', exerciseId)
       .gte('workout.date', sixWeeksAgoStr)
       .order('workout(date)', { ascending: true })

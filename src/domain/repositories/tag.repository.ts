@@ -1,5 +1,6 @@
 import { BaseRepository } from './base.repository'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 import { ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 
@@ -84,7 +85,7 @@ export class TagRepository extends BaseRepository<Tag> implements ITagRepository
 
     const userId = userIdOrData
     const formData = data!
-    const id = `${Date.now()}-${Math.random()}`
+    const id = generateId()
     const tagData = { id, user_id: userId, name: formData.name, color: formData.color }
 
     return this.mutateWithOfflineSupport(

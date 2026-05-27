@@ -2,6 +2,7 @@ import { BaseRepository } from './base.repository'
 import { ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface SavedFilter {
   id: string
@@ -113,7 +114,7 @@ export class SavedFilterRepository extends BaseRepository<SavedFilter> implement
 
     const userId = userIdOrData
     const formData = data!
-    const id = `${Date.now()}-${Math.random()}`
+    const id = generateId()
     const filterData: SavedFilter = {
       id,
       user_id: userId,

@@ -2,6 +2,7 @@ import { BaseRepository } from './base.repository'
 import { PushSubscription, PushSubscriptionData, ApiResponse } from '@/types'
 import { createClient as createBrowserClient } from '@/lib/supabase/client'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/logger'
 
@@ -100,7 +101,7 @@ export class PushSubscriptionRepository extends BaseRepository<PushSubscription>
     if (!data.user_id) return { error: 'user_id is required' }
 
     if (data.endpoint && data.p256dh && data.auth) {
-      const id = data.id || `${Date.now()}-${Math.random()}`
+      const id = data.id || generateId()
       const subData = { ...data, id }
 
       return this.mutateWithOfflineSupport(

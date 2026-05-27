@@ -2,6 +2,7 @@ import { BaseRepository } from './base.repository'
 import { BodyMeasurement, BodyMeasurementFormData, ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 import { getTodayColombia } from '@/lib/datetime/colombia'
 
 export interface IBodyMeasurementRepository {
@@ -114,7 +115,7 @@ export class BodyMeasurementRepository extends BaseRepository<BodyMeasurement> i
   }
 
   override async create(data: Partial<BodyMeasurement>): Promise<ApiResponse<BodyMeasurement>> {
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const measurementData = {
       ...data,
       id,

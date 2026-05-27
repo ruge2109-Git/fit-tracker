@@ -2,6 +2,7 @@ import { BaseRepository } from './base.repository'
 import { ProgressPhoto, ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface IProgressPhotoRepository {
   findById(id: string): Promise<ApiResponse<ProgressPhoto>>
@@ -113,7 +114,7 @@ export class ProgressPhotoRepository extends BaseRepository<ProgressPhoto> imple
   }
 
   override async create(data: Partial<ProgressPhoto>): Promise<ApiResponse<ProgressPhoto>> {
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const photoData = { ...data, id }
 
     return this.mutateWithOfflineSupport(

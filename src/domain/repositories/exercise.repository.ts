@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase/client'
 import { Exercise, ExerciseType, MuscleGroup, ApiResponse } from '@/types'
 import { BaseRepository } from './base.repository'
 import { offlineDB } from '@/lib/offline/db'
+import { generateId } from '@/lib/utils'
 
 export interface IExerciseRepository {
   findById(id: string): Promise<ApiResponse<Exercise>>
@@ -114,7 +115,7 @@ export class ExerciseRepository extends BaseRepository<Exercise> implements IExe
   }
 
   async create(data: Partial<Exercise>): Promise<ApiResponse<Exercise>> {
-    const id = data.id || `${Date.now()}-${Math.random()}`
+    const id = data.id || generateId()
     const exerciseData = { ...data, id }
 
     return this.mutateWithOfflineSupport(

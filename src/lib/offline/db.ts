@@ -4,6 +4,7 @@
  */
 
 import { Workout, Routine, Exercise } from '@/types'
+import { generateId } from '@/lib/utils'
 
 const DB_NAME = 'fittrackr-db'
 const DB_VERSION = 2
@@ -252,7 +253,7 @@ class OfflineDB {
       const store = transaction.objectStore('syncQueue')
       const syncItem: SyncItem = {
         ...item,
-        id: `${Date.now()}-${Math.random()}`,
+        id: generateId(),
         timestamp: Date.now(),
         retryCount: 0,
       }

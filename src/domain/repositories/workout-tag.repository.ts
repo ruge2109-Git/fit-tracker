@@ -1,9 +1,5 @@
-/**
- * Workout Tag Repository
- * Handles many-to-many relationship between workouts and tags
- */
-
 import { BaseRepository } from './base.repository'
+import { offlineDB } from '@/lib/offline/db'
 import { ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 
@@ -25,168 +21,227 @@ export interface IWorkoutTagRepository {
 
 export class WorkoutTagRepository extends BaseRepository<WorkoutTag> implements IWorkoutTagRepository {
   constructor() {
-    super('workout_tags')
+    super('workout_tags', 'workout_tag')
   }
 
   async findById(id: string): Promise<ApiResponse<WorkoutTag>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      if (error) return this.handleError(error)
-      return this.success(data as WorkoutTag)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('id', id)
+          .single(),
+      async () => await offlineDB.getEntity<WorkoutTag>(this.tableName, id),
+      async (data) => await offlineDB.saveEntity(this.tableName, data)
+    )
   }
 
   async findAll(): Promise<ApiResponse<WorkoutTag[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) return this.handleError(error)
-      return this.success(data as WorkoutTag[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .order('created_at', { ascending: false }),
+      async () => await offlineDB.getAllEntities<WorkoutTag>(this.tableName),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
-
   async update(id: string, data: Partial<WorkoutTag>): Promise<ApiResponse<WorkoutTag>> {
-    // WorkoutTag is a join table, updates are not supported
     throw new Error('Updates not supported for workout tags. Delete and recreate instead.')
   }
 
   async findByWorkoutId(workoutId: string): Promise<ApiResponse<WorkoutTag[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('workout_id', workoutId)
-
-      if (error) return this.handleError(error)
-      return this.success(data as WorkoutTag[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('workout_id', workoutId),
+      async () => await offlineDB.getEntitiesByIndex<WorkoutTag>(this.tableName, 'workout_id', workoutId),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async findByTagId(tagId: string): Promise<ApiResponse<WorkoutTag[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('tag_id', tagId)
-
-      if (error) return this.handleError(error)
-      return this.success(data as WorkoutTag[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('tag_id', tagId),
+      async () => await offlineDB.getEntitiesByIndex<WorkoutTag>(this.tableName, 'tag_id', tagId),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
-  // Overload signatures
   async create(data: Partial<WorkoutTag>): Promise<ApiResponse<WorkoutTag>>
   async create(workoutId: string, tagId: string): Promise<ApiResponse<WorkoutTag>>
-  // Implementation
   async create(workoutIdOrData: string | Partial<WorkoutTag>, tagId?: string): Promise<ApiResponse<WorkoutTag>> {
-    // If called with BaseRepository signature (data only), throw error
     if (typeof workoutIdOrData !== 'string') {
       throw new Error('Use create(workoutId, tagId) instead')
     }
-    
-    // Called with custom signature (workoutId, tagId)
+
     const workoutId = workoutIdOrData
     const tagIdValue = tagId!
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .insert({
-          workout_id: workoutId,
-          tag_id: tagIdValue,
-        })
-        .select()
-        .single()
+    const id = `${workoutId}_${tagIdValue}`
+    const workoutTagData = { id, workout_id: workoutId, tag_id: tagIdValue }
 
-      if (error) return this.handleError(error)
-      return this.success(data as WorkoutTag)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.mutateWithOfflineSupport(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .insert(workoutTagData)
+          .select()
+          .single(),
+      async (savedData) => await offlineDB.saveEntity(this.tableName, savedData),
+      'create',
+      workoutTagData
+    )
   }
 
-  // Overload signatures
   async delete(id: string): Promise<ApiResponse<boolean>>
   async delete(workoutId: string, tagId: string): Promise<ApiResponse<boolean>>
-  // Implementation
   async delete(workoutIdOrId: string, tagId?: string): Promise<ApiResponse<boolean>> {
-    // If called with BaseRepository signature (id only)
     if (tagId === undefined) {
-      // This is the base delete method, but we don't support it
       throw new Error('Use delete(workoutId, tagId) instead')
     }
-    
-    // Called with custom signature (workoutId, tagId)
-    const workoutId = workoutIdOrId
-    try {
-      const { error } = await supabase
-        .from(this.tableName)
-        .delete()
-        .eq('workout_id', workoutId)
-        .eq('tag_id', tagId)
 
-      if (error) return this.handleError(error)
-      return this.success(true)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    const workoutId = workoutIdOrId
+    const id = `${workoutId}_${tagId}`
+
+    return this.mutateWithOfflineSupport(
+      async () => {
+        const { error } = await supabase
+          .from(this.tableName)
+          .delete()
+          .eq('workout_id', workoutId)
+          .eq('tag_id', tagId)
+        return { data: error ? null : true, error }
+      },
+      async () => await offlineDB.deleteEntity(this.tableName, id),
+      'delete',
+      { id, workout_id: workoutId, tag_id: tagId }
+    )
   }
 
   async deleteByWorkoutId(workoutId: string): Promise<ApiResponse<boolean>> {
+    const isOnline = typeof window !== 'undefined' ? navigator.onLine : true
+
+    if (!isOnline) {
+      const existing = await offlineDB.getEntitiesByIndex<WorkoutTag>(this.tableName, 'workout_id', workoutId)
+      for (const item of existing) {
+        await offlineDB.deleteEntity(this.tableName, item.id)
+        await offlineDB.addToSyncQueue({
+          type: this.entityType,
+          action: 'delete',
+          data: { id: item.id, workout_id: workoutId, tag_id: item.tag_id },
+        })
+      }
+      return this.success(true)
+    }
+
     try {
+      const existing = await offlineDB.getEntitiesByIndex<WorkoutTag>(this.tableName, 'workout_id', workoutId)
       const { error } = await supabase
         .from(this.tableName)
         .delete()
         .eq('workout_id', workoutId)
 
-      if (error) return this.handleError(error)
+      if (error) {
+        if (error.message?.includes('FetchError') || (error as any).status === 0) {
+          return this.deleteByWorkoutId(workoutId)
+        }
+        return this.handleError(error)
+      }
+
+      for (const item of existing) {
+        await offlineDB.deleteEntity(this.tableName, item.id)
+      }
       return this.success(true)
     } catch (error) {
-      return this.handleError(error)
+      return this.deleteByWorkoutId(workoutId)
     }
   }
 
   async setWorkoutTags(workoutId: string, tagIds: string[]): Promise<ApiResponse<boolean>> {
-    try {
-      // Delete existing tags
-      await this.deleteByWorkoutId(workoutId)
+    const isOnline = typeof window !== 'undefined' ? navigator.onLine : true
 
-      // Insert new tags
+    if (!isOnline) {
+      await this.deleteByWorkoutId(workoutId)
+      for (const tagId of tagIds) {
+        const id = `${workoutId}_${tagId}`
+        const data = { id, workout_id: workoutId, tag_id: tagId }
+        await offlineDB.saveEntity(this.tableName, data)
+        await offlineDB.addToSyncQueue({
+          type: this.entityType,
+          action: 'create',
+          data,
+        })
+      }
+      return this.success(true)
+    }
+
+    try {
+      const existing = await offlineDB.getEntitiesByIndex<WorkoutTag>(this.tableName, 'workout_id', workoutId)
+
       if (tagIds.length > 0) {
         const { error } = await supabase
           .from(this.tableName)
-          .insert(
+          .upsert(
             tagIds.map(tagId => ({
               workout_id: workoutId,
               tag_id: tagId,
-            }))
+            })),
+            { onConflict: 'workout_id,tag_id' }
           )
 
-        if (error) return this.handleError(error)
+        if (error) {
+          if (error.message?.includes('FetchError') || (error as any).status === 0) {
+            return this.setWorkoutTags(workoutId, tagIds)
+          }
+          return this.handleError(error)
+        }
+      } else {
+        const { error } = await supabase
+          .from(this.tableName)
+          .delete()
+          .eq('workout_id', workoutId)
+
+        if (error) {
+          if (error.message?.includes('FetchError') || (error as any).status === 0) {
+            return this.setWorkoutTags(workoutId, tagIds)
+          }
+          return this.handleError(error)
+        }
       }
 
+      for (const item of existing) {
+        await offlineDB.deleteEntity(this.tableName, item.id)
+      }
+      for (const tagId of tagIds) {
+        const id = `${workoutId}_${tagId}`
+        await offlineDB.saveEntity(this.tableName, { id, workout_id: workoutId, tag_id: tagId } as WorkoutTag)
+      }
       return this.success(true)
     } catch (error) {
-      return this.handleError(error)
+      return this.setWorkoutTags(workoutId, tagIds)
     }
   }
 }
 
 export const workoutTagRepository = new WorkoutTagRepository()
-

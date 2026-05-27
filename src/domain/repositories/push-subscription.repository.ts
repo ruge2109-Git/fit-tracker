@@ -1,155 +1,126 @@
-/**
- * Push Subscription Repository
- * Handles database operations for push notification subscriptions
- */
-
 import { BaseRepository } from './base.repository'
 import { PushSubscription, PushSubscriptionData, ApiResponse } from '@/types'
 import { createClient as createBrowserClient } from '@/lib/supabase/client'
+import { offlineDB } from '@/lib/offline/db'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/logger'
 
 export class PushSubscriptionRepository extends BaseRepository<PushSubscription> {
   constructor() {
-    super('push_subscriptions')
+    super('push_subscriptions', 'push_subscription')
   }
 
   async findById(id: string): Promise<ApiResponse<PushSubscription>> {
-    try {
-      const supabase = createBrowserClient()
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      if (error) {
-        logger.error('Failed to find push subscription by ID', error, 'PushSubscriptionRepository')
-        return { error: error.message }
-      }
-
-      return { data: data as PushSubscription }
-    } catch (error) {
-      logger.error('Exception in findById', error as Error, 'PushSubscriptionRepository')
-      return { error: 'Failed to find push subscription' }
-    }
+    return this.fetchWithOfflineFallback(
+      async () => {
+        const supabase = createBrowserClient()
+        return await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('id', id)
+          .single()
+      },
+      async () => await offlineDB.getEntity<PushSubscription>(this.tableName, id),
+      async (data) => await offlineDB.saveEntity(this.tableName, data)
+    )
   }
 
-  async findAll() {
-    // Not typically used - would return all subscriptions
-    try {
-      const supabase = createBrowserClient()
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-
-      if (error) {
-        logger.error('Failed to find all push subscriptions', error, 'PushSubscriptionRepository')
-        return { error: error.message }
+  async findAll(): Promise<ApiResponse<PushSubscription[]>> {
+    return this.fetchWithOfflineFallback(
+      async () => {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase
+          .from(this.tableName)
+          .select('*')
+        return { data: data || [], error }
+      },
+      async () => await offlineDB.getAllEntities<PushSubscription>(this.tableName),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
       }
-
-      return { data: data || [] }
-    } catch (error) {
-      logger.error('Exception in findAll', error as Error, 'PushSubscriptionRepository')
-      return { error: 'Failed to find push subscriptions' }
-    }
+    )
   }
 
-  async update(id: string, data: Partial<PushSubscription>) {
-    try {
-      const supabase = createBrowserClient()
-      const { data: updated, error } = await supabase
-        .from(this.tableName)
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) {
-        logger.error('Failed to update push subscription', error, 'PushSubscriptionRepository')
-        return { error: error.message }
-      }
-
-      return { data: updated as PushSubscription }
-    } catch (error) {
-      logger.error('Exception in update', error as Error, 'PushSubscriptionRepository')
-      return { error: 'Failed to update push subscription' }
-    }
+  async update(id: string, data: Partial<PushSubscription>): Promise<ApiResponse<PushSubscription>> {
+    const updateData = { ...data, id }
+    return this.mutateWithOfflineSupport(
+      async () => {
+        const supabase = createBrowserClient()
+        return await supabase
+          .from(this.tableName)
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single()
+      },
+      async (savedData) => await offlineDB.saveEntity(this.tableName, { ...savedData, id }),
+      'update',
+      updateData
+    )
   }
 
   async delete(id: string) {
-    try {
-      const supabase = createBrowserClient()
-      const { error } = await supabase
-        .from(this.tableName)
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        logger.error('Failed to delete push subscription', error, 'PushSubscriptionRepository')
-        return { error: error.message }
-      }
-
-      return { data: true }
-    } catch (error) {
-      logger.error('Exception in delete', error as Error, 'PushSubscriptionRepository')
-      return { error: 'Failed to delete push subscription' }
-    }
+    return this.mutateWithOfflineSupport(
+      async () => {
+        const supabase = createBrowserClient()
+        const { error } = await supabase
+          .from(this.tableName)
+          .delete()
+          .eq('id', id)
+        return { data: error ? null : true, error }
+      },
+      async () => await offlineDB.deleteEntity(this.tableName, id),
+      'delete',
+      { id }
+    )
   }
 
   async findByUserId(userId: string, supabaseClient?: SupabaseClient): Promise<ApiResponse<PushSubscription[]>> {
-    try {
-      const supabase = supabaseClient || createBrowserClient()
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        logger.error('Failed to find push subscriptions by user ID', error, 'PushSubscriptionRepository')
-        return { error: error.message }
+    return this.fetchWithOfflineFallback(
+      async () => {
+        const supabase = supabaseClient || createBrowserClient()
+        return await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+      },
+      async () => await offlineDB.getEntitiesByIndex<PushSubscription>(this.tableName, 'user_id', userId),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
       }
-
-      return { data: data || [] }
-    } catch (error) {
-      logger.error('Exception in findByUserId', error as Error, 'PushSubscriptionRepository')
-      return { error: 'Failed to find push subscriptions' }
-    }
+    )
   }
 
   async create(data: Partial<PushSubscription>): Promise<ApiResponse<PushSubscription>> {
-    // This method accepts Partial<PushSubscription> for BaseRepository compatibility
-    // But we need userId and subscriptionData, so we extract them
-    if (!data.user_id) {
-      return { error: 'user_id is required' }
-    }
-    
-    // If data has endpoint and keys, use them directly
+    if (!data.user_id) return { error: 'user_id is required' }
+
     if (data.endpoint && data.p256dh && data.auth) {
-      try {
-        const supabase = createBrowserClient()
-        const { data: created, error } = await supabase
-          .from(this.tableName)
-          .insert({
-            user_id: data.user_id,
-            endpoint: data.endpoint,
-            p256dh: data.p256dh,
-            auth: data.auth,
-          })
-          .select()
-          .single()
+      const id = data.id || `${Date.now()}-${Math.random()}`
+      const subData = { ...data, id }
 
-        if (error) {
-          logger.error('Failed to create push subscription', error, 'PushSubscriptionRepository')
-          return { error: error.message }
-        }
-
-        return { data: created as PushSubscription }
-      } catch (error) {
-        logger.error('Exception in create', error as Error, 'PushSubscriptionRepository')
-        return { error: 'Failed to create push subscription' }
-      }
+      return this.mutateWithOfflineSupport(
+        async () => {
+          const supabase = createBrowserClient()
+          return await supabase
+            .from(this.tableName)
+            .insert({
+              user_id: data.user_id,
+              endpoint: data.endpoint,
+              p256dh: data.p256dh,
+              auth: data.auth,
+            })
+            .select()
+            .single()
+        },
+        async (savedData) => await offlineDB.saveEntity(this.tableName, savedData),
+        'create',
+        subData
+      )
     }
 
     return { error: 'Invalid subscription data' }
@@ -158,8 +129,7 @@ export class PushSubscriptionRepository extends BaseRepository<PushSubscription>
   async createSubscription(userId: string, subscriptionData: PushSubscriptionData, supabaseClient?: SupabaseClient): Promise<ApiResponse<PushSubscription>> {
     try {
       const supabase = supabaseClient || createBrowserClient()
-      
-      // Check if subscription already exists
+
       const { data: existing } = await supabase
         .from(this.tableName)
         .select('*')
@@ -168,7 +138,6 @@ export class PushSubscriptionRepository extends BaseRepository<PushSubscription>
         .single()
 
       if (existing) {
-        // Update existing subscription
         const { data, error } = await supabase
           .from(this.tableName)
           .update({
@@ -188,7 +157,6 @@ export class PushSubscriptionRepository extends BaseRepository<PushSubscription>
         return { data: data as PushSubscription }
       }
 
-      // Create new subscription
       const { data, error } = await supabase
         .from(this.tableName)
         .insert({
@@ -255,4 +223,3 @@ export class PushSubscriptionRepository extends BaseRepository<PushSubscription>
 }
 
 export const pushSubscriptionRepository = new PushSubscriptionRepository()
-

@@ -6,6 +6,7 @@
 import { supabase } from '@/lib/supabase/client'
 import { Routine, RoutineWithExercises, RoutineExercise, ApiResponse } from '@/types'
 import { BaseRepository } from './base.repository'
+import { offlineDB } from '@/lib/offline/db'
 
 export interface IRoutineRepository {
   findById(id: string): Promise<ApiResponse<RoutineWithExercises>>
@@ -24,130 +25,140 @@ export interface IRoutineRepository {
 
 export class RoutineRepository extends BaseRepository<Routine> implements IRoutineRepository {
   constructor() {
-    super('routines')
+    super('routines', 'routine')
   }
 
   async findById(id: string): Promise<ApiResponse<RoutineWithExercises>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          exercises:routine_exercises (
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
             *,
-            exercise:exercises (*)
-          )
-        `)
-        .eq('id', id)
-        .maybeSingle()
-
-      if (error) return this.handleError(error)
-      return this.success(data as RoutineWithExercises)
-    } catch (error) {
-      return this.handleError(error)
-    }
+            exercises:routine_exercises (
+              *,
+              exercise:exercises (*)
+            )
+          `)
+          .eq('id', id)
+          .maybeSingle(),
+      async () => await offlineDB.getEntity<RoutineWithExercises>(this.tableName, id),
+      async (data) => await offlineDB.saveEntity(this.tableName, data)
+    )
   }
 
   async findAll(): Promise<ApiResponse<Routine[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) return this.handleError(error)
-      return this.success(data as Routine[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .order('created_at', { ascending: false }),
+      async () => await offlineDB.getAllEntities<Routine>(this.tableName),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async findByUserId(userId: string): Promise<ApiResponse<RoutineWithExercises[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          exercises:routine_exercises (
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
             *,
-            exercise:exercises (*)
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (error) return this.handleError(error)
-      return this.success(data as RoutineWithExercises[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+            exercises:routine_exercises (
+              *,
+              exercise:exercises (*)
+            )
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+      async () => await offlineDB.getEntitiesByIndex<RoutineWithExercises>(this.tableName, 'user_id', userId),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async findActiveByUserId(userId: string): Promise<ApiResponse<RoutineWithExercises[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          exercises:routine_exercises (
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
             *,
-            exercise:exercises (*)
-          )
-        `)
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-
-      if (error) return this.handleError(error)
-      return this.success(data as RoutineWithExercises[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+            exercises:routine_exercises (
+              *,
+              exercise:exercises (*)
+            )
+          `)
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false }),
+      async () => {
+        const all = await offlineDB.getEntitiesByIndex<RoutineWithExercises>(this.tableName, 'user_id', userId)
+        return all.filter(r => r.is_active)
+      },
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async create(data: Partial<Routine>): Promise<ApiResponse<Routine>> {
-    try {
-      const { data: routine, error } = await supabase
-        .from(this.tableName)
-        .insert(data)
-        .select()
-        .single()
+    const id = data.id || `${Date.now()}-${Math.random()}`
+    const routineData = { ...data, id }
 
-      if (error) return this.handleError(error)
-      return this.success(routine as Routine)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.mutateWithOfflineSupport(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .insert(routineData)
+          .select()
+          .single(),
+      async (savedData) => await offlineDB.saveEntity(this.tableName, savedData),
+      'create',
+      routineData
+    )
   }
 
   async update(id: string, data: Partial<Routine>): Promise<ApiResponse<Routine>> {
-    try {
-      const { data: routine, error } = await supabase
-        .from(this.tableName)
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) return this.handleError(error)
-      return this.success(routine as Routine)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    const updateData = { ...data, id }
+    return this.mutateWithOfflineSupport(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single(),
+      async (savedData) => await offlineDB.saveEntity(this.tableName, { ...savedData, id }),
+      'update',
+      updateData
+    )
   }
 
   async delete(id: string): Promise<ApiResponse<boolean>> {
-    try {
-      const { error } = await supabase
-        .from(this.tableName)
-        .delete()
-        .eq('id', id)
-
-      if (error) return this.handleError(error)
-      return this.success(true)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.mutateWithOfflineSupport(
+      async () => {
+        const { error } = await supabase
+          .from(this.tableName)
+          .delete()
+          .eq('id', id)
+        return { data: error ? null : true, error }
+      },
+      async () => await offlineDB.deleteEntity(this.tableName, id),
+      'delete',
+      { id }
+    )
   }
 
   async addExercise(data: Partial<RoutineExercise>): Promise<ApiResponse<RoutineExercise>> {

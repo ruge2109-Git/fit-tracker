@@ -1,11 +1,7 @@
-/**
- * Audit Log Repository
- * Manages audit log entries for tracking user actions
- */
-
 import { supabase } from '@/lib/supabase/client'
 import { BaseRepository } from './base.repository'
 import { ApiResponse } from '@/types'
+import { offlineDB } from '@/lib/offline/db'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface AuditLog {
@@ -41,7 +37,7 @@ export interface IAuditLogRepository {
 
 export class AuditLogRepository extends BaseRepository<AuditLog> implements IAuditLogRepository {
   constructor() {
-    super('audit_log')
+    super('audit_log', 'audit_log')
   }
 
   private getClient(supabaseClient?: SupabaseClient) {
@@ -49,116 +45,134 @@ export class AuditLogRepository extends BaseRepository<AuditLog> implements IAud
   }
 
   async findById(id: string): Promise<ApiResponse<AuditLogWithUser>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          user:users (
-            id,
-            email,
-            name
-          )
-        `)
-        .eq('id', id)
-        .single()
-
-      if (error) return this.handleError(error)
-      return this.success(data as AuditLogWithUser)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
+            *,
+            user:users (
+              id,
+              email,
+              name
+            )
+          `)
+          .eq('id', id)
+          .single(),
+      async () => await offlineDB.getEntity<AuditLogWithUser>(this.tableName, id),
+      async (data) => await offlineDB.saveEntity(this.tableName, data)
+    )
   }
 
   async findAll(limit = 100, offset = 0): Promise<ApiResponse<AuditLogWithUser[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          user:users (
-            id,
-            email,
-            name
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) return this.handleError(error)
-      return this.success(data as AuditLogWithUser[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
+            *,
+            user:users (
+              id,
+              email,
+              name
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1),
+      async () => {
+        const all = await offlineDB.getAllEntities<AuditLogWithUser>(this.tableName)
+        return all.slice(offset, offset + limit)
+      },
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async findByUserId(userId: string, limit = 100, offset = 0): Promise<ApiResponse<AuditLogWithUser[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          user:users (
-            id,
-            email,
-            name
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) return this.handleError(error)
-      return this.success(data as AuditLogWithUser[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
+            *,
+            user:users (
+              id,
+              email,
+              name
+            )
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1),
+      async () => {
+        const all = await offlineDB.getEntitiesByIndex<AuditLogWithUser>(this.tableName, 'user_id', userId)
+        return all.slice(offset, offset + limit)
+      },
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async findByAction(action: string, limit = 100, offset = 0): Promise<ApiResponse<AuditLogWithUser[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          user:users (
-            id,
-            email,
-            name
-          )
-        `)
-        .eq('action', action)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) return this.handleError(error)
-      return this.success(data as AuditLogWithUser[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
+            *,
+            user:users (
+              id,
+              email,
+              name
+            )
+          `)
+          .eq('action', action)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1),
+      async () => {
+        const all = await offlineDB.getAllEntities<AuditLogWithUser>(this.tableName)
+        return all.filter(e => e.action === action).slice(offset, offset + limit)
+      },
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async findByEntityType(entityType: string, limit = 100, offset = 0): Promise<ApiResponse<AuditLogWithUser[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          user:users (
-            id,
-            email,
-            name
-          )
-        `)
-        .eq('entity_type', entityType)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) return this.handleError(error)
-      return this.success(data as AuditLogWithUser[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
+            *,
+            user:users (
+              id,
+              email,
+              name
+            )
+          `)
+          .eq('entity_type', entityType)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1),
+      async () => {
+        const all = await offlineDB.getAllEntities<AuditLogWithUser>(this.tableName)
+        return all.filter(e => e.entity_type === entityType).slice(offset, offset + limit)
+      },
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async findByDateRange(
@@ -167,69 +181,81 @@ export class AuditLogRepository extends BaseRepository<AuditLog> implements IAud
     limit = 100,
     offset = 0
   ): Promise<ApiResponse<AuditLogWithUser[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          user:users (
-            id,
-            email,
-            name
-          )
-        `)
-        .gte('created_at', startDate)
-        .lte('created_at', endDate)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) return this.handleError(error)
-      return this.success(data as AuditLogWithUser[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
+            *,
+            user:users (
+              id,
+              email,
+              name
+            )
+          `)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1),
+      async () => {
+        const all = await offlineDB.getAllEntities<AuditLogWithUser>(this.tableName)
+        return all.filter(e => e.created_at >= startDate && e.created_at <= endDate).slice(offset, offset + limit)
+      },
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
   async create(data: Omit<AuditLog, 'id' | 'created_at'>, supabaseClient?: SupabaseClient): Promise<ApiResponse<AuditLog>> {
-    try {
-      const client = this.getClient(supabaseClient)
-      const { data: result, error } = await client
-        .from(this.tableName)
-        .insert(data)
-        .select()
-        .single()
+    const id = `${Date.now()}-${Math.random()}`
+    const auditData = { ...data, id }
+    const client = this.getClient(supabaseClient)
 
-      if (error) return this.handleError(error)
-      return this.success(result)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.mutateWithOfflineSupport(
+      async () =>
+        await client
+          .from(this.tableName)
+          .insert(data)
+          .select()
+          .single(),
+      async (savedData) => await offlineDB.saveEntity(this.tableName, savedData),
+      'create',
+      auditData
+    )
   }
 
   async search(query: string, limit = 100, offset = 0): Promise<ApiResponse<AuditLogWithUser[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select(`
-          *,
-          user:users (
-            id,
-            email,
-            name
-          )
-        `)
-        .or(`action.ilike.%${query}%,entity_type.ilike.%${query}%`)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) return this.handleError(error)
-      return this.success(data as AuditLogWithUser[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select(`
+            *,
+            user:users (
+              id,
+              email,
+              name
+            )
+          `)
+          .or(`action.ilike.%${query}%,entity_type.ilike.%${query}%`)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1),
+      async () => {
+        const all = await offlineDB.getAllEntities<AuditLogWithUser>(this.tableName)
+        const q = query.toLowerCase()
+        return all.filter(e => e.action.toLowerCase().includes(q) || e.entity_type.toLowerCase().includes(q)).slice(offset, offset + limit)
+      },
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
-  // Override base methods - audit logs should not be updated or deleted
   override async update(id: string, data: Partial<AuditLog>): Promise<ApiResponse<AuditLog>> {
     return { error: 'Audit logs cannot be updated' }
   }
@@ -240,4 +266,3 @@ export class AuditLogRepository extends BaseRepository<AuditLog> implements IAud
 }
 
 export const auditLogRepository = new AuditLogRepository()
-

@@ -1,9 +1,5 @@
-/**
- * Tag Repository
- * Handles database operations for workout tags
- */
-
 import { BaseRepository } from './base.repository'
+import { offlineDB } from '@/lib/offline/db'
 import { ApiResponse } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 
@@ -30,127 +26,119 @@ export interface ITagRepository {
 
 export class TagRepository extends BaseRepository<Tag> implements ITagRepository {
   constructor() {
-    super('tags')
+    super('tags', 'tag')
   }
 
   async findById(id: string): Promise<ApiResponse<Tag>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('id', id)
-        .single()
-
-      if (error) return this.handleError(error)
-      return this.success(data as Tag)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('id', id)
+          .single(),
+      async () => await offlineDB.getEntity<Tag>(this.tableName, id),
+      async (data) => await offlineDB.saveEntity(this.tableName, data)
+    )
   }
 
   async findAll(): Promise<ApiResponse<Tag[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) return this.handleError(error)
-      return this.success(data as Tag[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .order('created_at', { ascending: false }),
+      async () => await offlineDB.getAllEntities<Tag>(this.tableName),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
-
 
   async findByUserId(userId: string): Promise<ApiResponse<Tag[]>> {
-    try {
-      const { data, error } = await supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (error) return this.handleError(error)
-      return this.success(data as Tag[])
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.fetchWithOfflineFallback(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+      async () => await offlineDB.getEntitiesByIndex<Tag>(this.tableName, 'user_id', userId),
+      async (data) => {
+        for (const item of data) {
+          await offlineDB.saveEntity(this.tableName, item)
+        }
+      }
+    )
   }
 
-  // Overload signatures
   async create(data: Partial<Tag>): Promise<ApiResponse<Tag>>
   async create(userId: string, data: TagFormData): Promise<ApiResponse<Tag>>
-  // Implementation
   async create(userIdOrData: string | Partial<Tag>, data?: TagFormData): Promise<ApiResponse<Tag>> {
-    // If called with BaseRepository signature (data only), throw error
     if (typeof userIdOrData !== 'string') {
       throw new Error('Use create(userId, data) instead')
     }
-    
-    // Called with custom signature (userId, data)
+
     const userId = userIdOrData
     const formData = data!
-    try {
-      const { data: tag, error } = await supabase
-        .from(this.tableName)
-        .insert({
-          user_id: userId,
-          name: formData.name,
-          color: formData.color,
-        })
-        .select()
-        .single()
+    const id = `${Date.now()}-${Math.random()}`
+    const tagData = { id, user_id: userId, name: formData.name, color: formData.color }
 
-      if (error) return this.handleError(error)
-      return this.success(tag as Tag)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.mutateWithOfflineSupport(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .insert(tagData)
+          .select()
+          .single(),
+      async (savedData) => await offlineDB.saveEntity(this.tableName, savedData),
+      'create',
+      tagData
+    )
   }
 
-  // Overload signatures
   async update(id: string, data: Partial<Tag>): Promise<ApiResponse<Tag>>
   async update(id: string, data: Partial<TagFormData>): Promise<ApiResponse<Tag>>
-  // Implementation
   async update(id: string, data: Partial<Tag> | Partial<TagFormData>): Promise<ApiResponse<Tag>> {
-    try {
-      // Check if this is the base repository signature (has user_id, created_at, etc.)
-      if ('user_id' in data || 'created_at' in data) {
-        throw new Error('Use update(id, data) with TagFormData instead')
-      }
-
-      const { data: tag, error } = await supabase
-        .from(this.tableName)
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single()
-
-      if (error) return this.handleError(error)
-      return this.success(tag as Tag)
-    } catch (error) {
-      return this.handleError(error)
+    if ('user_id' in data || 'created_at' in data) {
+      throw new Error('Use update(id, data) with TagFormData instead')
     }
+
+    const updateData = { ...data, id }
+    return this.mutateWithOfflineSupport(
+      async () =>
+        await supabase
+          .from(this.tableName)
+          .update({
+            ...data,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .select()
+          .single(),
+      async (savedData) => await offlineDB.saveEntity(this.tableName, { ...savedData, id }),
+      'update',
+      updateData
+    )
   }
 
   async delete(id: string): Promise<ApiResponse<boolean>> {
-    try {
-      const { error } = await supabase
-        .from(this.tableName)
-        .delete()
-        .eq('id', id)
-
-      if (error) return this.handleError(error)
-      return this.success(true)
-    } catch (error) {
-      return this.handleError(error)
-    }
+    return this.mutateWithOfflineSupport(
+      async () => {
+        const { error } = await supabase
+          .from(this.tableName)
+          .delete()
+          .eq('id', id)
+        return { data: error ? null : true, error }
+      },
+      async () => await offlineDB.deleteEntity(this.tableName, id),
+      'delete',
+      { id }
+    )
   }
 }
 
 export const tagRepository = new TagRepository()
-

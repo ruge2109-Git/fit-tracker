@@ -20,9 +20,8 @@ Este archivo contiene las tareas pendientes, mejoras identificadas y correccione
   - Límite de 5 reintentos por item, luego se descarta con warning
 
 ### Rendimiento y UI
-- [ ] **Actualizaciones Optimistas (Optimistic UI)**: Añadir soporte para `onMutate` en las acciones de los stores principales (`WorkoutStore`, `GoalStore`).
-- [ ] **Refactorización de WorkoutStore**: Extraer la lógica de auditoría y PRs a un servicio de orquestación o hook dedicado.
-- [ ] **Modo Compacto**: Diseñar e implementar una interfaz más densa para el seguimiento de ejercicios en móviles.
+- [x] **Actualizaciones Optimistas (Optimistic UI)**: Añadir soporte para `onMutate` en las acciones de los stores principales (`WorkoutStore`, `GoalStore`).
+- [x] **Refactorización de WorkoutStore**: Extraer la lógica de auditoría y PRs a un servicio de orquestación o hook dedicado.
 
 ### Calidad y Seguridad
 - [ ] **Corrección de Registro (Auth Race Condition)**: Reemplazar el `setTimeout` por un listener reactivo o reintentos en `AuthService.signUp`.
@@ -47,3 +46,5 @@ Este archivo contiene las tareas pendientes, mejoras identificadas y correccione
   - Resuelto: se eliminó el listener module-level en `sync.ts` (line 99-104). El hook `use-offline.ts` ya maneja el evento correctamente con cleanup.
 - [x] Bug potencial: Bloqueo de cola de sincronización ante errores de validación permanentes.
   - Resuelto: se agregó `retryCount` a `SyncItem`. Máximo 5 reintentos, después se descarta con toast warning.
+- [x] Bug: `indexedDB is not defined` en API routes (server-side).
+  - Resuelto: `OfflineDB.init()` ahora checkea `typeof indexedDB === 'undefined'` antes de ejecutarse.

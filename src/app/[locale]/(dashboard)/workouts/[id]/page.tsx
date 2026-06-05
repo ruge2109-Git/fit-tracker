@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useWorkoutStore } from '@/store/workout.store'
+import { useWorkoutOrchestrator } from '@/hooks/use-workout-orchestrator'
 import { useAuthStore } from '@/store/auth.store'
 import { formatDate, formatDuration, formatWeight } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
@@ -33,7 +34,8 @@ import { cn } from '@/lib/utils'
 export default function WorkoutDetailPage() {
   const params = useParams()
   const router = useNavigationRouter()
-  const { currentWorkout, loadWorkout, deleteWorkout, createWorkout, updateWorkout, isLoading } = useWorkoutStore()
+  const { currentWorkout, loadWorkout, deleteWorkout, updateWorkout, isLoading } = useWorkoutStore()
+  const { createWorkoutWithEffects } = useWorkoutOrchestrator()
   const { user } = useAuthStore()
   const t = useTranslations('workouts')
   const tCommon = useTranslations('common')
@@ -66,7 +68,7 @@ export default function WorkoutDetailPage() {
     if (!currentWorkout || !user) return
     setIsDuplicating(true)
     try {
-      const newWorkoutId = await createWorkout(
+      const newWorkoutId = await createWorkoutWithEffects(
         user.id,
         {
           date: getTodayColombia(),

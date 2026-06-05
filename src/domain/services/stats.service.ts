@@ -583,9 +583,9 @@ class StatsService implements IStatsService {
         .select(`
           weight,
           reps,
-          workout:workouts(date)
+          workout:workouts!inner(date)
         `)
-        .eq('user_id', userId)
+        .eq('workout.user_id', userId)
         .eq('exercise_id', exerciseId)
         .order('created_at', { ascending: false })
         .maybeSingle()

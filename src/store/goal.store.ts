@@ -115,15 +115,10 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   },
 
   updateGoal: async (id, data) => {
+    const snapshot = get()
     set({ isLoading: true, error: null })
-    const result = await goalService.updateGoal(id, data)
 
-    if (result.error) {
-      set({ error: result.error, isLoading: false })
-      return false
-    }
-
-    // Update local state
+    // Optimistic update
     set((state) => ({
       goals: state.goals.map(g => g.id === id ? { ...g, ...data } : g),
       activeGoals: state.activeGoals.map(g => g.id === id ? { ...g, ...data } : g),
@@ -131,10 +126,24 @@ export const useGoalStore = create<GoalState>((set, get) => ({
       currentGoal: state.currentGoal?.id === id 
         ? { ...state.currentGoal, ...data } 
         : state.currentGoal,
-      isLoading: false,
     }))
+
+    const result = await goalService.updateGoal(id, data)
+
+    if (result.error) {
+      set({
+        goals: snapshot.goals,
+        activeGoals: snapshot.activeGoals,
+        completedGoals: snapshot.completedGoals,
+        currentGoal: snapshot.currentGoal,
+        isLoading: false,
+        error: result.error,
+      })
+      return false
+    }
+
+    set({ isLoading: false })
     
-    // Log update goal event
     logAuditEvent({
       action: 'update_goal',
       entityType: 'goal',
@@ -146,24 +155,33 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   },
 
   deleteGoal: async (id) => {
+    const snapshot = get()
     set({ isLoading: true, error: null })
-    const result = await goalService.deleteGoal(id)
 
-    if (result.error) {
-      set({ error: result.error, isLoading: false })
-      return false
-    }
-
-    // Remove from local state
+    // Optimistic update
     set((state) => ({
       goals: state.goals.filter(g => g.id !== id),
       activeGoals: state.activeGoals.filter(g => g.id !== id),
       completedGoals: state.completedGoals.filter(g => g.id !== id),
       currentGoal: state.currentGoal?.id === id ? null : state.currentGoal,
-      isLoading: false,
     }))
+
+    const result = await goalService.deleteGoal(id)
+
+    if (result.error) {
+      set({
+        goals: snapshot.goals,
+        activeGoals: snapshot.activeGoals,
+        completedGoals: snapshot.completedGoals,
+        currentGoal: snapshot.currentGoal,
+        isLoading: false,
+        error: result.error,
+      })
+      return false
+    }
+
+    set({ isLoading: false })
     
-    // Log delete goal event
     logAuditEvent({
       action: 'delete_goal',
       entityType: 'goal',
@@ -174,17 +192,41 @@ export const useGoalStore = create<GoalState>((set, get) => ({
   },
 
   addProgress: async (goalId, progress) => {
+    const snapshot = get()
     set({ isLoading: true, error: null })
+
+    // Optimistic update — increment current_value immediately
+    const optimistically = (state: GoalState) => ({
+      goals: state.goals.map(g =>
+        g.id === goalId ? { ...g, current_value: g.current_value + progress.value } : g
+      ),
+      activeGoals: state.activeGoals.map(g =>
+        g.id === goalId ? { ...g, current_value: g.current_value + progress.value } : g
+      ),
+      completedGoals: state.completedGoals,
+      currentGoal: state.currentGoal?.id === goalId
+        ? { ...state.currentGoal, current_value: state.currentGoal.current_value + progress.value }
+        : state.currentGoal,
+    })
+
+    set(optimistically)
+
     const result = await goalService.addProgress(goalId, progress)
 
     if (result.error) {
-      set({ error: result.error, isLoading: false })
+      set({
+        goals: snapshot.goals,
+        activeGoals: snapshot.activeGoals,
+        completedGoals: snapshot.completedGoals,
+        currentGoal: snapshot.currentGoal,
+        isLoading: false,
+        error: result.error,
+      })
       return false
     }
 
-    // Update local state
+    // Update local state with server response
     if (result.data) {
-      const currentState = get()
       set((state) => ({
         goals: state.goals.map(g => g.id === goalId ? result.data! : g),
         activeGoals: state.activeGoals.map(g => g.id === goalId ? result.data! : g),
@@ -192,37 +234,31 @@ export const useGoalStore = create<GoalState>((set, get) => ({
         isLoading: false,
       }))
 
-      // Check if goal was completed
-      const wasCompleted = result.data.is_completed && !currentState.currentGoal?.is_completed
+      const wasCompleted = result.data.is_completed && !snapshot.currentGoal?.is_completed
       if (wasCompleted) {
-        // Move to completed goals
         await get().loadCompletedGoals(result.data.user_id)
         await get().loadActiveGoals(result.data.user_id)
-        
-        // Show toast notification
+
         toast.success('¡Meta completada! 🎉', {
           description: result.data.title,
           duration: 5000,
         })
-        
-        // Show browser notification if permission is granted (toast already shown above)
+
         goalNotificationService.showGoalCompletedNotification(result.data, false).catch((error) => {
-          // Silently fail - notification shouldn't break progress addition
           logger.error('Error showing goal completion notification', error as Error, 'GoalStore')
         })
       }
     } else {
       set({ isLoading: false })
     }
-    
-    // Log add progress event
+
     logAuditEvent({
       action: 'add_goal_progress',
       entityType: 'goal',
       entityId: goalId,
       details: { value: progress.value },
     })
-    
+
     return true
   },
 

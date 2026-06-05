@@ -53,6 +53,7 @@ class OfflineDB {
   private db: IDBDatabase | null = null
 
   async init(): Promise<void> {
+    if (typeof indexedDB === 'undefined') return
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION)
 
@@ -168,9 +169,16 @@ class OfflineDB {
     })
   }
 
+  private async ensureDB(): Promise<boolean> {
+    if (this.db) return true
+    if (typeof indexedDB === 'undefined') return false
+    await this.init()
+    return this.db !== null
+  }
+
   // Generic Entity Methods
   async saveEntity<T>(storeName: string, data: T): Promise<void> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db!.transaction([storeName], 'readwrite')
@@ -185,7 +193,7 @@ class OfflineDB {
   }
 
   async getEntity<T>(storeName: string, id: string): Promise<T | null> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return null
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db!.transaction([storeName], 'readonly')
@@ -200,7 +208,7 @@ class OfflineDB {
   }
 
   async getAllEntities<T>(storeName: string): Promise<T[]> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return []
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db!.transaction([storeName], 'readonly')
@@ -215,7 +223,7 @@ class OfflineDB {
   }
 
   async deleteEntity(storeName: string, id: string): Promise<void> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db!.transaction([storeName], 'readwrite')
@@ -230,7 +238,7 @@ class OfflineDB {
   }
 
   async getEntitiesByIndex<T>(storeName: string, indexName: string, value: any): Promise<T[]> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return []
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.db!.transaction([storeName], 'readonly')
@@ -247,7 +255,7 @@ class OfflineDB {
 
   // Sync Queue
   async addToSyncQueue(item: Omit<SyncItem, 'id' | 'timestamp'> & { localUpdatedAt?: string }): Promise<void> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['syncQueue'], 'readwrite')
       const store = transaction.objectStore('syncQueue')
@@ -264,7 +272,7 @@ class OfflineDB {
   }
 
   async incrementRetry(itemId: string): Promise<void> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['syncQueue'], 'readwrite')
       const store = transaction.objectStore('syncQueue')
@@ -282,7 +290,7 @@ class OfflineDB {
   }
 
   async getSyncQueue(): Promise<SyncItem[]> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return []
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['syncQueue'], 'readonly')
       const store = transaction.objectStore('syncQueue')
@@ -294,7 +302,7 @@ class OfflineDB {
   }
 
   async removeFromSyncQueue(id: string): Promise<void> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['syncQueue'], 'readwrite')
       const store = transaction.objectStore('syncQueue')
@@ -305,7 +313,7 @@ class OfflineDB {
   }
 
   async clearSyncQueue(): Promise<void> {
-    if (!this.db) await this.init()
+    if (!(await this.ensureDB())) return
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(['syncQueue'], 'readwrite')
       const store = transaction.objectStore('syncQueue')

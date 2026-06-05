@@ -415,7 +415,11 @@
     "noExercisesYet": "Aún no hay ejercicios",
     "addFirstExercise": "Agrega tu primer ejercicio abajo",
     "activeSession": "Sesión activa",
-    "continueWorkout": "Continuar Entrenamiento"
+    "continueWorkout": "Continuar Entrenamiento",
+    "exportCSV": "Exportar CSV",
+    "exportSuccess": "Exportación exitosa",
+    "exportError": "Error al exportar",
+    "noWorkoutsToExport": "No hay entrenamientos para exportar"
   },
   "exercises": {
     "title": "Ejercicios",

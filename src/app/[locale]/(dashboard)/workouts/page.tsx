@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 import { routineRepository } from '@/domain/repositories/routine.repository'
 import { RoutineWithExercises } from '@/types'
 import { RestDaysSettings } from '@/components/profile/rest-days-settings'
+import { ExportWorkoutsButton } from '@/components/workouts/export-workouts-button'
 
 export default function WorkoutsPage() {
   const router = useNavigationRouter()
@@ -144,14 +145,17 @@ export default function WorkoutsPage() {
              {t('subtitle') || 'History'}
           </h2>
         </div>
-        <Button 
-          onClick={() => router.push(ROUTES.NEW_WORKOUT)}
-          size="sm"
-          className="h-10 rounded-xl font-bold uppercase tracking-wider text-[10px] bg-primary text-white shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all px-6 w-full sm:w-auto"
-        >
-          <Plus className="h-3.5 w-3.5 mr-2" />
-          {t('newWorkout') || 'New Workout'}
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={() => router.push(ROUTES.NEW_WORKOUT)}
+            size="sm"
+            className="h-10 rounded-xl font-bold uppercase tracking-wider text-[10px] bg-primary text-white shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all px-6 flex-1 sm:flex-none"
+          >
+            <Plus className="h-3.5 w-3.5 mr-2" />
+            {t('newWorkout') || 'New Workout'}
+          </Button>
+          <ExportWorkoutsButton />
+        </div>
       </div>
 
       {user && <RestDaysSettings variant="workouts" />}

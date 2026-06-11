@@ -49,6 +49,19 @@ const QuickStartRoutines = dynamic(() => import('@/components/dashboard/quick-st
 const StreakCounter = dynamic(() => import('@/components/dashboard/streak-counter').then(mod => ({ default: mod.StreakCounter })), {
   ssr: false,
 })
+const VolumeAnalytics = dynamic(() => import('@/components/dashboard/volume-analytics').then(mod => ({ default: mod.VolumeAnalytics })), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+})
+const RecommendationsCard = dynamic(() => import('@/components/dashboard/recommendations-card').then(mod => ({ default: mod.RecommendationsCard })), {
+  ssr: false,
+})
+const StrengthProgression = dynamic(() => import('@/components/dashboard/strength-progression').then(mod => ({ default: mod.StrengthProgression })), {
+  ssr: false,
+})
+const FrequencyHeatmap = dynamic(() => import('@/components/dashboard/frequency-heatmap').then(mod => ({ default: mod.FrequencyHeatmap })), {
+  ssr: false,
+})
 
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { useCompactMode } from '@/hooks/use-compact-mode'
@@ -334,6 +347,26 @@ export default function DashboardPage() {
             : personalRecords.length === 0
               ? <EmptyChartCard title="Récords Personales" message="Tus mejores levantamientos aparecerán aquí cuando registres entrenamientos." />
               : <PersonalRecordsList data={personalRecords} />}
+        </div>
+
+        {/* Advanced Analytics Section */}
+        <div className="space-y-6 border-t pt-8 mt-8">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">{t('advancedAnalytics') || 'Advanced Analytics'}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{t('deepInsights') || 'Detailed insights into your training'}</p>
+          </div>
+
+          {/* Volume Analytics */}
+          <VolumeAnalytics />
+
+          {/* Strength Progression and Recommendations */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <StrengthProgression />
+            <RecommendationsCard />
+          </div>
+
+          {/* Frequency Heatmap */}
+          <FrequencyHeatmap />
         </div>
 
         {/* Recent Workouts Card */}

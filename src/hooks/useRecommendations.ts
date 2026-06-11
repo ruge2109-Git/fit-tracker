@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/auth.store'
+import { useTranslations } from 'next-intl'
 import { workoutService } from '@/domain/services/workout.service'
 import { recommendationsService, Recommendation } from '@/domain/services/recommendations.service'
 import { WorkoutWithSets } from '@/types'
@@ -17,6 +18,7 @@ interface RecommendationsState {
 
 export function useRecommendations() {
   const { user } = useAuthStore()
+  const t = useTranslations('dashboard.recommendations')
   const [state, setState] = useState<RecommendationsState>({
     loading: true,
     recommendations: [],
@@ -45,9 +47,10 @@ export function useRecommendations() {
           }
         }
 
-        // Generate recommendations
+        // Generate recommendations with translations
         const recommendations = await recommendationsService.generateRecommendations(
-          detailedWorkouts
+          detailedWorkouts,
+          t
         )
 
         setState({
@@ -65,7 +68,7 @@ export function useRecommendations() {
     }
 
     fetchAndRecommend()
-  }, [user])
+  }, [user, t])
 
   return state
 }

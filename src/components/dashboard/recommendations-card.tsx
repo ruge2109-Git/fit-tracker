@@ -77,7 +77,14 @@ export function RecommendationsCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6 space-y-3">
-        {recommendations.map((rec, idx) => (
+        {recommendations.map((rec, idx) => {
+          const priorityLabels: Record<string, string> = {
+            high: t('high'),
+            medium: t('medium'),
+            low: t('low'),
+          }
+
+          return (
           <div key={idx} className={`p-4 rounded-lg border ${colorMap[rec.priority]}`}>
             <div className="flex items-start gap-3">
               <div className="text-muted-foreground mt-0.5">
@@ -87,7 +94,7 @@ export function RecommendationsCard() {
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-semibold text-sm">{rec.title}</h4>
                   <Badge className={badgeColorMap[rec.priority]} variant="outline">
-                    {rec.priority}
+                    {priorityLabels[rec.priority]}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mb-2">{rec.description}</p>
@@ -103,7 +110,8 @@ export function RecommendationsCard() {
               </div>
             </div>
           </div>
-        ))}
+          )
+        })}
       </CardContent>
     </Card>
   )

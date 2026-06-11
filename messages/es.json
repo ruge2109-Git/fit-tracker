@@ -269,12 +269,19 @@
       "medium": "Media",
       "low": "Baja",
       "missingMuscle": "Entrenar {muscle} más",
+      "missingMuscleDesc": "No has entrenado {muscle} recientemente. Agrega ejercicios para mantener un desarrollo muscular equilibrado.",
       "balanceMuscles": "Equilibrar desarrollo muscular",
+      "balanceMusclesDesc": "El volumen de {weak} es significativamente menor que {strong}. Considera aumentar el volumen para {weak}.",
       "getBackToTraining": "Vuelve al entrenamiento",
+      "getBackToTrainingDesc": "No has entrenado en {days} días. La consistencia es clave para construir fuerza y músculo.",
       "increaseFrequency": "Aumenta la frecuencia de entrenamiento",
+      "increaseFrequencyDesc": "Entrenar al menos 3-4 veces por semana ayuda a construir progreso consistente.",
       "strengthProgressing": "¡Tu fuerza está mejorando!",
+      "strengthProgressingDesc": "Tus estimaciones de máximo de una repetición han aumentado un {percent}% en promedio. ¡Mantén la sobrecarga progresiva!",
       "increaseWeightGradually": "Aumenta el peso gradualmente",
-      "breakThroughPlateau": "Rompe el plateau"
+      "increaseWeightGraduallyDesc": "Tu fuerza está mejorando lentamente. Intenta aumentar el peso en 5-10% cuando puedas completar cómodamente todas las repeticiones.",
+      "breakThroughPlateau": "Rompe el plateau",
+      "breakThroughPlateauDesc": "Tus levantamientos no han aumentado recientemente. Intenta cambiar rangos de reps, reducir tiempo de descanso o variar ejercicios."
     },
     "frequencyHeatmap": {
       "title": "Frecuencia de Entrenamiento por Día",

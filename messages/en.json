@@ -269,12 +269,19 @@
       "medium": "Medium",
       "low": "Low",
       "missingMuscle": "Train {muscle} more",
+      "missingMuscleDesc": "You haven't trained {muscle} recently. Consider adding exercises to maintain balanced development.",
       "balanceMuscles": "Balance muscle development",
+      "balanceMusclesDesc": "{weak} volume is significantly lower than {strong}. Consider increasing volume for {weak}.",
       "getBackToTraining": "Get back to training",
+      "getBackToTrainingDesc": "You haven't trained in {days} days. Consistency is key to building strength and muscle.",
       "increaseFrequency": "Increase training frequency",
+      "increaseFrequencyDesc": "Training at least 3-4 times per week helps build consistent progress.",
       "strengthProgressing": "Strength is improving!",
+      "strengthProgressingDesc": "Your one-rep max estimates have increased by {percent}% on average. Keep up the progressive overload!",
       "increaseWeightGradually": "Increase weight gradually",
-      "breakThroughPlateau": "Break through plateau"
+      "increaseWeightGraduallyDesc": "Your strength is improving slowly. Try increasing weight by 5-10% when you can comfortably complete all reps.",
+      "breakThroughPlateau": "Break through plateau",
+      "breakThroughPlateauDesc": "Your lifts haven't increased recently. Try changing rep ranges, reducing rest time, or varying exercises."
     },
     "frequencyHeatmap": {
       "title": "Training Frequency by Day",

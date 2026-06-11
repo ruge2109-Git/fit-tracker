@@ -19,15 +19,18 @@ class RecommendationsService {
   /**
    * Generate recommendations based on workout history
    */
-  async generateRecommendations(workouts: WorkoutWithSets[]): Promise<Recommendation[]> {
+  async generateRecommendations(
+    workouts: WorkoutWithSets[],
+    t?: (key: string, options?: any) => string
+  ): Promise<Recommendation[]> {
     const recommendations: Recommendation[] = []
 
     try {
       // Local analysis first (doesn't need API)
-      recommendations.push(...this.analyzeLocalData(workouts))
+      recommendations.push(...this.analyzeLocalData(workouts, t))
 
       // AI-powered analysis (uses OpenAI)
-      const aiRecommendations = await this.getAIRecommendations(workouts)
+      const aiRecommendations = await this.getAIRecommendations(workouts, t)
       recommendations.push(...aiRecommendations)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
@@ -43,13 +46,15 @@ class RecommendationsService {
   /**
    * Analyze workout data without AI
    */
-  private analyzeLocalData(workouts: WorkoutWithSets[]): Recommendation[] {
+  private analyzeLocalData(workouts: WorkoutWithSets[], t?: (key: string, options?: any) => string): Recommendation[] {
     const recommendations: Recommendation[] = []
 
     if (workouts.length === 0) return recommendations
 
     const muscleBalance = analyticsService.calculateMuscleBalance(workouts)
-    const lastWorkout = new Date(workouts[workouts.length - 1].date)
+    // Sort workouts by date to find the most recent one
+    const sortedWorkouts = [...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    const lastWorkout = new Date(sortedWorkouts[0].date)
     const daysSinceLastWorkout = Math.floor((Date.now() - lastWorkout.getTime()) / (1000 * 60 * 60 * 24))
 
     // Check for missing muscle groups
@@ -60,8 +65,8 @@ class RecommendationsService {
       if (!trainedMuscles.has(muscle)) {
         recommendations.push({
           type: 'missing_muscle',
-          title: `Train ${muscle} more`,
-          description: `You haven't trained ${muscle} in your recent workouts. Consider adding exercises to maintain balanced development.`,
+          title: t ? t('missingMuscle', { muscle }) : `Train ${muscle} more`,
+          description: t ? t('missingMuscleDesc', { muscle }) : `You haven't trained ${muscle} recently. Consider adding exercises to maintain balanced development.`,
           priority: 'medium',
           suggestedExercises: this.getSuggestedExercisesForMuscle(muscle),
         })
@@ -78,8 +83,8 @@ class RecommendationsService {
       if (ratio < 0.5) {
         recommendations.push({
           type: 'balance',
-          title: `Balance muscle development`,
-          description: `${weakest.muscleGroup} volume is significantly lower than ${strongest.muscleGroup}. Consider increasing volume for ${weakest.muscleGroup}.`,
+          title: t ? t('balanceMuscles') : `Balance muscle development`,
+          description: t ? t('balanceMusclesDesc', { weak: weakest.muscleGroup, strong: strongest.muscleGroup }) : `${weakest.muscleGroup} volume is significantly lower than ${strongest.muscleGroup}. Consider increasing volume for ${weakest.muscleGroup}.`,
           priority: 'medium',
           suggestedExercises: this.getSuggestedExercisesForMuscle(weakest.muscleGroup),
         })
@@ -90,15 +95,15 @@ class RecommendationsService {
     if (daysSinceLastWorkout > 7) {
       recommendations.push({
         type: 'frequency',
-        title: `Get back to training`,
-        description: `You haven't trained in ${daysSinceLastWorkout} days. Consistency is key to building strength and muscle.`,
+        title: t ? t('getBackToTraining') : `Get back to training`,
+        description: t ? t('getBackToTrainingDesc', { days: daysSinceLastWorkout }) : `You haven't trained in ${daysSinceLastWorkout} days. Consistency is key to building strength and muscle.`,
         priority: 'high',
       })
     } else if (workouts.length < 4) {
       recommendations.push({
         type: 'frequency',
-        title: `Increase training frequency`,
-        description: `Training at least 3-4 times per week helps build consistent progress.`,
+        title: t ? t('increaseFrequency') : `Increase training frequency`,
+        description: t ? t('increaseFrequencyDesc') : `Training at least 3-4 times per week helps build consistent progress.`,
         priority: 'medium',
       })
     }
@@ -109,7 +114,7 @@ class RecommendationsService {
   /**
    * Get AI-powered recommendations using OpenAI
    */
-  private async getAIRecommendations(workouts: WorkoutWithSets[]): Promise<Recommendation[]> {
+  private async getAIRecommendations(workouts: WorkoutWithSets[], t?: (key: string, options?: any) => string): Promise<Recommendation[]> {
     try {
       const metrics = analyticsService.calculateVolumeMetrics(workouts)
       const oneRMProgression = analyticsService.getOneRepMaxProgression(workouts)
@@ -125,22 +130,22 @@ class RecommendationsService {
       if (avgProgression > 10) {
         recommendations.push({
           type: 'strength_progression',
-          title: `Strength is improving!`,
-          description: `Your one-rep max estimates have increased by ${avgProgression.toFixed(1)}% on average. Keep up the progressive overload!`,
+          title: t ? t('strengthProgressing') : `Strength is improving!`,
+          description: t ? t('strengthProgressingDesc', { percent: avgProgression.toFixed(1) }) : `Your one-rep max estimates have increased by ${avgProgression.toFixed(1)}% on average. Keep up the progressive overload!`,
           priority: 'low',
         })
       } else if (avgProgression > 0 && avgProgression < 5) {
         recommendations.push({
           type: 'strength_progression',
-          title: `Increase weight gradually`,
-          description: `Your strength is improving slowly. Try increasing weight by 5-10% when you can comfortably complete all reps.`,
+          title: t ? t('increaseWeightGradually') : `Increase weight gradually`,
+          description: t ? t('increaseWeightGraduallyDesc') : `Your strength is improving slowly. Try increasing weight by 5-10% when you can comfortably complete all reps.`,
           priority: 'medium',
         })
       } else if (avgProgression <= 0) {
         recommendations.push({
           type: 'strength_progression',
-          title: `Break through plateau`,
-          description: `Your lifts haven't increased recently. Try changing rep ranges, reducing rest time, or varying exercises.`,
+          title: t ? t('breakThroughPlateau') : `Break through plateau`,
+          description: t ? t('breakThroughPlateauDesc') : `Your lifts haven't increased recently. Try changing rep ranges, reducing rest time, or varying exercises.`,
           priority: 'high',
         })
       }

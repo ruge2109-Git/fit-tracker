@@ -5,6 +5,7 @@
 
 import { WorkoutWithSets } from '@/types'
 import { formatDate, formatWeight } from '@/lib/utils'
+import { blobUrlManager } from '@/lib/blob-url-manager'
 
 /**
  * Escapes a string for CSV format by wrapping in quotes and escaping existing quotes
@@ -93,32 +94,8 @@ export function downloadWorkoutsAsCSV(workouts: WorkoutWithSets[]) {
 
   const csvContent = generateWorkoutsCSV(workouts)
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
   const dateStr = new Date().toISOString().split('T')[0]
   const fileName = `workouts_report_${dateStr}.csv`
 
-  link.setAttribute('href', url)
-  link.setAttribute('download', fileName)
-  link.style.visibility = 'hidden'
-
-  document.body.appendChild(link)
-  link.click()
-
-  // Cleanup: defer revoke until next event loop to ensure download starts
-  link.addEventListener('click', () => {
-    setTimeout(() => {
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }, 0)
-  }, { once: true })
-
-  // Fallback cleanup if click event doesn't fire
-  setTimeout(() => {
-    if (document.body.contains(link)) {
-      document.body.removeChild(link)
-    }
-    URL.revokeObjectURL(url)
-  }, 1000)
+  blobUrlManager.downloadBlob(blob, fileName)
 }

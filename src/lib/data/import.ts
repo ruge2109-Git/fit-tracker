@@ -3,9 +3,10 @@
  * Functions to import user data from JSON and CSV formats
  */
 
-import { Workout, Exercise, Routine, WorkoutWithSets, RoutineWithExercises, Set, SetWithExercise, ExerciseType, MuscleGroup } from '@/types'
+import { Workout, Exercise, Routine, WorkoutWithSets, RoutineWithExercises, Set, SetWithExercise, ExerciseType, MuscleGroup, RoutineExercise } from '@/types'
 import { logger } from '@/lib/logger'
 import { validateWorkout, validateExercise, validateRoutine, validateSet } from '@/lib/validation/validator'
+import Papa from 'papaparse'
 
 function isValidExerciseType(value: string): value is ExerciseType {
   return Object.values(ExerciseType).includes(value as ExerciseType)
@@ -190,42 +191,21 @@ export async function importFromJSONFile(file: File): Promise<ImportResult> {
 }
 
 /**
- * Parses CSV content (basic implementation - can be enhanced)
+ * Parses CSV content using papaparse for robust handling
  */
 function parseCSV(csvContent: string): string[][] {
-  const rows: string[][] = []
-  const lines = csvContent.split('\n')
-  
-  for (const line of lines) {
-    if (!line.trim()) continue
-    
-    const row: string[] = []
-    let current = ''
-    let inQuotes = false
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i]
-      
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"'
-          i++ // Skip next quote
-        } else {
-          inQuotes = !inQuotes
-        }
-      } else if (char === ',' && !inQuotes) {
-        row.push(current.trim())
-        current = ''
-      } else {
-        current += char
-      }
-    }
-    
-    row.push(current.trim())
-    rows.push(row)
+  const result = Papa.parse<string[]>(csvContent, {
+    header: false,
+    skipEmptyLines: true,
+    dynamicTyping: false,
+  })
+
+  if (result.errors && result.errors.length > 0) {
+    const errorMsg = result.errors.map((e: any) => e.message).join('; ')
+    logger.warn(`CSV parsing errors: ${errorMsg}`, 'DataImport')
   }
-  
-  return rows
+
+  return result.data || []
 }
 
 /**
@@ -351,6 +331,234 @@ export function importWorkoutsFromCSV(csvContent: string): ImportResult {
 }
 
 /**
+ * Imports exercises from CSV format
+ */
+export function importExercisesFromCSV(csvContent: string): ImportResult {
+  try {
+    const rows = parseCSV(csvContent)
+    if (rows.length === 0) {
+      return {
+        success: false,
+        errors: ['CSV file is empty'],
+      }
+    }
+
+    const headers = rows[0]
+    const exercises: Exercise[] = []
+    const warnings: string[] = []
+
+    // Expected headers: Name, Type, Muscle Group, Description
+    const nameIdx = headers.findIndex((h) => h.toLowerCase().includes('name'))
+    const typeIdx = headers.findIndex((h) => h.toLowerCase().includes('type'))
+    const muscleIdx = headers.findIndex((h) => h.toLowerCase().includes('muscle'))
+    const descIdx = headers.findIndex((h) => h.toLowerCase().includes('description') || h.toLowerCase().includes('desc'))
+
+    if (nameIdx === -1 || typeIdx === -1 || muscleIdx === -1) {
+      return {
+        success: false,
+        errors: ['CSV file missing required columns: Name, Type, Muscle Group'],
+      }
+    }
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i]
+      if (row.length < headers.length) continue
+
+      const name = row[nameIdx]?.trim()
+      const typeStr = row[typeIdx]?.trim().toLowerCase()
+      const muscleStr = row[muscleIdx]?.trim().toLowerCase()
+      const description = descIdx >= 0 ? row[descIdx]?.trim() : undefined
+
+      if (!name || !typeStr || !muscleStr) {
+        warnings.push(`Row ${i + 1} skipped: Missing required fields`)
+        continue
+      }
+
+      const type = normalizeExerciseType(typeStr)
+      const muscleGroup = normalizeMuscleGroup(muscleStr)
+
+      if (!type || !muscleGroup) {
+        warnings.push(`Row ${i + 1} skipped: Invalid type or muscle group`)
+        continue
+      }
+
+      const exercise: Exercise = {
+        id: '',
+        name,
+        type,
+        muscle_group: muscleGroup,
+        description,
+        created_at: new Date().toISOString(),
+      }
+
+      exercises.push(exercise)
+    }
+
+    return {
+      success: true,
+      data: {
+        workouts: [],
+        exercises,
+        routines: [],
+      },
+      warnings: warnings.length > 0 ? warnings : undefined,
+      stats: {
+        workoutsImported: 0,
+        exercisesImported: exercises.length,
+        routinesImported: 0,
+        workoutsSkipped: 0,
+        exercisesSkipped: rows.length - 1 - exercises.length,
+        routinesSkipped: 0,
+      },
+    }
+  } catch (error) {
+    logger.error('Error importing exercises from CSV', error as Error, 'DataImport')
+    return {
+      success: false,
+      errors: [error instanceof Error ? error.message : 'Failed to parse CSV file'],
+    }
+  }
+}
+
+/**
+ * Imports routines from CSV format
+ * CSV format: Routine Name, Description, Exercise Name, Target Sets, Target Reps, Target Weight (optional), Target Rest Time (optional)
+ */
+export function importRoutinesFromCSV(csvContent: string): ImportResult {
+  try {
+    const rows = parseCSV(csvContent)
+    if (rows.length === 0) {
+      return {
+        success: false,
+        errors: ['CSV file is empty'],
+      }
+    }
+
+    const headers = rows[0]
+    const routines = new Map<string, RoutineWithExercises>()
+    const warnings: string[] = []
+
+    // Expected headers: Routine Name, Description, Exercise Name, Target Sets, Target Reps, Target Weight, Target Rest Time
+    const routineNameIdx = headers.findIndex((h) => h.toLowerCase().includes('routine'))
+    const descIdx = headers.findIndex((h) => h.toLowerCase().includes('description'))
+    const exerciseNameIdx = headers.findIndex((h) => h.toLowerCase().includes('exercise'))
+    const setsIdx = headers.findIndex((h) => h.toLowerCase().includes('set'))
+    const repsIdx = headers.findIndex((h) => h.toLowerCase().includes('rep'))
+    const weightIdx = headers.findIndex((h) => h.toLowerCase().includes('weight'))
+    const restIdx = headers.findIndex((h) => h.toLowerCase().includes('rest'))
+
+    if (routineNameIdx === -1 || exerciseNameIdx === -1 || setsIdx === -1 || repsIdx === -1) {
+      return {
+        success: false,
+        errors: ['CSV file missing required columns: Routine Name, Exercise Name, Target Sets, Target Reps'],
+      }
+    }
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i]
+      if (row.length < headers.length) continue
+
+      const routineName = row[routineNameIdx]?.trim()
+      const description = descIdx >= 0 ? row[descIdx]?.trim() : undefined
+      const exerciseName = row[exerciseNameIdx]?.trim()
+      const targetSets = parseInt(row[setsIdx]?.trim() || '0', 10)
+      const targetReps = parseInt(row[repsIdx]?.trim() || '0', 10)
+      const targetWeight = weightIdx >= 0 ? parseFloat(row[weightIdx]?.trim() || '0') : undefined
+      const targetRestTime = restIdx >= 0 ? parseInt(row[restIdx]?.trim() || '0', 10) : undefined
+
+      if (!routineName || !exerciseName || !targetSets || !targetReps) {
+        warnings.push(`Row ${i + 1} skipped: Missing required fields`)
+        continue
+      }
+
+      const routineKey = routineName
+      if (!routines.has(routineKey)) {
+        const routine: RoutineWithExercises = {
+          id: '',
+          user_id: '',
+          name: routineName,
+          description,
+          is_active: true,
+          exercises: [],
+          created_at: new Date().toISOString(),
+        }
+        routines.set(routineKey, routine)
+      }
+
+      const routine = routines.get(routineKey)!
+      const routineExercise: RoutineExercise = {
+        id: '',
+        routine_id: routine.id,
+        exercise_id: '',
+        target_sets: targetSets,
+        target_reps: targetReps,
+        target_weight: targetWeight || undefined,
+        target_rest_time: targetRestTime || undefined,
+        order: routine.exercises.length + 1,
+        created_at: new Date().toISOString(),
+        exercise: {
+          id: '',
+          name: exerciseName,
+          type: ExerciseType.STRENGTH,
+          muscle_group: MuscleGroup.FULL_BODY,
+          created_at: new Date().toISOString(),
+        },
+      }
+
+      routine.exercises.push(routineExercise)
+    }
+
+    const importedRoutines = Array.from(routines.values())
+
+    return {
+      success: true,
+      data: {
+        workouts: [],
+        exercises: [],
+        routines: importedRoutines,
+      },
+      warnings: warnings.length > 0 ? warnings : undefined,
+      stats: {
+        workoutsImported: 0,
+        exercisesImported: 0,
+        routinesImported: importedRoutines.length,
+        workoutsSkipped: 0,
+        exercisesSkipped: 0,
+        routinesSkipped: rows.length - 1 - importedRoutines.length,
+      },
+    }
+  } catch (error) {
+    logger.error('Error importing routines from CSV', error as Error, 'DataImport')
+    return {
+      success: false,
+      errors: [error instanceof Error ? error.message : 'Failed to parse CSV file'],
+    }
+  }
+}
+
+function normalizeExerciseType(value: string): ExerciseType | null {
+  const normalized = value.toLowerCase().trim()
+  if (normalized.includes('strength') || normalized === 'str') return ExerciseType.STRENGTH
+  if (normalized.includes('cardio') || normalized === 'card') return ExerciseType.CARDIO
+  if (normalized.includes('mobility') || normalized === 'mob') return ExerciseType.MOBILITY
+  if (normalized.includes('flexibility') || normalized === 'flex') return ExerciseType.FLEXIBILITY
+  return null
+}
+
+function normalizeMuscleGroup(value: string): MuscleGroup | null {
+  const normalized = value.toLowerCase().trim()
+  if (normalized.includes('chest')) return MuscleGroup.CHEST
+  if (normalized.includes('back')) return MuscleGroup.BACK
+  if (normalized.includes('leg')) return MuscleGroup.LEGS
+  if (normalized.includes('shoulder')) return MuscleGroup.SHOULDERS
+  if (normalized.includes('arm')) return MuscleGroup.ARMS
+  if (normalized.includes('core') || normalized.includes('abs')) return MuscleGroup.CORE
+  if (normalized.includes('full') || normalized.includes('body')) return MuscleGroup.FULL_BODY
+  if (normalized === 'cardio') return MuscleGroup.CARDIO
+  return null
+}
+
+/**
  * Imports data from a CSV file
  */
 export async function importFromCSVFile(file: File, type: 'workouts' | 'exercises' | 'routines'): Promise<ImportResult> {
@@ -369,10 +577,17 @@ export async function importFromCSVFile(file: File, type: 'workouts' | 'exercise
       return importWorkoutsFromCSV(text)
     }
 
-    // TODO: Implement exercises and routines CSV import
+    if (type === 'exercises') {
+      return importExercisesFromCSV(text)
+    }
+
+    if (type === 'routines') {
+      return importRoutinesFromCSV(text)
+    }
+
     return {
       success: false,
-      errors: [`CSV import for ${type} is not yet implemented`],
+      errors: [`Unknown import type: ${type}`],
     }
   } catch (error) {
     logger.error('Error reading CSV file', error as Error, 'DataImport')

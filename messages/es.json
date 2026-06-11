@@ -240,7 +240,47 @@
       "legendRest": "Descanso (racha)",
       "legendFree": "Sin rutina fija"
     },
-    "reminder": "RECORDATORIO: Sueles entrenar a las {hour}:00. Te avisaremos en esa ventana."
+    "reminder": "RECORDATORIO: Sueles entrenar a las {hour}:00. Te avisaremos en esa ventana.",
+    "advancedAnalytics": "Analíticas Avanzadas",
+    "deepInsights": "Análisis profundo de tu entrenamiento",
+    "volumeAnalytics": {
+      "title": "Análisis de Volumen",
+      "totalTonnage": "Tonnage Total",
+      "totalSets": "Total de Series",
+      "avgWeightPerSet": "Peso Promedio por Serie",
+      "totalReps": "Total de Repeticiones",
+      "kgTotal": "kg total",
+      "setsCompleted": "series realizadas",
+      "kgPerSet": "kg por serie",
+      "repsTotal": "reps total",
+      "muscleGroupBalance": "Balance de Grupos Musculares",
+      "weeklyTonnageTrend": "Tendencia de Tonnage Semanal",
+      "tonnajeKg": "Tonnage (kg)"
+    },
+    "strengthProgression": {
+      "title": "Progresión de Fuerza",
+      "estimatedOneRM": "Estimado 1RM: {weight} kg",
+      "noData": "Sin datos de fuerza disponibles"
+    },
+    "recommendations": {
+      "title": "Recomendaciones Personalizadas",
+      "keepTraining": "¡Sigue entrenando consistentemente y tendremos más recomendaciones personalizadas!",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja",
+      "missingMuscle": "Entrenar {muscle} más",
+      "balanceMuscles": "Equilibrar desarrollo muscular",
+      "getBackToTraining": "Vuelve al entrenamiento",
+      "increaseFrequency": "Aumenta la frecuencia de entrenamiento",
+      "strengthProgressing": "¡Tu fuerza está mejorando!",
+      "increaseWeightGradually": "Aumenta el peso gradualmente",
+      "breakThroughPlateau": "Rompe el plateau"
+    },
+    "frequencyHeatmap": {
+      "title": "Frecuencia de Entrenamiento por Día",
+      "workouts": "Entrenamientos",
+      "mostActive": "Más activo"
+    }
   },
   "workouts": {
     "title": "Entrenamientos",

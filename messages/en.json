@@ -240,7 +240,47 @@
       "legendRest": "Rest (streak)",
       "legendFree": "No fixed routine"
     },
-    "reminder": "REMINDER: You usually train at {hour}:00. We'll notify you in that window."
+    "reminder": "REMINDER: You usually train at {hour}:00. We'll notify you in that window.",
+    "advancedAnalytics": "Advanced Analytics",
+    "deepInsights": "Detailed insights into your training",
+    "volumeAnalytics": {
+      "title": "Volume Analytics",
+      "totalTonnage": "Total Tonnage",
+      "totalSets": "Total Sets",
+      "avgWeightPerSet": "Avg Weight per Set",
+      "totalReps": "Total Reps",
+      "kgTotal": "kg total",
+      "setsCompleted": "sets completed",
+      "kgPerSet": "kg per set",
+      "repsTotal": "reps total",
+      "muscleGroupBalance": "Muscle Group Balance",
+      "weeklyTonnageTrend": "Weekly Tonnage Trend",
+      "tonnajeKg": "Tonnage (kg)"
+    },
+    "strengthProgression": {
+      "title": "Strength Progression",
+      "estimatedOneRM": "Estimated 1RM: {weight} kg",
+      "noData": "No strength data available"
+    },
+    "recommendations": {
+      "title": "Personalized Recommendations",
+      "keepTraining": "Keep training consistently and we'll have more personalized recommendations!",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "missingMuscle": "Train {muscle} more",
+      "balanceMuscles": "Balance muscle development",
+      "getBackToTraining": "Get back to training",
+      "increaseFrequency": "Increase training frequency",
+      "strengthProgressing": "Strength is improving!",
+      "increaseWeightGradually": "Increase weight gradually",
+      "breakThroughPlateau": "Break through plateau"
+    },
+    "frequencyHeatmap": {
+      "title": "Training Frequency by Day",
+      "workouts": "Workouts",
+      "mostActive": "Most active"
+    }
   },
   "workouts": {
     "title": "Workouts",

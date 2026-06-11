@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useNavigationRouter } from '@/hooks/use-navigation-router'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Trash2, TrendingUp, Clock } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, TrendingUp, Clock, Info } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ExerciseSelect } from '@/components/exercises/exercise-select'
 import { SortableExerciseCard } from '@/components/workouts/sortable-exercise-card'
 import { ExerciseProgressDialog } from '@/components/workouts/exercise-progress-dialog'
@@ -84,6 +85,7 @@ export default function NewWorkoutFromRoutinePage() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [lastLbsInput, setLastLbsInput] = useState<Record<string, number>>({})
   const [exerciseOrder, setExerciseOrder] = useState<string[]>([])
+  const [showDescriptionDialog, setShowDescriptionDialog] = useState(false)
 
   // Drag and drop sensors - optimized for mobile
   const sensors = useSensors(
@@ -379,21 +381,33 @@ export default function NewWorkoutFromRoutinePage() {
             
             {/* Header / Navigation */}
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => router.back()}
                 className="rounded-full hover:bg-accent/10"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-xs font-medium text-muted-foreground mb-1">
                   {t('startWorkout') || 'Start Workout'}
                 </h1>
-                <h2 className="text-2xl font-bold text-foreground">
-                   {routine.name}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold text-foreground">
+                     {routine.name}
+                  </h2>
+                  {routine.description && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowDescriptionDialog(true)}
+                      className="rounded-full hover:bg-accent/10 h-8 w-8"
+                    >
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -693,6 +707,29 @@ export default function NewWorkoutFromRoutinePage() {
              </div>
         </div>
       </div>
+
+      {/* Routine Description Dialog */}
+      <Dialog open={showDescriptionDialog} onOpenChange={setShowDescriptionDialog}>
+        <DialogContent className="rounded-t-[2.5rem] sm:rounded-3xl p-0 border-none bg-background shadow-2xl max-w-md">
+          <DialogHeader className="pt-8 px-8">
+            <DialogTitle className="text-xl font-black uppercase italic tracking-tighter flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              {routine.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-8 pb-8 space-y-4">
+            {routine.description ? (
+              <p className="text-sm text-muted-foreground leading-relaxed italic font-medium">
+                "{routine.description}"
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground/50">
+                {t('noDescription') || 'No description available'}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

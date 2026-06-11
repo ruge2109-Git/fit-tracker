@@ -1,50 +1,236 @@
-# Lista de Tareas - FitTrackr
+# FitTrackr - Tareas y Mejoras
 
-Este archivo contiene las tareas pendientes, mejoras identificadas y correcciones necesarias basadas en el análisis del proyecto.
-
-## 🛠️ Mejoras Prioritarias
-
-### Infraestructura Offline-First
-- [x] **Integrar Repositorios con OfflineDB**: Modificar `BaseRepository` para manejar caché local de IndexedDB de forma transparente.
-  - `BaseRepository` con `fetchWithOfflineFallback` y `mutateWithOfflineSupport`
-  - 14 repositorios migrados (exercise, workout, routine, set, goal, tag, workout-tag, body-measurement, progress-photo, audit-log, feedback, push-subscription, saved-filter)
-  - Nuevos stores en IndexedDB: `goal_progress`, `routine_exercises`
-- [x] **Sincronización Automática**: Implementar lógica en los servicios para añadir cambios a `syncQueue` automáticamente cuando falla la red.
-  - `mutateWithOfflineSupport` detecta `!navigator.onLine` o errores de red y encola en `syncQueue`
-  - `sync.ts` con `repositoryRegistry` procesa todos los tipos de entidades
-  - `use-offline.ts` hook llama a `syncService.sync()` al reconectarse
-- [x] **Resolución de Conflictos**: Diseñar e implementar una estrategia básica de resolución ("último gana con aviso" basado en timestamps).
-  - `localUpdatedAt` en cada `SyncItem`
-  - En `sync.ts`, antes de hacer update consulta versión del servidor vía `findById`
-  - Si `server.updated_at > localUpdatedAt` → log + contador de conflictos en toast
-  - Límite de 5 reintentos por item, luego se descarta con warning
-
-### Rendimiento y UI
-- [x] **Actualizaciones Optimistas (Optimistic UI)**: Añadir soporte para `onMutate` en las acciones de los stores principales (`WorkoutStore`, `GoalStore`).
-- [x] **Refactorización de WorkoutStore**: Extraer la lógica de auditoría y PRs a un servicio de orquestación o hook dedicado.
-
-### Calidad y Seguridad
-- [ ] **Corrección de Registro (Auth Race Condition)**: Reemplazar el `setTimeout` por un listener reactivo o reintentos en `AuthService.signUp`.
-- [ ] **Suite de Pruebas**:
-    - [ ] Configurar Vitest para lógica de servicios.
-    - [ ] Configurar Playwright para flujos de autenticación.
-- [ ] **Auditoría de RLS**: Revisar todas las políticas de Supabase para las tablas de `social` (amigos, chats).
+Análisis detallado del proyecto con categorización de issues, deuda técnica, mejoras de diseño y features propuestas.
 
 ---
 
-## 🚀 Próximas Funcionalidades (Ideas)
+## 🐛 Posibles Bugs
 
-- [ ] **AI Coach Proactivo**: Implementar sugerencias inteligentes basadas en el historial (ej. "Parece que te estancaste en Press de Banca, ¿intentamos bajar el peso y subir reps?").
-- [ ] **Sincronización Multi-dispositivo en tiempo real**: Usar Supabase Realtime para ver el entrenamiento activo en varios dispositivos.
-- [ ] **Exportación de Datos**: Mejorar la generación de PDFs y añadir exportación a CSV/Excel.
+### 1. ExportWorkoutsButton - Sobrecarga de memoria
+- **Ubicación**: `src/components/workouts/export-workouts-button.tsx:41-45`
+- **Descripción**: `Promise.all()` carga todos los entrenamientos en paralelo sin límite
+- **Impacto**: Alto - crash con miles de entrenamientos
+- **Solución**: Chunking de 50-100 entrenamientos por batch
+
+### 2. CSV Import - Type casting inseguro
+- **Ubicación**: `src/lib/data/import.ts:287-289`
+- **Descripción**: `type` y `muscle_group` forzados como `any` sin validación
+- **Impacto**: Medio - datos inconsistentes
+- **Solución**: Mapear a enums válidos
+
+### 3. PDF Export - Sin validación de tamaño
+- **Ubicación**: `src/lib/pdf-export.ts`
+- **Impacto**: Medio - puede freezear navegador
+- **Solución**: Limit entrenamientos o split en múltiples PDFs
+
+### 4. CSV Export - URL.revokeObjectURL frágil
+- **Ubicación**: `src/lib/csv-export.ts:111`
+- **Problema**: setTimeout(100ms) puede no ser suficiente
+- **Impacto**: Bajo - memory leak potencial
+
+### 5. Workout Service - Rollback incompleto
+- **Ubicación**: `src/domain/services/workout.service.ts:65-66`
+- **Problema**: Si delete falla, datos quedan inconsistentes
+- **Impacto**: Bajo-Medio
+
+### 6. Data Import - Sin límite de tamaño archivo
+- **Ubicación**: `src/lib/data/import.ts:154-155`
+- **Problema**: file.text() sin validación puede cargar >50MB
+- **Impacto**: Bajo-Medio
 
 ---
 
-## 🐞 Bugs Identificados / Por Resolver
+## 💾 Deuda Técnica
 
-- [x] Bug potencial: Duplicidad en el disparador de sincronización (`online` event listener doble).
-  - Resuelto: se eliminó el listener module-level en `sync.ts` (line 99-104). El hook `use-offline.ts` ya maneja el evento correctamente con cleanup.
-- [x] Bug potencial: Bloqueo de cola de sincronización ante errores de validación permanentes.
-  - Resuelto: se agregó `retryCount` a `SyncItem`. Máximo 5 reintentos, después se descarta con toast warning.
-- [x] Bug: `indexedDB is not defined` en API routes (server-side).
-  - Resuelto: `OfflineDB.init()` ahora checkea `typeof indexedDB === 'undefined'` antes de ejecutarse.
+### 1. TODO: CSV import incompleto
+- Ubicación: `src/lib/data/import.ts:337-341`
+- Falta: Import de ejercicios y rutinas desde CSV
+- Prioridad: Media | Tiempo: 2-3 horas
+
+### 2. CSV Parsing manual
+- Ubicación: `src/lib/data/import.ts:168-202`
+- Problema: Edge cases no manejados
+- Alternativa: Usar papaparse
+
+### 3. Falta de Tests Unitarios
+- Sin tests: services, import, export, components críticos
+- Prioridad: ALTA - impide refactorización segura
+- Archivos: *.service.ts, csv-export, import, export-button
+
+### 4. Validación duplicada
+- Ubicación: import.ts y validator.ts
+- Solución: Centralizar validaciones
+
+### 5. Logger simplista
+- Sin: niveles (DEBUG/INFO/WARN/ERROR), timestamps, stack traces
+- Alternativa: Winston o Pino
+
+### 6. Error handling inconsistente
+- Mix de ApiResponse<T> y exceptions
+- Solución: Patrón único en todos servicios
+
+### 7. Tipos con any
+- src/lib/data/import.ts:288-289
+- type: 'strength' as any, muscle_group: 'full_body' as any
+
+### 8. Gestión manual de Object URLs
+- src/lib/csv-export.ts, pdf-export.ts
+- Problema: Memory leaks potenciales
+- Solución: Utility function con lifecycle
+
+---
+
+## 🎨 Mejoras de Diseño
+
+### 1. Caché de exports
+- Cada click = nuevas queries
+- Solución: TanStack Query cache
+- Beneficio: -50-70% latencia
+
+### 2. Rate limiting en exports
+- Sin límite de exports/minuto
+- Solución: 1 export per 5 segundos
+- Implementación: useRateLimitedAction hook
+
+### 3. Progreso visible en exports
+- Problema: Spinner sin contexto
+- Solución: Toast "Cargando 500 entrenamientos..."
+
+### 4. Validación PRE-creación
+- Ubicación: workout.service.ts:45-72
+- Actualmente: Valida DESPUÉS de crear
+- Solución: Validar ANTES
+
+### 5. Abstracción export logic
+- Problema: fetch+export en componente
+- Solución: Hook useWorkoutExport()
+
+### 6. Mejor manejo errores import
+- Warnings no se muestran claramente
+- Solución: Modal con lista de errores + skip option
+
+### 7. Transacciones reales
+- Ubicación: workout.service.ts:65
+- Solución: Supabase RLS policies + triggers
+
+### 8. Patrón Repository + Mapper
+- Problema: Services hacen fetch + validación + transform
+- Solución: Separar en 3 capas claras
+
+### 9. Modals global state
+- Problema: State hardcodeado en componentes
+- Solución: Zustand store para UI
+
+### 10. Sincronización cross-tab
+- Problema: Tab A exporta, Tab B no se actualiza
+- Solución: BroadcastChannel API
+
+---
+
+## ✨ Features que Agregarían Valor
+
+### ALTO VALOR (Categoría A)
+
+1. Dashboard Avanzado (3-5 días)
+   - Gráficos de tendencia + proyección
+   - Comparativa mes vs mes
+   - Heatmap frecuencia
+   - One-rep-max histórico
+   - Tech: Recharts (ya instalado)
+
+2. Recomendaciones IA (2-3 días)
+   - Ejercicios faltantes (muscle groups)
+   - Alerta si >7 días sin entrenar
+   - Recomendar aumento peso
+   - Tech: OpenAI API (ya instalada)
+
+3. Análisis de Volumen (1 día)
+   - Total tonnage semana/mes
+   - Balance muscular por grupo
+
+### MEDIO VALOR (Categoría B)
+
+4. Wearables (4-6 días)
+   - Apple Health, Google Fit, Garmin
+   - Importar calorías quemadas
+
+5. Sincronización realtime (2 días)
+   - Cross-device sync con Supabase realtime
+
+6. Importar de otras apps (3-5 días)
+   - Strong, FitBod, JEFIT
+
+### MEDIO VALOR (Categoría C)
+
+7. Compartir entrenamientos (3 días)
+   - Link + clone + comments
+
+8. Leaderboards públicos (4-5 días)
+   - Trending, rating, rankings
+
+### BAJO-MEDIO VALOR (Categoría D)
+
+9. Workout Templates (2 días)
+   - Presets, quick-start, versionado
+
+10. Historial / Undo (2-3 días)
+    - Ver cambios, revertir, auditoría
+
+11. Modo Training (3 días)
+    - Full-screen, voice commands, vibración
+
+12. Comparación visual (1 día)
+    - Este vs hace 4 semanas
+
+### TÉCNICO (Categoría E)
+
+13. Offline sync mejorada (3-4 días)
+    - Queue offline, conflict resolution
+
+14. Búsqueda global (1-2 días)
+    - Fuzzy search, historial
+
+15. Dark mode+ (1 día)
+    - AMOLED, temas personalizados
+
+### BUSINESS (Categoría F)
+
+16. Premium features
+    - Exports ilimitados, analytics, support
+
+17. Badges & Achievements (2 días)
+    - Gamification, sharable
+
+---
+
+## 📋 Roadmap Recomendado
+
+### Week 1-2 (Quick Wins)
+- [ ] Chunking en exports
+- [ ] Tests básicos services
+- [ ] Progreso visible exports
+- [ ] Comparación sesiones
+- [ ] Rate limiting
+
+### Week 3-4 (Medium Term)
+- [ ] Dashboard avanzado
+- [ ] Recomendaciones IA
+- [ ] Compartir entrenamientos
+- [ ] CSV import completo
+- [ ] Realtime sync
+
+### Month 2-3 (Long Term)
+- [ ] Wearables
+- [ ] Leaderboards
+- [ ] Voice commands
+- [ ] Audit UI
+
+---
+
+## ✅ Notas Finales
+
+- TypeScript: Excelente strict:true, mantener
+- Architecture: Services/components bien separados
+- Testing: CRÍTICO - Jest + React Testing Library
+- Escalabilidad: Supabase+RLS soporta 100k+ usuarios
+- Mobile: PWA existe, considerar React Native después

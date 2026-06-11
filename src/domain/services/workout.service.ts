@@ -6,6 +6,7 @@
 
 import { workoutRepository } from '../repositories/workout.repository'
 import { setRepository } from '../repositories/set.repository'
+import { validateWorkout, validateSets } from '@/lib/validation/validator'
 import { Workout, WorkoutWithSets, WorkoutFormData, SetFormData, ApiResponse } from '@/types'
 
 export interface IWorkoutService {
@@ -42,7 +43,24 @@ class WorkoutService implements IWorkoutService {
     workoutData: WorkoutFormData,
     sets: SetFormData[]
   ): Promise<ApiResponse<WorkoutWithSets>> {
-    // Create workout first
+    // Validate data BEFORE creating anything
+    const workoutValidation = validateWorkout(workoutData)
+    if (!workoutValidation.success) {
+      return {
+        error: workoutValidation.errorMessage || 'Invalid workout data',
+      }
+    }
+
+    if (sets.length > 0) {
+      const setsValidation = validateSets(sets)
+      if (!setsValidation.success) {
+        return {
+          error: setsValidation.errorMessage || 'Invalid sets data',
+        }
+      }
+    }
+
+    // Create workout
     const workoutResponse = await this.createWorkout(userId, workoutData)
 
     if (workoutResponse.error || !workoutResponse.data) {

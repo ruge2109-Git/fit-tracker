@@ -3,9 +3,28 @@
  * Functions to import user data from JSON and CSV formats
  */
 
-import { Workout, Exercise, Routine, WorkoutWithSets, RoutineWithExercises, Set, SetWithExercise } from '@/types'
+import { Workout, Exercise, Routine, WorkoutWithSets, RoutineWithExercises, Set, SetWithExercise, ExerciseType, MuscleGroup } from '@/types'
 import { logger } from '@/lib/logger'
 import { validateWorkout, validateExercise, validateRoutine, validateSet } from '@/lib/validation/validator'
+
+function isValidExerciseType(value: string): value is ExerciseType {
+  return Object.values(ExerciseType).includes(value as ExerciseType)
+}
+
+function isValidMuscleGroup(value: string): value is MuscleGroup {
+  return Object.values(MuscleGroup).includes(value as MuscleGroup)
+}
+
+// Maximum file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+
+function validateFileSize(file: File): string | null {
+  if (file.size > MAX_FILE_SIZE) {
+    const sizeMB = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0)
+    return `File size exceeds limit. Maximum allowed: ${sizeMB}MB`
+  }
+  return null
+}
 
 export interface ImportData {
   workouts: WorkoutWithSets[]
@@ -151,6 +170,14 @@ export function importFromJSON(jsonString: string): ImportResult {
  */
 export async function importFromJSONFile(file: File): Promise<ImportResult> {
   try {
+    const sizeError = validateFileSize(file)
+    if (sizeError) {
+      return {
+        success: false,
+        errors: [sizeError],
+      }
+    }
+
     const text = await file.text()
     return importFromJSON(text)
   } catch (error) {
@@ -274,9 +301,9 @@ export function importWorkoutsFromCSV(csvContent: string): ImportResult {
 
         if (exerciseName && reps > 0) {
           const set: SetWithExercise = {
-            id: '', // Will be generated on import
+            id: '',
             workout_id: workout.id,
-            exercise_id: '', // Will be resolved from exercise name
+            exercise_id: '',
             reps,
             weight,
             rest_time: restTime,
@@ -285,8 +312,8 @@ export function importWorkoutsFromCSV(csvContent: string): ImportResult {
             exercise: {
               id: '',
               name: exerciseName,
-              type: 'strength' as any,
-              muscle_group: 'full_body' as any,
+              type: ExerciseType.STRENGTH,
+              muscle_group: MuscleGroup.FULL_BODY,
               created_at: new Date().toISOString(),
             },
           }
@@ -328,12 +355,20 @@ export function importWorkoutsFromCSV(csvContent: string): ImportResult {
  */
 export async function importFromCSVFile(file: File, type: 'workouts' | 'exercises' | 'routines'): Promise<ImportResult> {
   try {
+    const sizeError = validateFileSize(file)
+    if (sizeError) {
+      return {
+        success: false,
+        errors: [sizeError],
+      }
+    }
+
     const text = await file.text()
-    
+
     if (type === 'workouts') {
       return importWorkoutsFromCSV(text)
     }
-    
+
     // TODO: Implement exercises and routines CSV import
     return {
       success: false,

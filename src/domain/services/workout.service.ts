@@ -63,8 +63,11 @@ class WorkoutService implements IWorkoutService {
 
       if (setsResponse.error) {
         // Rollback: delete workout if sets creation failed
-        await workoutRepository.delete(workout.id)
-        return { error: 'Failed to create sets' }
+        const deleteResponse = await workoutRepository.delete(workout.id)
+        if (deleteResponse.error) {
+          console.error('Rollback failed - workout may be orphaned:', workout.id)
+        }
+        return { error: `Failed to create sets: ${setsResponse.error}` }
       }
     }
 

@@ -21,9 +21,8 @@ export function ExportWorkoutsButton() {
 
     setIsExporting(true)
     try {
-      // 1. Fetch all user workouts
       const workoutsResponse = await workoutService.getUserWorkouts(user.id)
-      
+
       if (workoutsResponse.error || !workoutsResponse.data) {
         throw new Error(workoutsResponse.error || 'Failed to fetch workouts')
       }
@@ -35,22 +34,23 @@ export function ExportWorkoutsButton() {
         return
       }
 
-      // 2. Fetch full details (sets) for each workout
-      // We do this in parallel but with a bit of caution for large numbers
-      // For very large datasets, we might want to paginate or chunk this
-      const detailedWorkoutsPromises = basicWorkouts.map(w => 
-        workoutService.getWorkout(w.id)
-      )
+      // Fetch full details in batches of 50 to avoid memory overload
+      const detailedWorkouts: WorkoutWithSets[] = []
+      const batchSize = 50
 
-      const results = await Promise.all(detailedWorkoutsPromises)
-      
-      const detailedWorkouts: WorkoutWithSets[] = results
-        .map(r => r.data)
-        .filter((w): w is WorkoutWithSets => !!w)
+      for (let i = 0; i < basicWorkouts.length; i += batchSize) {
+        const batch = basicWorkouts.slice(i, i + batchSize)
+        const batchPromises = batch.map(w => workoutService.getWorkout(w.id))
+        const batchResults = await Promise.all(batchPromises)
 
-      // 3. Generate and download CSV
+        const batchWorkouts = batchResults
+          .map(r => r.data)
+          .filter((w): w is WorkoutWithSets => !!w)
+
+        detailedWorkouts.push(...batchWorkouts)
+      }
+
       downloadWorkoutsAsCSV(detailedWorkouts)
-      
       toast.success(t('exportSuccess') || 'Export successful')
     } catch (error) {
       console.error('Export error:', error)

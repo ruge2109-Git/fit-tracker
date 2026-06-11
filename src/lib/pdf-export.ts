@@ -7,7 +7,15 @@ import { jsPDF } from 'jspdf'
 import { WorkoutWithSets } from '@/types'
 import { formatDate, formatDuration, formatWeight } from '@/lib/utils'
 
+const MAX_SETS_PER_PDF = 200
+
 export function exportWorkoutToPDF(workout: WorkoutWithSets, locale: string = 'en') {
+  // Validate dataset size
+  if (workout.sets.length > MAX_SETS_PER_PDF) {
+    exportWorkoutToPDFSplit(workout, locale)
+    return
+  }
+
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
@@ -128,6 +136,131 @@ export function exportWorkoutToPDF(workout: WorkoutWithSets, locale: string = 'e
 
   // Save PDF
   const fileName = `${workout.routine_name || 'workout'}_${formatDate(workout.date, 'yyyy-MM-dd')}.pdf`
+  doc.save(fileName)
+}
+
+function exportWorkoutToPDFSplit(workout: WorkoutWithSets, locale: string = 'en') {
+  const exerciseGroups = workout.sets.reduce((acc, set) => {
+    const exerciseName = set.exercise.name
+    if (!acc[exerciseName]) {
+      acc[exerciseName] = []
+    }
+    acc[exerciseName].push(set)
+    return acc
+  }, {} as Record<string, typeof workout.sets>)
+
+  const exerciseNames = Object.keys(exerciseGroups)
+  let pdfIndex = 1
+  let currentSetCount = 0
+  let currentExercises: Record<string, typeof workout.sets> = {}
+
+  for (const exerciseName of exerciseNames) {
+    const sets = exerciseGroups[exerciseName]
+    if (currentSetCount + sets.length > MAX_SETS_PER_PDF && Object.keys(currentExercises).length > 0) {
+      // Export current PDF chunk
+      exportWorkoutToPDFChunk(workout, currentExercises, pdfIndex++, locale)
+      currentExercises = {}
+      currentSetCount = 0
+    }
+
+    currentExercises[exerciseName] = sets
+    currentSetCount += sets.length
+  }
+
+  if (Object.keys(currentExercises).length > 0) {
+    exportWorkoutToPDFChunk(workout, currentExercises, pdfIndex, locale)
+  }
+}
+
+function exportWorkoutToPDFChunk(
+  workout: WorkoutWithSets,
+  exerciseGroups: Record<string, typeof workout.sets>,
+  partNumber: number,
+  locale: string = 'en'
+) {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 20
+  let yPosition = margin
+
+  // Title
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  const title = workout.routine_name || 'Workout'
+  doc.text(`${title} (Part ${partNumber})`, margin, yPosition)
+  yPosition += 10
+
+  // Date and Duration
+  doc.setFontSize(12)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Date: ${formatDate(workout.date, 'PPP')}`, margin, yPosition)
+  yPosition += 7
+  doc.text(`Duration: ${formatDuration(workout.duration)}`, margin, yPosition)
+  yPosition += 10
+
+  // Exercises
+  const checkNewPage = (requiredSpace: number) => {
+    if (yPosition + requiredSpace > pageHeight - margin) {
+      doc.addPage()
+      yPosition = margin
+    }
+  }
+
+  Object.entries(exerciseGroups).forEach(([exerciseName, sets]) => {
+    checkNewPage(25)
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(14)
+    doc.text(exerciseName, margin, yPosition)
+    yPosition += 8
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('Set', margin, yPosition)
+    doc.text('Reps', margin + 30, yPosition)
+    doc.text('Weight', margin + 60, yPosition)
+    doc.text('Rest', margin + 90, yPosition)
+    doc.text('Volume', margin + 120, yPosition)
+    yPosition += 7
+
+    doc.setLineWidth(0.5)
+    doc.line(margin, yPosition - 2, pageWidth - margin, yPosition - 2)
+    yPosition += 3
+
+    doc.setFont('helvetica', 'normal')
+    sets.forEach((set, index) => {
+      checkNewPage(10)
+      const volume = (set.weight * set.reps).toFixed(1)
+      doc.text(`${index + 1}`, margin, yPosition)
+      doc.text(`${set.reps}`, margin + 30, yPosition)
+      doc.text(formatWeight(set.weight), margin + 60, yPosition)
+      doc.text(set.rest_time ? `${set.rest_time}s` : '-', margin + 90, yPosition)
+      doc.text(`${volume} kg`, margin + 120, yPosition)
+      yPosition += 7
+    })
+
+    checkNewPage(10)
+    const totalVolume = sets.reduce((sum, set) => sum + (set.weight * set.reps), 0)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Total Volume: ${totalVolume.toFixed(1)} kg`, margin + 60, yPosition)
+    yPosition += 10
+  })
+
+  // Footer
+  const totalPages = doc.getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.text(
+      `Page ${i} of ${totalPages}`,
+      pageWidth - margin - 20,
+      pageHeight - 10
+    )
+  }
+
+  const fileName = `${workout.routine_name || 'workout'}_${formatDate(workout.date, 'yyyy-MM-dd')}_part${partNumber}.pdf`
   doc.save(fileName)
 }
 

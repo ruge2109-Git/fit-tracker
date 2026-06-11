@@ -4,6 +4,7 @@ import { useRecommendations } from '@/hooks/useRecommendations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle, Lightbulb, TrendingUp, Zap, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useTranslations } from 'next-intl'
 
 const iconMap = {
   missing_muscle: <AlertCircle className="w-5 h-5" />,
@@ -26,6 +27,7 @@ const badgeColorMap = {
 
 export function RecommendationsCard() {
   const { loading, error, recommendations } = useRecommendations()
+  const t = useTranslations('dashboard.recommendations')
 
   if (loading) {
     return (
@@ -39,9 +41,9 @@ export function RecommendationsCard() {
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50">
+      <Card className="rounded-3xl border-none shadow-lg overflow-hidden bg-red-50/50">
         <CardContent className="pt-6">
-          <p className="text-red-700">Error loading recommendations: {error}</p>
+          <p className="text-red-700 text-sm">{error}</p>
         </CardContent>
       </Card>
     )
@@ -49,13 +51,17 @@ export function RecommendationsCard() {
 
   if (recommendations.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recommendations</CardTitle>
+      <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-accent/10">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-primary" />
+            {t('title')}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-8">
-            Keep training consistently and we'll have more personalized recommendations!
+        <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+          <Lightbulb className="h-8 w-8 text-muted-foreground/40 mb-3 stroke-[1.5px]" />
+          <p className="text-xs text-muted-foreground max-w-[200px] leading-relaxed">
+            {t('keepTraining')}
           </p>
         </CardContent>
       </Card>
@@ -63,14 +69,14 @@ export function RecommendationsCard() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Lightbulb className="w-5 h-5" />
-          Personalized Recommendations
+    <Card className="rounded-3xl border-none shadow-lg overflow-hidden bg-accent/10">
+      <CardHeader className="pb-0">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Lightbulb className="w-5 h-5 text-primary" />
+          {t('title')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="pt-6 space-y-3">
         {recommendations.map((rec, idx) => (
           <div key={idx} className={`p-4 rounded-lg border ${colorMap[rec.priority]}`}>
             <div className="flex items-start gap-3">

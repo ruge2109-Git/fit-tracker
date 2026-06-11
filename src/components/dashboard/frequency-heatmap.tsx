@@ -4,9 +4,11 @@ import { useAnalytics } from '@/hooks/useAnalytics'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useTranslations } from 'next-intl'
 
 export function FrequencyHeatmap() {
   const { loading, error, frequencyHeatmap } = useAnalytics()
+  const t = useTranslations('dashboard.frequencyHeatmap')
 
   if (loading) {
     return (
@@ -20,9 +22,9 @@ export function FrequencyHeatmap() {
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50">
+      <Card className="rounded-3xl border-none shadow-lg overflow-hidden bg-red-50/50">
         <CardContent className="pt-6">
-          <p className="text-red-700">Error loading frequency data: {error}</p>
+          <p className="text-red-700 text-sm">{error}</p>
         </CardContent>
       </Card>
     )
@@ -30,9 +32,10 @@ export function FrequencyHeatmap() {
 
   if (!frequencyHeatmap) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-muted-foreground">No frequency data available</p>
+      <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-accent/10">
+        <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+          <Loader2 className="h-8 w-8 text-muted-foreground/40 mb-3 stroke-[1.5px]" />
+          <p className="text-xs text-muted-foreground">No frequency data available</p>
         </CardContent>
       </Card>
     )
@@ -44,23 +47,23 @@ export function FrequencyHeatmap() {
   }))
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Training Frequency by Day</CardTitle>
+    <Card className="rounded-3xl border-none shadow-lg overflow-hidden bg-accent/10">
+      <CardHeader className="pb-0">
+        <CardTitle className="text-lg">{t('title')}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="day" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="workouts" fill="#3b82f6" name="Workouts" />
+            <Bar dataKey="workouts" fill="#3b82f6" name={t('workouts')} />
           </BarChart>
         </ResponsiveContainer>
         <div className="mt-4 text-sm text-muted-foreground">
           <p>
-            Most active: <span className="font-semibold">
+            {t('mostActive')}: <span className="font-semibold">
               {data.reduce((a, b) => (b.workouts > a.workouts ? b : a)).day}
             </span>
           </p>

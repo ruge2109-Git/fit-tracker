@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Loader2 } from 'lucide-react'
 import { MuscleGroup } from '@/types'
+import { useTranslations } from 'next-intl'
 
 const COLORS = {
   [MuscleGroup.CHEST]: '#ef4444',
@@ -19,6 +20,7 @@ const COLORS = {
 
 export function VolumeAnalytics() {
   const { loading, error, volumeMetrics, muscleBalance, weeklyTrend } = useAnalytics()
+  const t = useTranslations('dashboard.volumeAnalytics')
 
   if (loading) {
     return (
@@ -56,52 +58,52 @@ export function VolumeAnalytics() {
   return (
     <div className="space-y-6">
       {/* Volume Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-3">
+        <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-accent/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Tonnage</CardTitle>
+            <CardTitle className="text-[10px] md:text-xs font-bold text-muted-foreground/70 uppercase tracking-tight">{t('totalTonnage')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{volumeMetrics.totalTonnage.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">kg total</p>
+            <div className="text-2xl md:text-3xl font-black">{volumeMetrics.totalTonnage.toLocaleString()}</div>
+            <p className="text-[10px] text-muted-foreground mt-1 font-medium">{t('kgTotal')}</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-accent/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Sets</CardTitle>
+            <CardTitle className="text-[10px] md:text-xs font-bold text-muted-foreground/70 uppercase tracking-tight">{t('totalSets')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{volumeMetrics.totalSets}</div>
-            <p className="text-xs text-muted-foreground mt-1">sets completed</p>
+            <div className="text-2xl md:text-3xl font-black">{volumeMetrics.totalSets}</div>
+            <p className="text-[10px] text-muted-foreground mt-1 font-medium">{t('setsCompleted')}</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-accent/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg Weight/Set</CardTitle>
+            <CardTitle className="text-[10px] md:text-xs font-bold text-muted-foreground/70 uppercase tracking-tight">{t('avgWeightPerSet')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{volumeMetrics.averageWeightPerSet}</div>
-            <p className="text-xs text-muted-foreground mt-1">kg per set</p>
+            <div className="text-2xl md:text-3xl font-black">{volumeMetrics.averageWeightPerSet}</div>
+            <p className="text-[10px] text-muted-foreground mt-1 font-medium">{t('kgPerSet')}</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-accent/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Reps</CardTitle>
+            <CardTitle className="text-[10px] md:text-xs font-bold text-muted-foreground/70 uppercase tracking-tight">{t('totalReps')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{volumeMetrics.totalReps.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1">reps total</p>
+            <div className="text-2xl md:text-3xl font-black">{volumeMetrics.totalReps.toLocaleString()}</div>
+            <p className="text-[10px] text-muted-foreground mt-1 font-medium">{t('repsTotal')}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Muscle Balance */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Muscle Group Balance</CardTitle>
+      <Card className="rounded-3xl border-none shadow-lg overflow-hidden bg-accent/10">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-lg">{t('muscleGroupBalance')}</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -152,9 +154,9 @@ export function VolumeAnalytics() {
       </Card>
 
       {/* Weekly Trend */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Weekly Tonnage Trend</CardTitle>
+      <Card className="rounded-3xl border-none shadow-lg overflow-hidden bg-accent/10">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-lg">Weekly Tonnage Trend</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
